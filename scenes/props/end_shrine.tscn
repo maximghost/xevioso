@@ -1,0 +1,21 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/props/end_shrine.gd" id="1_end"]
+[ext_resource type="Texture2D" path="res://assets/decor/village/altar.png" id="2_altar"]
+
+[sub_resource type="RectangleShape2D" id="end_shape"]
+size = Vector2(40, 60)
+
+[node name="EndShrine" type="Area2D"]
+collision_layer = 0
+collision_mask = 2
+monitorable = false
+script = ExtResource("1_end")
+
+[node name="Sprite" type="Sprite2D" parent="."]
+position = Vector2(0, -22)
+texture = ExtResource("2_altar")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -30)
+shape = SubResource("end_shape")

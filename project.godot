@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="Xèvioso"
-run/main_scene="res://scenes/levels/test_level.tscn"
+run/main_scene="res://scenes/ui/title_screen.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 config/icon="res://icon.svg"
 
@@ -106,6 +106,7 @@ pause={
 2d_physics/layer_2="heros"
 2d_physics/layer_3="ennemis"
 2d_physics/layer_4="projectiles"
+2d_physics/layer_5="plateformes"
 
 [physics]
 
@@ -117,3 +118,7 @@ textures/canvas_textures/default_texture_filter=0
 rendering_device/driver.windows="d3d12"
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
+
+[gui]
+
+theme/custom="res://assets/ui/theme.tres"

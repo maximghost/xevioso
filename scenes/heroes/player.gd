@@ -110,6 +110,12 @@ signal died
 ## Délai pendant lequel un saut demandé juste avant l'atterrissage est mémorisé.
 @export var jump_buffer_time: float = 0.12
 
+## Durée pendant laquelle les plateformes traversables sont ignorées après « bas + saut ».
+@export var drop_through_time: float = 0.25
+
+# Numéro du calque des plateformes traversables (Projet → Noms de couches → Physique 2D).
+const PLATFORM_LAYER := 5
+
 
 # ---------------------------------------------------------------------------
 # État
@@ -331,7 +337,12 @@ func _handle_run(direction: float, delta: float) -> void:
 
 
 ## Lance le saut quand c'est permis, et le raccourcit si on relâche tôt.
+## Bas + saut sur une plateforme en bois : le héros la traverse et descend.
 func _handle_jump() -> void:
+	if _jump_buffer_timer > 0.0 and is_on_floor() and Input.is_action_pressed("move_down") and _try_drop_through():
+		_jump_buffer_timer = 0.0
+		return
+
 	# On saute si un saut a été demandé récemment (mémoire du saut)
 	# et qu'on touche le sol, ou qu'on vient tout juste de le quitter (coyote time).
 	if _jump_buffer_timer > 0.0 and _coyote_timer > 0.0:
@@ -644,3 +655,21 @@ func _process(delta: float) -> void:
 	else:
 		camera.offset = Vector2.ZERO
 		_shake_strength = 0.0
+
+
+# ---------------------------------------------------------------------------
+# Plateformes traversables
+# ---------------------------------------------------------------------------
+
+## Si le héros se tient sur une plateforme traversable, il passe au travers : on ignore
+## un instant le calque des plateformes. Renvoie vrai si c'est le cas (le saut est alors
+## consommé), faux s'il est sur un sol ordinaire (le saut se fait normalement).
+func _try_drop_through() -> bool:
+	set_collision_mask_value(PLATFORM_LAYER, false)
+	# Sans les plateformes, y a-t-il encore un sol juste sous les pieds ?
+	if test_move(global_transform, Vector2(0.0, 2.0)):
+		set_collision_mask_value(PLATFORM_LAYER, true)
+		return false
+	get_tree().create_timer(drop_through_time, false).timeout.connect(
+		set_collision_mask_value.bind(PLATFORM_LAYER, true))
+	return true

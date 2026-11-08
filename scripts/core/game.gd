@@ -22,6 +22,15 @@ signal message(text: String)
 const SAVE_PATH := "user://sauvegarde.json"
 ## Version du format : si on le change un jour, on saura convertir les anciennes sauvegardes.
 const SAVE_VERSION := 1
+## Les niveaux du jeu : identifiant → scène. Le premier est celui d'une nouvelle partie.
+const LEVELS := {
+	&"village_1": "res://scenes/levels/village/village_1.tscn",
+	&"test": "res://scenes/levels/test_level.tscn",
+}
+const FIRST_LEVEL: StringName = &"village_1"
+## L'écran titre.
+const TITLE_SCREEN := "res://scenes/ui/title_screen.tscn"
+
 ## Les héros disponibles dès le début.
 const STARTING_HEROES: Array[StringName] = [&"kodjo", &"afi"]
 
@@ -32,6 +41,8 @@ var sokpe: Dictionary = {}
 ## Dernier point de contrôle : niveau et nom du point (vides = début du niveau).
 var checkpoint_level: StringName = &""
 var checkpoint_name: StringName = &""
+## Niveaux terminés.
+var completed_levels: Array[StringName] = []
 
 
 func _ready() -> void:
@@ -102,6 +113,42 @@ func checkpoint_for(level_id: StringName) -> StringName:
 
 
 # ---------------------------------------------------------------------------
+# Niveaux
+# ---------------------------------------------------------------------------
+
+func complete_level(level_id: StringName) -> void:
+	if not level_id in completed_levels:
+		completed_levels.append(level_id)
+	# Le niveau est fini : on ne reprendra plus à son point de contrôle.
+	if checkpoint_level == level_id:
+		checkpoint_level = &""
+		checkpoint_name = &""
+	save_game()
+
+
+## Vrai s'il existe une partie à continuer.
+func has_save() -> bool:
+	return FileAccess.file_exists(SAVE_PATH)
+
+
+## Le niveau où reprendre : celui du dernier point de contrôle, sinon le premier non terminé.
+func level_to_continue() -> StringName:
+	if checkpoint_level != &"" and LEVELS.has(checkpoint_level):
+		return checkpoint_level
+	return FIRST_LEVEL
+
+
+func go_to_level(level_id: StringName) -> void:
+	get_tree().paused = false
+	get_tree().change_scene_to_file(LEVELS.get(level_id, LEVELS[FIRST_LEVEL]))
+
+
+func go_to_title() -> void:
+	get_tree().paused = false
+	get_tree().change_scene_to_file(TITLE_SCREEN)
+
+
+# ---------------------------------------------------------------------------
 # Sauvegarde
 # ---------------------------------------------------------------------------
 
@@ -111,6 +158,7 @@ func save_game() -> void:
 		"unlocked_heroes": unlocked_heroes.map(func(id): return String(id)),
 		"sokpe": sokpe,
 		"checkpoint": {"level": String(checkpoint_level), "name": String(checkpoint_name)},
+		"completed_levels": completed_levels.map(func(id): return String(id)),
 	}
 	var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if file == null:
@@ -137,6 +185,8 @@ func load_game() -> void:
 	var point: Dictionary = data.get("checkpoint", {})
 	checkpoint_level = StringName(point.get("level", ""))
 	checkpoint_name = StringName(point.get("name", ""))
+	for id in data.get("completed_levels", []):
+		completed_levels.append(StringName(id))
 
 
 ## Efface toute la progression (bouton de test du menu pause, plus tard « Nouvelle partie »).
@@ -152,3 +202,4 @@ func _reset_state() -> void:
 	sokpe = {}
 	checkpoint_level = &""
 	checkpoint_name = &""
+	completed_levels = []

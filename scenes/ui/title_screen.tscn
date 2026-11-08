@@ -1,0 +1,190 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/ui/title_screen.gd" id="1_title"]
+[ext_resource type="Texture2D" path="res://assets/backgrounds/village/bg_sky.png" id="2_sky"]
+[ext_resource type="Texture2D" path="res://assets/backgrounds/village/bg_far.png" id="3_far"]
+[ext_resource type="Texture2D" path="res://assets/backgrounds/village/bg_mid.png" id="4_mid"]
+[ext_resource type="Texture2D" path="res://assets/backgrounds/village/bg_near.png" id="5_near"]
+[ext_resource type="Texture2D" path="res://assets/ui/title/ground.png" id="6_ground"]
+[ext_resource type="Texture2D" path="res://assets/ui/title/logo.png" id="7_logo"]
+[ext_resource type="SpriteFrames" path="res://assets/heroes/kodjo/kodjo_frames.tres" id="h_kodjo"]
+[ext_resource type="SpriteFrames" path="res://assets/heroes/afi/afi_frames.tres" id="h_afi"]
+[ext_resource type="SpriteFrames" path="res://assets/heroes/yawa/yawa_frames.tres" id="h_yawa"]
+[ext_resource type="SpriteFrames" path="res://assets/heroes/abla/abla_frames.tres" id="h_abla"]
+[ext_resource type="SpriteFrames" path="res://assets/heroes/kokou/kokou_frames.tres" id="h_kokou"]
+
+[sub_resource type="LabelSettings" id="subtitle"]
+font_size = 13
+font_color = Color(1, 0.93, 0.78, 1)
+outline_size = 4
+outline_color = Color(0.2, 0.08, 0.06, 1)
+
+[sub_resource type="LabelSettings" id="credit"]
+font_size = 8
+font_color = Color(1, 0.93, 0.8, 0.8)
+outline_size = 2
+outline_color = Color(0.2, 0.08, 0.06, 1)
+
+[node name="TitleScreen" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_title")
+
+[node name="Backdrop" type="Node2D" parent="."]
+
+[node name="Sky" type="Parallax2D" parent="Backdrop"]
+repeat_size = Vector2(640, 0)
+autoscroll = Vector2(0, 0)
+repeat_times = 3
+
+[node name="Image" type="Sprite2D" parent="Backdrop/Sky"]
+position = Vector2(0, 0)
+texture = ExtResource("2_sky")
+centered = false
+
+[node name="Far" type="Parallax2D" parent="Backdrop"]
+repeat_size = Vector2(640, 0)
+autoscroll = Vector2(-3, 0)
+repeat_times = 3
+
+[node name="Image" type="Sprite2D" parent="Backdrop/Far"]
+position = Vector2(0, -26)
+texture = ExtResource("3_far")
+centered = false
+
+[node name="Mid" type="Parallax2D" parent="Backdrop"]
+repeat_size = Vector2(640, 0)
+autoscroll = Vector2(-8, 0)
+repeat_times = 3
+
+[node name="Image" type="Sprite2D" parent="Backdrop/Mid"]
+position = Vector2(0, -34)
+texture = ExtResource("4_mid")
+centered = false
+
+[node name="Near" type="Parallax2D" parent="Backdrop"]
+repeat_size = Vector2(640, 0)
+autoscroll = Vector2(-16, 0)
+repeat_times = 3
+
+[node name="Image" type="Sprite2D" parent="Backdrop/Near"]
+position = Vector2(0, -44)
+texture = ExtResource("5_near")
+centered = false
+
+[node name="Ground" type="Parallax2D" parent="Backdrop"]
+repeat_size = Vector2(640, 0)
+repeat_times = 3
+
+[node name="Image" type="Sprite2D" parent="Backdrop/Ground"]
+position = Vector2(0, 302)
+texture = ExtResource("6_ground")
+centered = false
+
+[node name="Heroes" type="Node2D" parent="Backdrop"]
+
+[node name="Kodjo" type="AnimatedSprite2D" parent="Backdrop/Heroes"]
+position = Vector2(262, 283)
+sprite_frames = ExtResource("h_kodjo")
+animation = &"idle"
+autoplay = "idle"
+
+[node name="Afi" type="AnimatedSprite2D" parent="Backdrop/Heroes"]
+position = Vector2(290, 283)
+sprite_frames = ExtResource("h_afi")
+animation = &"idle"
+autoplay = "idle"
+
+[node name="Yawa" type="AnimatedSprite2D" parent="Backdrop/Heroes"]
+position = Vector2(320, 283)
+sprite_frames = ExtResource("h_yawa")
+animation = &"idle"
+autoplay = "idle"
+
+[node name="Abla" type="AnimatedSprite2D" parent="Backdrop/Heroes"]
+position = Vector2(350, 283)
+sprite_frames = ExtResource("h_abla")
+animation = &"idle"
+autoplay = "idle"
+
+[node name="Kokou" type="AnimatedSprite2D" parent="Backdrop/Heroes"]
+position = Vector2(378, 283)
+sprite_frames = ExtResource("h_kokou")
+animation = &"idle"
+autoplay = "idle"
+
+[node name="Menu" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -130.0
+offset_top = 28.0
+offset_right = 130.0
+offset_bottom = 250.0
+grow_horizontal = 2
+theme_override_constants/separation = 6
+
+[node name="Logo" type="TextureRect" parent="Menu"]
+texture_filter = 1
+custom_minimum_size = Vector2(234, 81)
+layout_mode = 2
+size_flags_horizontal = 4
+texture = ExtResource("7_logo")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Subtitle" type="Label" parent="Menu"]
+layout_mode = 2
+text = "les Envoyés de la foudre"
+label_settings = SubResource("subtitle")
+horizontal_alignment = 1
+
+[node name="Space" type="Control" parent="Menu"]
+custom_minimum_size = Vector2(0, 12)
+layout_mode = 2
+
+[node name="Continue" type="Button" parent="Menu"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(150, 26)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "Continuer"
+
+[node name="NewGame" type="Button" parent="Menu"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(150, 26)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "Nouvelle partie"
+
+[node name="Credit" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -220.0
+offset_top = -14.0
+offset_right = -6.0
+offset_bottom = -3.0
+grow_horizontal = 0
+grow_vertical = 0
+text = "© 2026 Maxim Tokinlo · Ghost.Technologies"
+label_settings = SubResource("credit")
+horizontal_alignment = 2
+
+[node name="Flash" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(1, 1, 0.95, 0)
