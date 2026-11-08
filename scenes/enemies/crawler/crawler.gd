@@ -123,21 +123,4 @@ func _on_died() -> void:
 
 ## Petit nuage de poussière de latérite à l'endroit où elle disparaît.
 func _spawn_dust() -> void:
-	var dust := CPUParticles2D.new()
-	dust.one_shot = true
-	dust.explosiveness = 1.0
-	dust.amount = 14
-	dust.lifetime = 0.45
-	dust.direction = Vector2.UP
-	dust.spread = 80.0
-	dust.initial_velocity_min = 30.0
-	dust.initial_velocity_max = 80.0
-	dust.gravity = Vector2(0.0, 160.0)
-	dust.scale_amount_min = 1.0
-	dust.scale_amount_max = 2.5
-	dust.color = Color(0.72, 0.44, 0.24)
-	dust.global_position = global_position + Vector2(0.0, -4.0)
-	dust.emitting = true
-	get_parent().add_child(dust)
-	# Le nuage se supprime une fois fini.
-	dust.finished.connect(dust.queue_free)
+	Fx.dust(get_parent(), global_position + Vector2(0.0, -4.0), Color(0.72, 0.44, 0.24))

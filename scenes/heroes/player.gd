@@ -139,6 +139,10 @@ var _jump_buffer_timer: float = 0.0
 # Temps restant pendant lequel le héros, touché, est sonné.
 var _hurt_timer: float = 0.0
 
+# Secousse de la caméra : durée restante et amplitude, en pixels.
+var _shake_time: float = 0.0
+var _shake_strength: float = 0.0
+
 # Sens du dernier coup reçu, pour orienter le recul.
 var _last_hit_direction: float = 1.0
 
@@ -253,6 +257,12 @@ func _physics_process(delta: float) -> void:
 ##   hauteur = gravité × temps² / 2        →  gravité = 2 × hauteur / temps²
 ##   vitesse initiale = gravité × temps    →  impulsion = 2 × hauteur / temps
 ## L'impulsion est négative, car dans Godot l'axe vertical pointe vers le bas.
+## La gravité du saut (pixels par seconde au carré), pour les capacités qui gèrent
+## elles-mêmes la chute (le balancement de la Perche).
+func get_gravity_strength() -> float:
+	return _gravity
+
+
 func _compute_jump_physics() -> void:
 	_gravity = 2.0 * jump_height / (time_to_apex * time_to_apex)
 	_jump_velocity = -2.0 * jump_height / time_to_apex
@@ -433,9 +443,13 @@ func _handle_switch() -> void:
 
 ## Fait du héros n° « index » le héros joué : ses animations et sa capacité.
 func _apply_hero(index: int) -> void:
+	if _ability != null:
+		_ability.on_deselected()
 	_hero_index = index
 	_sprite.sprite_frames = heroes[index].frames
 	_ability = _abilities[index]
+	if _ability != null:
+		_ability.on_selected()
 	hero_changed.emit(heroes[index])
 
 
@@ -596,3 +610,22 @@ func _respawn() -> void:
 ## Change le point de réapparition (servira aux points de contrôle).
 func set_respawn_point(point: Vector2) -> void:
 	_respawn_point = point
+
+
+## Fait trembler la caméra (impacts, explosions). « strength » en pixels, « duration » en secondes.
+func shake_camera(strength: float, duration: float) -> void:
+	_shake_strength = maxf(_shake_strength, strength)
+	_shake_time = maxf(_shake_time, duration)
+
+
+func _process(delta: float) -> void:
+	if _shake_time <= 0.0:
+		return
+	_shake_time -= delta
+	var camera: Camera2D = $Camera2D
+	if _shake_time > 0.0:
+		# Décalage aléatoire, arrondi au pixel près pour rester net en pixel art.
+		camera.offset = Vector2(randf_range(-1.0, 1.0), randf_range(-1.0, 1.0)).round() * _shake_strength
+	else:
+		camera.offset = Vector2.ZERO
+		_shake_strength = 0.0

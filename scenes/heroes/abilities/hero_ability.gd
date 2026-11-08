@@ -107,6 +107,16 @@ func passive_update(_delta: float) -> void:
 	pass
 
 
+## Appelées quand ce héros devient le héros joué, ou cesse de l'être
+## (ex. la Perche éteint le halo du pieu quand on change de héros).
+func on_selected() -> void:
+	pass
+
+
+func on_deselected() -> void:
+	pass
+
+
 ## Vrai si le héros ne peut pas être blessé en ce moment (servira avec les ennemis).
 func grants_invulnerability() -> bool:
 	return false
