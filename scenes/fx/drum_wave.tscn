@@ -1,0 +1,15 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/fx/drum_wave.gd" id="1_wave"]
+
+[sub_resource type="CircleShape2D" id="wave_shape"]
+radius = 1.0
+
+[node name="DrumWave" type="Area2D"]
+collision_layer = 8
+collision_mask = 4
+monitorable = false
+script = ExtResource("1_wave")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("wave_shape")

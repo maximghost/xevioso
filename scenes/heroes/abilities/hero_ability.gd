@@ -8,7 +8,8 @@ extends Node
 ##   - try_activate() quand on appuie sur « ability » ;
 ##   - physics_update(delta) à chaque image tant que la capacité est active.
 ## Pendant qu'une capacité est active, elle peut prendre la main sur le mouvement
-## (takes_control) : le Player ne gère alors ni la gravité ni la course.
+## (takes_control, ex. la Ruée) : le Player ne gère alors ni la gravité ni la course.
+## Sinon (ex. le Pagne-voile), le héros bouge normalement et physics_update s'ajoute.
 
 
 ## Émis quand la capacité démarre.
@@ -69,6 +70,17 @@ func cancel() -> void:
 
 
 # --- À redéfinir dans chaque capacité ---------------------------------------
+
+## Le joueur demande-t-il la capacité ? Par défaut : un appui sur « ability ».
+## Une capacité « à maintenir » (le Pagne-voile) répond aussi au bouton tenu.
+func wants_activation() -> bool:
+	return Input.is_action_just_pressed("ability")
+
+
+## Permet à une capacité active de modifier la vitesse de chute maximale
+## (le Pagne-voile ralentit la chute). Par défaut, aucune modification.
+func limit_fall_speed(default_speed: float) -> float:
+	return default_speed
 
 ## Conditions propres à la capacité (ex. la Ruée : une seule fois par saut).
 func can_activate() -> bool:

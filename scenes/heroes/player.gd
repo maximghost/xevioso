@@ -223,6 +223,10 @@ func _physics_process(delta: float) -> void:
 		_handle_run(direction, delta)
 		_handle_jump()
 		_handle_throw(delta)
+		# Capacité active qui laisse le héros bouger (Pagne-voile, Onde) : elle se met à jour
+		# en plus du mouvement normal.
+		if _ability != null and _ability.active:
+			_ability.physics_update(delta)
 
 	# Déplace le corps selon sa vitesse et le fait glisser le long des obstacles.
 	move_and_slide()
@@ -275,7 +279,17 @@ func _apply_gravity(delta: float) -> void:
 	if velocity.y > 0.0:  # le héros descend
 		gravity *= fall_gravity_multiplier
 
-	velocity.y = minf(velocity.y + gravity * delta, max_fall_speed)
+	# Vitesse de chute maximale, éventuellement réduite par une capacité (Pagne-voile).
+	var fall_cap: float = max_fall_speed
+	if _ability != null and _ability.active:
+		fall_cap = _ability.limit_fall_speed(fall_cap)
+
+	if velocity.y > fall_cap:
+		# Déjà plus rapide que la limite (voile ouvert en pleine chute) : on freine
+		# progressivement, pour un effet de parachute plutôt qu'un arrêt sec.
+		velocity.y = move_toward(velocity.y, fall_cap, gravity * 2.0 * delta)
+	else:
+		velocity.y = minf(velocity.y + gravity * delta, fall_cap)
 
 
 ## Fait tendre la vitesse horizontale vers la vitesse voulue, sans à-coups.
@@ -451,7 +465,7 @@ func _tick_abilities(delta: float) -> void:
 
 ## Déclenche la capacité du héros joué quand on appuie sur « ability ».
 func _handle_ability() -> void:
-	if _ability != null and Input.is_action_just_pressed("ability"):
+	if _ability != null and not _ability.active and _ability.wants_activation():
 		if _ability.try_activate():
 			_throwing = false  # la capacité interrompt un lancer en cours
 
@@ -489,7 +503,9 @@ func spawn_afterimage(color: Color, lifetime: float = 0.22) -> void:
 
 ## Reçoit un coup (appelée par les ennemis). « from_direction » : sens du coup,
 ## 1 s'il vient de la gauche (le héros recule vers la droite), -1 sinon.
-func take_hit(damage: int, from_direction: float) -> void:
+## « _stun » n'est pas utilisé pour le héros (sa durée est hurt_stun_time) : le paramètre
+## existe pour que héros et ennemis encaissent les coups de la même façon.
+func take_hit(damage: int, from_direction: float, _stun: float = -1.0) -> void:
 	if _respawning or is_invulnerable():
 		return
 	# Le recul est appliqué dans _on_damaged, seulement si le coup porte vraiment.

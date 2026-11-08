@@ -86,11 +86,12 @@ func _hurt_touching_heroes() -> void:
 			body.take_hit(contact_damage, side if side != 0.0 else float(-_direction))
 
 
-## Reçoit un coup (appelée par la hache). « from_direction » : sens du coup (-1 ou 1).
-func take_hit(damage: int, from_direction: float) -> void:
+## Reçoit un coup (hache, onde...). « from_direction » : sens du coup (-1 ou 1).
+## « stun » : durée d'étourdissement imposée par l'attaque (-1 = la durée habituelle).
+func take_hit(damage: int, from_direction: float, stun: float = -1.0) -> void:
 	if _dead or not _health.damage(damage):
 		return
-	_stun_timer = stun_time
+	_stun_timer = stun if stun >= 0.0 else stun_time
 	velocity.x = from_direction * knockback_speed
 	# Éclair blanc : le coup se voit.
 	_sprite.modulate = Color(4.0, 4.0, 4.0)

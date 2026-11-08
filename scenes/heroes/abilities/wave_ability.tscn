@@ -1,0 +1,6 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/heroes/abilities/wave_ability.gd" id="1_wave"]
+
+[node name="WaveAbility" type="Node"]
+script = ExtResource("1_wave")
