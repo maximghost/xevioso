@@ -45,8 +45,12 @@ extends CharacterBody2D
 ## Durée pendant laquelle le héros, sonné, ne répond plus aux commandes.
 @export var hurt_stun_time: float = 0.3
 
-## Sous cette hauteur, le héros est tombé dans le vide : il réapparaît.
+## Sous cette hauteur, le héros est tombé dans le vide : il perd un cœur et revient
+## sur le dernier sol sûr (ou meurt s'il n'avait plus qu'un cœur).
 @export var death_height: float = 600.0
+
+## Invincibilité après une chute dans le vide, en secondes.
+@export var fall_invincibility: float = 1.2
 
 ## Délai entre la mort et la réapparition, en secondes.
 @export var respawn_delay: float = 0.8
@@ -152,11 +156,18 @@ var _shake_strength: float = 0.0
 # Sens du dernier coup reçu, pour orienter le recul.
 var _last_hit_direction: float = 1.0
 
+# Vrai pendant le retrait du cœur d'une chute : pas de recul ni d'étourdissement.
+var _falling_back: bool = false
+
 # Vrai entre la mort et la réapparition : le héros ne fait plus rien.
 var _respawning: bool = false
 
-# Point de réapparition : la position de départ (plus tard, le dernier point de contrôle).
+# Point de réapparition : la position de départ, puis la dernière stèle.
 var _respawn_point: Vector2 = Vector2.ZERO
+
+# Dernier sol sûr où le héros se tenait (bien posé, sur un sol fixe) : on y revient
+# après une chute dans le vide.
+var _last_safe_position: Vector2 = Vector2.ZERO
 
 # Le héros joué : sa position dans la liste « heroes ».
 var _hero_index: int = 0
@@ -194,6 +205,7 @@ const AXE_OFFSET := Vector2(12.0, -2.0)
 # ---------------------------------------------------------------------------
 
 func _ready() -> void:
+	add_to_group(&"player")
 	_compute_jump_physics()
 	_create_abilities()
 	if not heroes.is_empty():
@@ -202,6 +214,7 @@ func _ready() -> void:
 	# Le lancer se termine quand son animation est finie.
 	_sprite.animation_finished.connect(_on_animation_finished)
 	_respawn_point = global_position
+	_last_safe_position = global_position
 	health.damaged.connect(_on_damaged)
 	health.died.connect(_on_died)
 
@@ -251,6 +264,7 @@ func _physics_process(delta: float) -> void:
 
 	_update_facing(direction)
 	_update_animation()
+	_remember_safe_ground()
 	_check_fall()
 
 
@@ -572,8 +586,8 @@ func take_hit(damage: int, from_direction: float, _stun: float = -1.0) -> void:
 
 ## Le coup a porté : recul, héros sonné, capacité ou lancer interrompus.
 func _on_damaged(_amount: int) -> void:
-	if health.is_dead():
-		return  # la mort prend le relais (_on_died)
+	if health.is_dead() or _falling_back:
+		return  # la mort prend le relais (_on_died), ou c'est une chute (pas de recul)
 	if _ability != null and _ability.active:
 		_ability.cancel()
 	_throwing = false
@@ -598,10 +612,42 @@ func _update_blink() -> void:
 		_visual.visible = true
 
 
-## Tombé dans le vide : mort immédiate.
+## Tombé dans le vide : un cœur de moins et retour sur le dernier sol sûr.
+## S'il ne restait qu'un cœur, c'est la mort (retour à la dernière stèle).
 func _check_fall() -> void:
-	if global_position.y > death_height:
+	if global_position.y <= death_height or _respawning:
+		return
+	if health.current <= 1:
 		health.kill()
+		return
+	if _ability != null and _ability.active:
+		_ability.cancel()
+	_throwing = false
+	_hurt_timer = 0.0
+	# Le coup est infligé sans recul (on n'est pas « touché ») : on retire le cœur directement.
+	_falling_back = true
+	health.damage(1, true)
+	_falling_back = false
+	global_position = _last_safe_position
+	velocity = Vector2.ZERO
+	health.make_invincible(fall_invincibility)
+	$Camera2D.reset_smoothing()
+
+
+## Mémorise la position si le héros est bien posé sur un sol fixe : les deux bords
+## de ses pieds touchent le sol, et ce sol n'est ni mobile ni fragile (groupe « unsafe_ground »).
+func _remember_safe_ground() -> void:
+	if not is_on_floor() or _hurt_timer > 0.0:
+		return
+	var space := get_world_2d().direct_space_state
+	for dx in [-6.0, 6.0]:
+		var query := PhysicsRayQueryParameters2D.create(
+			global_position + Vector2(dx, 16.0), global_position + Vector2(dx, 26.0), collision_mask)
+		query.exclude = [get_rid()]
+		var hit := space.intersect_ray(query)
+		if hit.is_empty() or (hit.collider as Node).is_in_group(&"unsafe_ground"):
+			return
+	_last_safe_position = global_position
 
 
 ## Mort : le héros disparaît, puis réapparaît au point de départ.
@@ -624,6 +670,7 @@ func _on_died() -> void:
 ## Replace le héros au point de réapparition, avec toute sa vie et un peu d'invincibilité.
 func _respawn() -> void:
 	global_position = _respawn_point
+	_last_safe_position = _respawn_point
 	velocity = Vector2.ZERO
 	health.refill()
 	health.make_invincible(respawn_invincibility)

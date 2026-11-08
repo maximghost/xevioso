@@ -1,0 +1,18 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/props/drum_target.gd" id="1_drum"]
+[ext_resource type="Texture2D" path="res://assets/props/gong.png" id="2_gong"]
+
+[sub_resource type="RectangleShape2D" id="drum_shape"]
+size = Vector2(16, 18)
+
+[node name="DrumTarget" type="Area2D"]
+script = ExtResource("1_drum")
+
+[node name="Sprite" type="Sprite2D" parent="."]
+position = Vector2(0, -16)
+texture = ExtResource("2_gong")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -15)
+shape = SubResource("drum_shape")

@@ -33,11 +33,19 @@ de route. Tous lancent la hache de foudre.
 |---|---|---|---|
 | Se déplacer | A / D ou ← → (Q / D en AZERTY) | Stick gauche, croix | Croix (pouce gauche) |
 | Sauter | Espace, W ou ↑ (Z en AZERTY) | A | Bouton saut ou flèche haut |
-| Descendre d'une plateforme | Bas + saut | Bas + A | Bas + saut |
 | Hache de foudre | J ou clic gauche | X | Bouton hache |
 | Capacité du héros | K ou clic droit (à maintenir : Pagne-voile, Perche) | B | Bouton éclair |
 | Changer de héros | Tab | RB | Bouton flèches |
 | Pause | Échap | Start | Bouton pause |
+
+## Le village (région 1, niveau 1)
+
+Neuf passages aux défis variés : sauts sur les planches des greniers, haies d'épines
+d'acacia, dalles de terre sèche qui s'effritent, nuées de criquets, termitières cracheuses,
+un grand vide à franchir avec la Ruée ou le Pagne-voile, l'énigme du portail du chef
+(viser le tambour à travers une fente de la falaise), les nacelles du puits et les séchoirs.
+Huit pierres sokpe, dont une qu'on ne peut atteindre qu'en revenant avec Abla. Au bout,
+l'autel de la foudre : la pluie revient et le village refleurit.
 
 ## Structure
 
@@ -45,8 +53,9 @@ de route. Tous lancent la hache de foudre.
 assets/       images : héros, ennemis, décor, tuiles, arrière-plans, interface
 scenes/
   heroes/     le héros (player) et les capacités des cinq Envoyés
-  enemies/    les ennemis (la Motte sèche)
-  props/      éléments du décor : stèles, pierres sokpe, pieux, blocs fragiles, autels
+  enemies/    les ennemis : Motte sèche, Criquet, Termitière cracheuse
+  props/      éléments du décor : stèles, pierres sokpe, pieux, blocs et dalles fragiles,
+              nacelles, portail et tambour, épines, autels
   levels/     les niveaux (script commun level.gd, village/, terrain d'essai)
   fx/         effets : hache, onde, météo
   ui/         écran titre, interface en jeu, menus, contrôles tactiles

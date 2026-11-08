@@ -36,8 +36,9 @@ func _physics_process(delta: float) -> void:
 
 
 ## Inflige « amount » points de dégâts. Renvoie vrai si le coup a porté.
-func damage(amount: int) -> bool:
-	if is_dead() or is_invincible() or amount <= 0:
+## « ignore_invincibility » : le coup porte même pendant l'invincibilité (chute dans le vide).
+func damage(amount: int, ignore_invincibility: bool = false) -> bool:
+	if is_dead() or amount <= 0 or (is_invincible() and not ignore_invincibility):
 		return false
 	current = maxi(current - amount, 0)
 	_invincible_timer = invincibility_time

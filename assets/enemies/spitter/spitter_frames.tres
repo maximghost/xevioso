@@ -1,0 +1,30 @@
+[gd_resource type="SpriteFrames" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/enemies/spitter/spitter.png" id="1_tex"]
+
+[sub_resource type="AtlasTexture" id="f0"]
+atlas = ExtResource("1_tex")
+region = Rect2(0, 0, 30, 38)
+
+[sub_resource type="AtlasTexture" id="f1"]
+atlas = ExtResource("1_tex")
+region = Rect2(30, 0, 30, 38)
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("f0")
+}],
+"loop": true,
+"name": &"idle",
+"speed": 1.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("f1")
+}],
+"loop": false,
+"name": &"spit",
+"speed": 1.0
+}]

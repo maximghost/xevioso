@@ -1,0 +1,17 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/enemies/spitter/clod.gd" id="1_clod"]
+[ext_resource type="Texture2D" path="res://assets/enemies/spitter/clod.png" id="2_tex"]
+
+[sub_resource type="CircleShape2D" id="clod_shape"]
+radius = 3.0
+
+[node name="Clod" type="Area2D"]
+monitorable = false
+script = ExtResource("1_clod")
+
+[node name="Sprite" type="Sprite2D" parent="."]
+texture = ExtResource("2_tex")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("clod_shape")
