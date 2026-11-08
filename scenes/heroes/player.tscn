@@ -1,0 +1,26 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/heroes/player.gd" id="1_i6i7o"]
+
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_mxjp5"]
+radius = 7.0
+height = 40.0
+
+[node name="Player" type="CharacterBody2D" unique_id=543139140]
+script = ExtResource("1_i6i7o")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1337161200]
+shape = SubResource("CapsuleShape2D_mxjp5")
+
+[node name="Visual" type="Node2D" parent="." unique_id=1541435163]
+
+[node name="Body" type="Polygon2D" parent="Visual" unique_id=51301826]
+color = Color(0.23921569, 0.22745098, 0.8392157, 1)
+polygon = PackedVector2Array(-7, -20, 7, -20, 7, 20, -7, 20)
+
+[node name="Eye" type="Polygon2D" parent="Visual" unique_id=1008085103]
+polygon = PackedVector2Array(2, -14, 6, -14, 6, -10, 2, -10)
+
+[node name="Camera2D" type="Camera2D" parent="." unique_id=1365893825]
+position_smoothing_enabled = true
+position_smoothing_speed = 8.0

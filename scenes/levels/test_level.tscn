@@ -1,0 +1,88 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/heroes/player.tscn" id="1_yautc"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_v45ci"]
+size = Vector2(800, 40)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_48ne7"]
+size = Vector2(500, 40)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_6xh4u"]
+size = Vector2(120, 16)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_cyt5c"]
+size = Vector2(96, 16)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_7x1jh"]
+size = Vector2(96, 16)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_hfwtw"]
+size = Vector2(80, 16)
+
+[node name="TestLevel" type="Node2D" unique_id=1222819865]
+
+[node name="Platforms" type="Node2D" parent="." unique_id=1312224272]
+
+[node name="GroundLeft" type="StaticBody2D" parent="Platforms" unique_id=532808973]
+position = Vector2(-300, 160)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Platforms/GroundLeft" unique_id=410540771]
+shape = SubResource("RectangleShape2D_v45ci")
+
+[node name="Polygon2D" type="Polygon2D" parent="Platforms/GroundLeft" unique_id=2107293109]
+color = Color(0.5411765, 0.29411766, 0.16470589, 1)
+polygon = PackedVector2Array(-400, -20, 400, -20, 400, 20, -400, 20)
+
+[node name="GroundRight" type="StaticBody2D" parent="Platforms" unique_id=385597491]
+position = Vector2(430, 160)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Platforms/GroundRight" unique_id=586187733]
+shape = SubResource("RectangleShape2D_48ne7")
+
+[node name="Polygon2D" type="Polygon2D" parent="Platforms/GroundRight" unique_id=79478592]
+color = Color(0.5411765, 0.29411766, 0.16470589, 1)
+polygon = PackedVector2Array(-250, -20, 250, -20, 250, 20, -250, 20)
+
+[node name="LedgeLow" type="StaticBody2D" parent="Platforms" unique_id=1015535644]
+position = Vector2(-200, 90)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Platforms/LedgeLow" unique_id=779248934]
+shape = SubResource("RectangleShape2D_6xh4u")
+
+[node name="Polygon2D" type="Polygon2D" parent="Platforms/LedgeLow" unique_id=600250498]
+color = Color(0.70980394, 0.4117647, 0.22745098, 1)
+polygon = PackedVector2Array(-60, -8, 60, -8, 60, 8, -60, 8)
+
+[node name="LedgeMid" type="StaticBody2D" parent="Platforms" unique_id=1245072443]
+position = Vector2(-40, 50)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Platforms/LedgeMid" unique_id=381588874]
+shape = SubResource("RectangleShape2D_cyt5c")
+
+[node name="Polygon2D" type="Polygon2D" parent="Platforms/LedgeMid" unique_id=1845624351]
+color = Color(0.70980394, 0.4117647, 0.22745098, 1)
+polygon = PackedVector2Array(-48, -8, 48, -8, 48, 8, -48, 8)
+
+[node name="LedgeHigh" type="StaticBody2D" parent="Platforms" unique_id=720218866]
+position = Vector2(120, 10)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Platforms/LedgeHigh" unique_id=1054867899]
+shape = SubResource("RectangleShape2D_7x1jh")
+
+[node name="Polygon2D" type="Polygon2D" parent="Platforms/LedgeHigh" unique_id=1190558435]
+color = Color(0.70980394, 0.4117647, 0.22745098, 1)
+polygon = PackedVector2Array(-48, -8, 48, -8, 48, 8, -48, 8)
+
+[node name="LedgeFar" type="StaticBody2D" parent="Platforms" unique_id=485304345]
+position = Vector2(330, 70)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Platforms/LedgeFar" unique_id=598647663]
+shape = SubResource("RectangleShape2D_hfwtw")
+
+[node name="Polygon2D" type="Polygon2D" parent="Platforms/LedgeFar" unique_id=1681497614]
+color = Color(0.70980394, 0.4117647, 0.22745098, 1)
+polygon = PackedVector2Array(-40, -8, 40, -8, 40, 8, -40, 8)
+
+[node name="Player" type="CharacterBody2D" parent="." unique_id=543139140 instance=ExtResource("1_yautc")]
+position = Vector2(-300, 100)
