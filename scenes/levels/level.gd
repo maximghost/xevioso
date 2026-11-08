@@ -47,6 +47,8 @@ var _completed: bool = false
 
 
 func _ready() -> void:
+	# Un niveau de développement (terrain d'essai) ne touche jamais à la vraie sauvegarde.
+	Game.saving_enabled = not level_id in Game.DEV_LEVELS
 	if level_id == &"":
 		push_warning("Niveau sans level_id : la sauvegarde ne pourra pas s'y retrouver.")
 	if terrain != null and player != null:

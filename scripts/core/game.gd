@@ -28,6 +28,8 @@ const LEVELS := {
 	&"test": "res://scenes/levels/test_level.tscn",
 }
 const FIRST_LEVEL: StringName = &"village_1"
+## Niveaux de développement : jamais sauvegardés, jamais proposés par « Continuer ».
+const DEV_LEVELS: Array[StringName] = [&"test"]
 ## L'écran titre.
 const TITLE_SCREEN := "res://scenes/ui/title_screen.tscn"
 
@@ -43,6 +45,9 @@ var checkpoint_level: StringName = &""
 var checkpoint_name: StringName = &""
 ## Niveaux terminés.
 var completed_levels: Array[StringName] = []
+## Faux dans un niveau de développement : rien n'est écrit sur le disque, et tout ce qui
+## s'y est passé (héros débloqués, pierres, stèles) est oublié en revenant au menu.
+var saving_enabled: bool = true
 
 
 func _ready() -> void:
@@ -133,7 +138,7 @@ func has_save() -> bool:
 
 ## Le niveau où reprendre : celui du dernier point de contrôle, sinon le premier non terminé.
 func level_to_continue() -> StringName:
-	if checkpoint_level != &"" and LEVELS.has(checkpoint_level):
+	if checkpoint_level != &"" and LEVELS.has(checkpoint_level) and not checkpoint_level in DEV_LEVELS:
 		return checkpoint_level
 	return FIRST_LEVEL
 
@@ -145,6 +150,10 @@ func go_to_level(level_id: StringName) -> void:
 
 func go_to_title() -> void:
 	get_tree().paused = false
+	if not saving_enabled:
+		# On sort d'un niveau de développement : on recharge la vraie partie depuis le disque.
+		saving_enabled = true
+		load_game()
 	get_tree().change_scene_to_file(TITLE_SCREEN)
 
 
@@ -153,6 +162,8 @@ func go_to_title() -> void:
 # ---------------------------------------------------------------------------
 
 func save_game() -> void:
+	if not saving_enabled:
+		return
 	var data := {
 		"version": SAVE_VERSION,
 		"unlocked_heroes": unlocked_heroes.map(func(id): return String(id)),
