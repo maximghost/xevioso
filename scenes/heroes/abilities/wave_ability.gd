@@ -12,14 +12,15 @@ extends HeroAbility
 @export var wave_scene: PackedScene = preload("res://scenes/fx/drum_wave.tscn")
 
 ## Durée de la frappe (animation), en secondes.
-@export var strike_time: float = 0.2
+@export var strike_time: float = 0.12
 
 # Temps restant de la frappe.
 var _time_left: float = 0.0
 
 
 func _init() -> void:
-	cooldown = 1.2
+	# Recharge courte : on peut enchaîner les frappes, comme un rythme de tambour.
+	cooldown = 0.1
 	takes_control = false
 	animation = &"throw"
 

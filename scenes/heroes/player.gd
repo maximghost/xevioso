@@ -29,6 +29,10 @@ extends CharacterBody2D
 ## Délai minimal entre deux lancers de hache, en secondes.
 @export var throw_cooldown: float = 0.35
 
+## Mémoire de la capacité : un appui un peu trop tôt (pendant la recharge) est retenu
+## pendant ce délai et la capacité part dès qu'elle est prête. On ne perd pas d'appui.
+@export var ability_buffer_time: float = 0.2
+
 
 # ---------------------------------------------------------------------------
 # Coups reçus
@@ -159,6 +163,9 @@ var _abilities: Array[HeroAbility] = []
 # La capacité du héros joué (null s'il n'en a pas encore).
 var _ability: HeroAbility = null
 
+# Temps restant pendant lequel un appui sur la capacité est mémorisé.
+var _ability_buffer_timer: float = 0.0
+
 # Matériau partagé des images rémanentes : mode de mélange additif (lumineux).
 static var _ADDITIVE: CanvasItemMaterial = _make_additive()
 
@@ -212,7 +219,7 @@ func _physics_process(delta: float) -> void:
 		return
 
 	_handle_switch()
-	_handle_ability()
+	_handle_ability(delta)
 
 	if _ability_in_control():
 		# Une capacité pilote le mouvement (ex. la Ruée) : ni gravité, ni course, ni hache.
@@ -414,6 +421,7 @@ func _handle_switch() -> void:
 	# Une capacité en cours est interrompue : le nouveau héros ne la possède pas.
 	if _ability != null and _ability.active:
 		_ability.cancel()
+	_ability_buffer_timer = 0.0
 	_apply_hero((_hero_index + 1) % heroes.size())
 	_throwing = false
 
@@ -464,10 +472,19 @@ func _tick_abilities(delta: float) -> void:
 
 
 ## Déclenche la capacité du héros joué quand on appuie sur « ability ».
-func _handle_ability() -> void:
-	if _ability != null and not _ability.active and _ability.wants_activation():
-		if _ability.try_activate():
-			_throwing = false  # la capacité interrompt un lancer en cours
+## L'appui est mémorisé un court instant : s'il arrive pendant la recharge,
+## la capacité part dès qu'elle est prête (comme la mémoire du saut).
+func _handle_ability(delta: float) -> void:
+	if _ability == null:
+		return
+	if _ability.wants_activation():
+		_ability_buffer_timer = ability_buffer_time
+	else:
+		_ability_buffer_timer = maxf(_ability_buffer_timer - delta, 0.0)
+
+	if _ability_buffer_timer > 0.0 and not _ability.active and _ability.try_activate():
+		_ability_buffer_timer = 0.0
+		_throwing = false  # la capacité interrompt un lancer en cours
 
 
 ## Vrai si une capacité est en cours et pilote le mouvement.

@@ -2,7 +2,7 @@ class_name TouchControls
 extends CanvasLayer
 ## Les boutons tactiles, pour jouer sur téléphone et tablette.
 ##
-## Chaque bouton est un TouchScreenButton relié à une action d'entrée (move_left, jump...) :
+## Chaque bouton est un TouchScreenButton relié à une action d'entrée (move_left, attack...) :
 ## pour le reste du jeu, appuyer sur un bouton revient exactement à appuyer sur la touche
 ## du clavier correspondante. Le héros n'a donc rien à savoir des écrans tactiles.
 ##
@@ -15,9 +15,10 @@ extends CanvasLayer
 ## Marge entre les boutons et les bords de l'écran, en pixels du jeu.
 @export var margin: float = 14.0
 
-## Côté de la croix de déplacement. Coché : flèches à droite, actions à gauche.
-## Décoché : l'inverse (disposition classique des jeux mobiles).
-@export var movement_on_right: bool = true
+## Côté de la croix de déplacement, vu par le joueur qui tient le téléphone.
+## Décoché (par défaut) : croix sous le pouce gauche, actions sous le pouce droit.
+## Coché : l'inverse, pour les joueurs qui préfèrent.
+@export var movement_on_right: bool = false
 
 ## Écart entre les flèches de la croix, en pixels.
 @export var dpad_gap: float = 2.0
@@ -26,7 +27,6 @@ extends CanvasLayer
 @onready var _right: TouchScreenButton = $Right
 @onready var _up: TouchScreenButton = $Up
 @onready var _down: TouchScreenButton = $Down
-@onready var _jump: TouchScreenButton = $Jump
 @onready var _attack: TouchScreenButton = $Attack
 @onready var _ability: TouchScreenButton = $Ability
 @onready var _switch: TouchScreenButton = $Switch
@@ -36,6 +36,10 @@ extends CanvasLayer
 func _ready() -> void:
 	if DisplayServer.is_touchscreen_available():
 		_remove_mouse_bindings()
+	# La flèche haut sert à sauter (son action est « jump ») ; elle déclenche aussi
+	# « move_up », pour les mécaniques à venir (portes, grimper, viser vers le haut).
+	_up.pressed.connect(Input.action_press.bind(&"move_up"))
+	_up.released.connect(Input.action_release.bind(&"move_up"))
 	if always_visible:
 		for button: TouchScreenButton in _buttons():
 			button.visibility_mode = TouchScreenButton.VISIBILITY_ALWAYS
@@ -58,7 +62,7 @@ func _remove_mouse_bindings() -> void:
 
 
 func _buttons() -> Array[TouchScreenButton]:
-	return [_left, _right, _up, _down, _jump, _attack, _ability, _switch, _pause]
+	return [_left, _right, _up, _down, _attack, _ability, _switch, _pause]
 
 
 ## Place les boutons dans les coins, quelle que soit la largeur de l'écran.
@@ -85,13 +89,14 @@ func _layout() -> void:
 	_right.position = corner + Vector2(step, 0.0)
 
 	# --- Les actions, de l'autre côté --------------------------------------
-	# Le saut, le plus gros bouton, dans le coin, sous le pouce ; les autres autour de lui.
+	# La hache, l'action la plus fréquente, dans le coin sous le pouce ; la capacité
+	# juste à côté ; le changement de héros, plus rare, au-dessus.
+	# (Le saut se fait avec la flèche haut de la croix.)
 	# Distances mesurées depuis le bord de l'écran côté actions.
 	var actions_on_right: bool = not movement_on_right
-	_place(_jump, margin, screen.y - margin - 52.0, actions_on_right)
-	_place(_attack, margin + 64.0, screen.y - margin - 42.0, actions_on_right)
-	_place(_ability, margin + 6.0, screen.y - margin - 104.0, actions_on_right)
-	_place(_switch, margin + 60.0, screen.y - margin - 88.0, actions_on_right)
+	_place(_attack, margin + 4.0, screen.y - margin - 44.0, actions_on_right)
+	_place(_ability, margin + 56.0, screen.y - margin - 64.0, actions_on_right)
+	_place(_switch, margin + 8.0, screen.y - margin - 98.0, actions_on_right)
 
 	# En haut à droite : la pause, petite et à l'écart pour éviter les appuis involontaires.
 	_pause.position = Vector2(screen.x - margin - 28.0, margin)

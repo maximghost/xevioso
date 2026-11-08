@@ -5,8 +5,6 @@
 [ext_resource type="Texture2D" path="res://assets/ui/touch/left_pressed.png" id="3_d7e7n"]
 [ext_resource type="Texture2D" path="res://assets/ui/touch/right.png" id="4_a8vbr"]
 [ext_resource type="Texture2D" path="res://assets/ui/touch/right_pressed.png" id="5_xd3pv"]
-[ext_resource type="Texture2D" path="res://assets/ui/touch/jump.png" id="6_6i7qg"]
-[ext_resource type="Texture2D" path="res://assets/ui/touch/jump_pressed.png" id="7_mmsdr"]
 [ext_resource type="Texture2D" path="res://assets/ui/touch/attack.png" id="8_anass"]
 [ext_resource type="Texture2D" path="res://assets/ui/touch/attack_pressed.png" id="9_s30a2"]
 [ext_resource type="Texture2D" path="res://assets/ui/touch/ability.png" id="10_s6ycp"]
@@ -25,9 +23,6 @@ radius = 28.0
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_wli54"]
 radius = 28.0
-
-[sub_resource type="CircleShape2D" id="CircleShape2D_a8rc7"]
-radius = 32.0
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_bdos2"]
 radius = 26.0
@@ -66,7 +61,7 @@ texture_normal = ExtResource("16_up")
 texture_pressed = ExtResource("17_up_p")
 shape = SubResource("CircleShape2D_eqmsn")
 passby_press = true
-action = "move_up"
+action = "jump"
 visibility_mode = 1
 
 [node name="Down" type="TouchScreenButton" parent="." unique_id=1610683602]
@@ -75,13 +70,6 @@ texture_pressed = ExtResource("19_down_p")
 shape = SubResource("CircleShape2D_eqmsn")
 passby_press = true
 action = "move_down"
-visibility_mode = 1
-
-[node name="Jump" type="TouchScreenButton" parent="." unique_id=2090034508]
-texture_normal = ExtResource("6_6i7qg")
-texture_pressed = ExtResource("7_mmsdr")
-shape = SubResource("CircleShape2D_a8rc7")
-action = "jump"
 visibility_mode = 1
 
 [node name="Attack" type="TouchScreenButton" parent="." unique_id=1670660618]
