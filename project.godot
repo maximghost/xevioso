@@ -91,6 +91,13 @@ pause={
 ]
 }
 
+[layer_names]
+
+2d_physics/layer_1="monde"
+2d_physics/layer_2="heros"
+2d_physics/layer_3="ennemis"
+2d_physics/layer_4="projectiles"
+
 [physics]
 
 3d/physics_engine="Jolt Physics"

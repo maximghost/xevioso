@@ -1,9 +1,11 @@
 class_name Player
 extends CharacterBody2D
-## Contrôleur d'un Envoyé : course, saut, chute.
+## Contrôleur des Envoyés : course, saut, chute, hache de foudre et changement de héros.
 ##
-## Ce script gère uniquement le déplacement. Les capacités propres à chaque héros
-## (la Ruée de Kodjo, le Pagne-voile d'Afi...) viendront plus tard, par-dessus.
+## Un seul nœud Player représente toute l'équipe : changer de héros change son apparence
+## (et plus tard sa capacité), mais le corps physique reste le même, à la même place.
+## Les capacités propres à chaque héros (la Ruée de Kodjo, le Pagne-voile d'Afi...)
+## viendront plus tard, par-dessus.
 ##
 ## Toutes les valeurs sont en pixels et en secondes, à l'échelle du jeu (640 × 360).
 ## Les variables marquées @export apparaissent dans l'inspecteur de Godot :
@@ -13,12 +15,18 @@ extends CharacterBody2D
 # ---------------------------------------------------------------------------
 # Apparence
 # ---------------------------------------------------------------------------
-@export_group("Apparence")
+@export_group("Équipe")
 
-## Les animations du héros (repos, course, saut, chute, lancer, coup reçu).
-## Une ressource par Envoyé : assets/heroes/<nom>/<nom>_frames.tres.
-## Laisser vide pour garder celles déjà réglées sur le nœud Sprite.
-@export var hero_frames: SpriteFrames
+## Les héros jouables, dans l'ordre de passage (une ressource d'animations par Envoyé :
+## assets/heroes/<nom>/<nom>_frames.tres). Au début du jeu : Kodjo et Afi. Les autres
+## s'ajouteront en progressant. Le premier de la liste est celui qu'on joue au départ.
+@export var heroes: Array[SpriteFrames] = []
+
+## La scène de la hache de foudre.
+@export var axe_scene: PackedScene = preload("res://scenes/fx/lightning_axe.tscn")
+
+## Délai minimal entre deux lancers de hache, en secondes.
+@export var throw_cooldown: float = 0.35
 
 
 # ---------------------------------------------------------------------------
@@ -93,6 +101,18 @@ var _jump_buffer_timer: float = 0.0
 # Le sprite animé, à l'intérieur du visuel.
 @onready var _sprite: AnimatedSprite2D = $Visual/Sprite
 
+# Le héros joué : sa position dans la liste « heroes ».
+var _hero_index: int = 0
+
+# Compte à rebours avant de pouvoir relancer la hache.
+var _throw_timer: float = 0.0
+
+# Vrai pendant l'animation de lancer : elle passe alors avant la course ou le saut.
+var _throwing: bool = false
+
+# Point de départ de la hache, par rapport au centre du héros (vers la droite).
+const AXE_OFFSET := Vector2(12.0, -14.0)
+
 
 # ---------------------------------------------------------------------------
 # Cycle de vie
@@ -100,8 +120,10 @@ var _jump_buffer_timer: float = 0.0
 
 func _ready() -> void:
 	_compute_jump_physics()
-	if hero_frames != null:
-		_sprite.sprite_frames = hero_frames
+	if not heroes.is_empty():
+		_sprite.sprite_frames = heroes[0]
+	# Le lancer se termine quand son animation est finie.
+	_sprite.animation_finished.connect(_on_animation_finished)
 
 
 func _physics_process(delta: float) -> void:
@@ -112,6 +134,8 @@ func _physics_process(delta: float) -> void:
 	_apply_gravity(delta)
 	_handle_run(direction, delta)
 	_handle_jump()
+	_handle_throw(delta)
+	_handle_switch()
 
 	# Déplace le corps selon sa vitesse et le fait glisser le long des obstacles.
 	move_and_slide()
@@ -211,6 +235,8 @@ func _update_facing(direction: float) -> void:
 
 ## Choisit l'animation qui correspond à ce que fait le héros.
 func _update_animation() -> void:
+	if _throwing:
+		return  # le lancer garde la main jusqu'à la fin de son animation
 	var animation: StringName
 	if not is_on_floor():
 		# En l'air : « jump » tant qu'il monte, « fall » dès qu'il redescend.
@@ -229,3 +255,49 @@ func _update_animation() -> void:
 
 	# play() ne relance pas une animation déjà en cours : on peut l'appeler à chaque image.
 	_sprite.play(animation)
+
+
+# ---------------------------------------------------------------------------
+# Hache de foudre
+# ---------------------------------------------------------------------------
+
+## Lance la hache quand on appuie sur « attack » et que le délai est écoulé.
+func _handle_throw(delta: float) -> void:
+	_throw_timer = maxf(_throw_timer - delta, 0.0)
+	if not Input.is_action_just_pressed("attack") or _throw_timer > 0.0:
+		return
+
+	_throw_timer = throw_cooldown
+	_throwing = true
+	_sprite.speed_scale = 1.0
+	_sprite.play(&"throw")
+
+	var axe: LightningAxe = axe_scene.instantiate()
+	axe.direction = facing
+	axe.position = position + Vector2(AXE_OFFSET.x * facing, AXE_OFFSET.y)
+	# La hache est ajoutée au niveau, pas au héros : sinon elle suivrait ses mouvements.
+	get_parent().add_child(axe)
+
+
+func _on_animation_finished() -> void:
+	if _sprite.animation == &"throw":
+		_throwing = false
+
+
+# ---------------------------------------------------------------------------
+# Changement de héros
+# ---------------------------------------------------------------------------
+
+## Passe au héros suivant de la liste, avec un éclair de lumière.
+func _handle_switch() -> void:
+	if not Input.is_action_just_pressed("switch_hero") or heroes.size() < 2:
+		return
+
+	_hero_index = (_hero_index + 1) % heroes.size()
+	_sprite.sprite_frames = heroes[_hero_index]
+	_throwing = false
+
+	# L'éclair : le visuel devient éblouissant (couleurs au-delà du blanc),
+	# puis revient à la normale en un quart de seconde.
+	_visual.modulate = Color(3.0, 3.0, 1.8)
+	create_tween().tween_property(_visual, "modulate", Color.WHITE, 0.25)

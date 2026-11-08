@@ -86,6 +86,7 @@ action = "switch_hero"
 visibility_mode = 1
 
 [node name="Pause" type="TouchScreenButton" parent="." unique_id=1544904627]
+process_mode = 3
 texture_normal = ExtResource("14_325eq")
 texture_pressed = ExtResource("15_debhn")
 shape = SubResource("CircleShape2D_lbtsn")
