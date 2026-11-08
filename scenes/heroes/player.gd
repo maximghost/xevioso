@@ -3,9 +3,10 @@ extends CharacterBody2D
 ## Contrôleur des Envoyés : course, saut, chute, hache de foudre et changement de héros.
 ##
 ## Un seul nœud Player représente toute l'équipe : changer de héros change son apparence
-## (et plus tard sa capacité), mais le corps physique reste le même, à la même place.
-## Les capacités propres à chaque héros (la Ruée de Kodjo, le Pagne-voile d'Afi...)
-## viendront plus tard, par-dessus.
+## et sa capacité, mais le corps physique reste le même, à la même place.
+## Chaque héros est décrit par une fiche HeroData (nom, animations, capacité) ;
+## sa capacité propre (la Ruée de Kodjo, le Pagne-voile d'Afi...) est un nœud HeroAbility
+## que le Player crée au démarrage et pilote (voir hero_ability.gd).
 ##
 ## Toutes les valeurs sont en pixels et en secondes, à l'échelle du jeu (640 × 360).
 ## Les variables marquées @export apparaissent dans l'inspecteur de Godot :
@@ -17,10 +18,10 @@ extends CharacterBody2D
 # ---------------------------------------------------------------------------
 @export_group("Équipe")
 
-## Les héros jouables, dans l'ordre de passage (une ressource d'animations par Envoyé :
-## assets/heroes/<nom>/<nom>_frames.tres). Au début du jeu : Kodjo et Afi. Les autres
+## Les héros jouables, dans l'ordre de passage (une fiche par Envoyé :
+## assets/heroes/<nom>/<nom>_data.tres). Au début du jeu : Kodjo et Afi. Les autres
 ## s'ajouteront en progressant. Le premier de la liste est celui qu'on joue au départ.
-@export var heroes: Array[SpriteFrames] = []
+@export var heroes: Array[HeroData] = []
 
 ## La scène de la hache de foudre.
 @export var axe_scene: PackedScene = preload("res://scenes/fx/lightning_axe.tscn")
@@ -110,6 +111,20 @@ var _throw_timer: float = 0.0
 # Vrai pendant l'animation de lancer : elle passe alors avant la course ou le saut.
 var _throwing: bool = false
 
+# Les capacités, une par héros, dans le même ordre que « heroes » (null = pas de capacité).
+var _abilities: Array[HeroAbility] = []
+
+# La capacité du héros joué (null s'il n'en a pas encore).
+var _ability: HeroAbility = null
+
+# Matériau partagé des images rémanentes : mode de mélange additif (lumineux).
+static var _ADDITIVE: CanvasItemMaterial = _make_additive()
+
+static func _make_additive() -> CanvasItemMaterial:
+	var material := CanvasItemMaterial.new()
+	material.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+	return material
+
 # Point de départ de la hache, par rapport au centre du héros (vers la droite).
 const AXE_OFFSET := Vector2(12.0, -14.0)
 
@@ -120,8 +135,9 @@ const AXE_OFFSET := Vector2(12.0, -14.0)
 
 func _ready() -> void:
 	_compute_jump_physics()
+	_create_abilities()
 	if not heroes.is_empty():
-		_sprite.sprite_frames = heroes[0]
+		_apply_hero(0)
 	# Le lancer se termine quand son animation est finie.
 	_sprite.animation_finished.connect(_on_animation_finished)
 
@@ -131,11 +147,19 @@ func _physics_process(delta: float) -> void:
 	var direction: float = Input.get_axis("move_left", "move_right")
 
 	_update_timers(delta)
-	_apply_gravity(delta)
-	_handle_run(direction, delta)
-	_handle_jump()
-	_handle_throw(delta)
+	_tick_abilities(delta)
 	_handle_switch()
+	_handle_ability()
+
+	if _ability_in_control():
+		# Une capacité pilote le mouvement (ex. la Ruée) : ni gravité, ni course, ni hache.
+		_ability.physics_update(delta)
+		_throw_timer = maxf(_throw_timer - delta, 0.0)
+	else:
+		_apply_gravity(delta)
+		_handle_run(direction, delta)
+		_handle_jump()
+		_handle_throw(delta)
 
 	# Déplace le corps selon sa vitesse et le fait glisser le long des obstacles.
 	move_and_slide()
@@ -227,14 +251,26 @@ func _handle_jump() -> void:
 
 ## Tourne le visuel du côté où l'on avance.
 func _update_facing(direction: float) -> void:
-	if direction == 0.0:
-		return  # au repos, le héros garde son orientation
-	facing = 1 if direction > 0.0 else -1
+	if direction == 0.0 or _ability_in_control():
+		return  # au repos (ou pendant une capacité), le héros garde son orientation
+	set_facing(1 if direction > 0.0 else -1)
+
+
+## Oriente le héros : 1 vers la droite, -1 vers la gauche.
+## Publique : les capacités s'en servent (la Ruée part dans la direction tenue).
+func set_facing(new_facing: int) -> void:
+	facing = new_facing
 	_visual.scale.x = facing
 
 
 ## Choisit l'animation qui correspond à ce que fait le héros.
 func _update_animation() -> void:
+	# Une capacité active impose son animation (si elle en a une et que le héros la possède).
+	if _ability != null and _ability.active and _ability.animation != &"":
+		if _sprite.sprite_frames.has_animation(_ability.animation):
+			_sprite.speed_scale = 2.0
+			_sprite.play(_ability.animation)
+			return
 	if _throwing:
 		return  # le lancer garde la main jusqu'à la fin de son animation
 	var animation: StringName
@@ -293,11 +329,91 @@ func _handle_switch() -> void:
 	if not Input.is_action_just_pressed("switch_hero") or heroes.size() < 2:
 		return
 
-	_hero_index = (_hero_index + 1) % heroes.size()
-	_sprite.sprite_frames = heroes[_hero_index]
+	# Une capacité en cours est interrompue : le nouveau héros ne la possède pas.
+	if _ability != null and _ability.active:
+		_ability.cancel()
+	_apply_hero((_hero_index + 1) % heroes.size())
 	_throwing = false
 
 	# L'éclair : le visuel devient éblouissant (couleurs au-delà du blanc),
 	# puis revient à la normale en un quart de seconde.
 	_visual.modulate = Color(3.0, 3.0, 1.8)
 	create_tween().tween_property(_visual, "modulate", Color.WHITE, 0.25)
+
+
+## Fait du héros n° « index » le héros joué : ses animations et sa capacité.
+func _apply_hero(index: int) -> void:
+	_hero_index = index
+	_sprite.sprite_frames = heroes[index].frames
+	_ability = _abilities[index]
+
+
+## Le héros joué (sa fiche), par exemple pour afficher son nom.
+func current_hero() -> HeroData:
+	return heroes[_hero_index] if not heroes.is_empty() else null
+
+
+# ---------------------------------------------------------------------------
+# Capacités
+# ---------------------------------------------------------------------------
+
+## Crée la capacité de chaque héros (s'il en a une) et la rattache au Player.
+## Toutes existent en même temps : chacune garde son temps de recharge, même en réserve.
+func _create_abilities() -> void:
+	_abilities.clear()
+	for hero in heroes:
+		var ability: HeroAbility = null
+		if hero != null and hero.ability_scene != null:
+			ability = hero.ability_scene.instantiate()
+			ability.player = self
+			add_child(ability)
+		_abilities.append(ability)
+
+
+## Fait avancer les recharges de toutes les capacités, et la mise à jour passive
+## de celle du héros joué (ex. la Ruée se recharge en touchant le sol).
+func _tick_abilities(delta: float) -> void:
+	for ability in _abilities:
+		if ability != null:
+			ability.tick(delta)
+	if _ability != null:
+		_ability.passive_update(delta)
+
+
+## Déclenche la capacité du héros joué quand on appuie sur « ability ».
+func _handle_ability() -> void:
+	if _ability != null and Input.is_action_just_pressed("ability"):
+		if _ability.try_activate():
+			_throwing = false  # la capacité interrompt un lancer en cours
+
+
+## Vrai si une capacité est en cours et pilote le mouvement.
+func _ability_in_control() -> bool:
+	return _ability != null and _ability.active and _ability.takes_control
+
+
+## Vrai si le héros ne peut pas être blessé (servira avec les ennemis).
+func is_invulnerable() -> bool:
+	return _ability != null and _ability.grants_invulnerability()
+
+
+# ---------------------------------------------------------------------------
+# Effets visuels
+# ---------------------------------------------------------------------------
+
+## Laisse derrière le héros une silhouette lumineuse qui s'efface (image rémanente).
+## Copie l'image d'animation en cours, à la même place et dans le même sens.
+## Le mode additif ajoute sa couleur au décor : la silhouette semble briller.
+func spawn_afterimage(color: Color, lifetime: float = 0.22) -> void:
+	var ghost := Sprite2D.new()
+	ghost.texture = _sprite.sprite_frames.get_frame_texture(_sprite.animation, _sprite.frame)
+	ghost.global_position = _sprite.global_position
+	ghost.scale.x = facing
+	ghost.modulate = color
+	ghost.material = _ADDITIVE
+	# Derrière le héros, sans être affectée par ses mouvements.
+	ghost.z_index = z_index - 1
+	get_parent().add_child(ghost)
+	var tween := ghost.create_tween()
+	tween.tween_property(ghost, "modulate:a", 0.0, lifetime)
+	tween.tween_callback(ghost.queue_free)

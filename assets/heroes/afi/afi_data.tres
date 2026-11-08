@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="HeroData" format=3]
+
+[ext_resource type="Script" path="res://scripts/heroes/hero_data.gd" id="1_data"]
+[ext_resource type="SpriteFrames" path="res://assets/heroes/afi/afi_frames.tres" id="2_frames"]
+
+[resource]
+script = ExtResource("1_data")
+display_name = "Afi"
+frames = ExtResource("2_frames")

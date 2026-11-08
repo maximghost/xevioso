@@ -2,7 +2,9 @@
 
 [ext_resource type="Script" path="res://scenes/heroes/player.gd" id="1_i6i7o"]
 [ext_resource type="SpriteFrames" path="res://assets/heroes/kodjo/kodjo_frames.tres" id="2_kodjo"]
-[ext_resource type="SpriteFrames" path="res://assets/heroes/afi/afi_frames.tres" id="3_afi"]
+[ext_resource type="Resource" path="res://assets/heroes/kodjo/kodjo_data.tres" id="4_kodjo_data"]
+[ext_resource type="Resource" path="res://assets/heroes/afi/afi_data.tres" id="5_afi_data"]
+[ext_resource type="Script" path="res://scripts/heroes/hero_data.gd" id="6_herodata"]
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_mxjp5"]
 radius = 7.0
@@ -11,7 +13,7 @@ height = 40.0
 [node name="Player" type="CharacterBody2D" unique_id=543139140]
 collision_layer = 2
 script = ExtResource("1_i6i7o")
-heroes = Array[SpriteFrames]([ExtResource("2_kodjo"), ExtResource("3_afi")])
+heroes = Array[ExtResource("6_herodata")]([ExtResource("4_kodjo_data"), ExtResource("5_afi_data")])
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1337161200]
 shape = SubResource("CapsuleShape2D_mxjp5")
