@@ -1,0 +1,93 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/ui/touch_controls.gd" id="1_x3plt"]
+[ext_resource type="Texture2D" path="res://assets/ui/touch/left.png" id="2_lbf0p"]
+[ext_resource type="Texture2D" path="res://assets/ui/touch/left_pressed.png" id="3_d7e7n"]
+[ext_resource type="Texture2D" path="res://assets/ui/touch/right.png" id="4_a8vbr"]
+[ext_resource type="Texture2D" path="res://assets/ui/touch/right_pressed.png" id="5_xd3pv"]
+[ext_resource type="Texture2D" path="res://assets/ui/touch/jump.png" id="6_6i7qg"]
+[ext_resource type="Texture2D" path="res://assets/ui/touch/jump_pressed.png" id="7_mmsdr"]
+[ext_resource type="Texture2D" path="res://assets/ui/touch/attack.png" id="8_anass"]
+[ext_resource type="Texture2D" path="res://assets/ui/touch/attack_pressed.png" id="9_s30a2"]
+[ext_resource type="Texture2D" path="res://assets/ui/touch/ability.png" id="10_s6ycp"]
+[ext_resource type="Texture2D" path="res://assets/ui/touch/ability_pressed.png" id="11_kova6"]
+[ext_resource type="Texture2D" path="res://assets/ui/touch/switch.png" id="12_mypxj"]
+[ext_resource type="Texture2D" path="res://assets/ui/touch/switch_pressed.png" id="13_smer8"]
+[ext_resource type="Texture2D" path="res://assets/ui/touch/pause.png" id="14_325eq"]
+[ext_resource type="Texture2D" path="res://assets/ui/touch/pause_pressed.png" id="15_debhn"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_eqmsn"]
+radius = 28.0
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_wli54"]
+radius = 28.0
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_a8rc7"]
+radius = 32.0
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_bdos2"]
+radius = 26.0
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_4w6bk"]
+radius = 26.0
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_s71pu"]
+radius = 22.0
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_lbtsn"]
+radius = 20.0
+
+[node name="TouchControls" type="CanvasLayer" unique_id=477747414]
+layer = 10
+script = ExtResource("1_x3plt")
+
+[node name="Left" type="TouchScreenButton" parent="." unique_id=21205733]
+texture_normal = ExtResource("2_lbf0p")
+texture_pressed = ExtResource("3_d7e7n")
+shape = SubResource("CircleShape2D_eqmsn")
+passby_press = true
+action = "move_left"
+visibility_mode = 1
+
+[node name="Right" type="TouchScreenButton" parent="." unique_id=1610683518]
+texture_normal = ExtResource("4_a8vbr")
+texture_pressed = ExtResource("5_xd3pv")
+shape = SubResource("CircleShape2D_wli54")
+passby_press = true
+action = "move_right"
+visibility_mode = 1
+
+[node name="Jump" type="TouchScreenButton" parent="." unique_id=2090034508]
+texture_normal = ExtResource("6_6i7qg")
+texture_pressed = ExtResource("7_mmsdr")
+shape = SubResource("CircleShape2D_a8rc7")
+action = "jump"
+visibility_mode = 1
+
+[node name="Attack" type="TouchScreenButton" parent="." unique_id=1670660618]
+texture_normal = ExtResource("8_anass")
+texture_pressed = ExtResource("9_s30a2")
+shape = SubResource("CircleShape2D_bdos2")
+action = "attack"
+visibility_mode = 1
+
+[node name="Ability" type="TouchScreenButton" parent="." unique_id=877196296]
+texture_normal = ExtResource("10_s6ycp")
+texture_pressed = ExtResource("11_kova6")
+shape = SubResource("CircleShape2D_4w6bk")
+action = "ability"
+visibility_mode = 1
+
+[node name="Switch" type="TouchScreenButton" parent="." unique_id=1623164413]
+texture_normal = ExtResource("12_mypxj")
+texture_pressed = ExtResource("13_smer8")
+shape = SubResource("CircleShape2D_s71pu")
+action = "switch_hero"
+visibility_mode = 1
+
+[node name="Pause" type="TouchScreenButton" parent="." unique_id=1544904627]
+texture_normal = ExtResource("14_325eq")
+texture_pressed = ExtResource("15_debhn")
+shape = SubResource("CircleShape2D_lbtsn")
+action = "pause"
+visibility_mode = 1

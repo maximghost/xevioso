@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://g1xf251myphx"]
 
 [ext_resource type="PackedScene" path="res://scenes/heroes/player.tscn" id="1_yautc"]
+[ext_resource type="PackedScene" path="res://scenes/ui/touch_controls.tscn" id="2_touch"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_v45ci"]
 size = Vector2(800, 40)
@@ -89,3 +90,5 @@ position = Vector2(-300, 100)
 max_speed = 200.0
 time_to_apex = 0.3
 fall_gravity_multiplier = 1.0
+
+[node name="TouchControls" parent="." instance=ExtResource("2_touch")]
