@@ -27,6 +27,7 @@ extends CanvasLayer
 @onready var _right: TouchScreenButton = $Right
 @onready var _up: TouchScreenButton = $Up
 @onready var _down: TouchScreenButton = $Down
+@onready var _jump: TouchScreenButton = $Jump
 @onready var _attack: TouchScreenButton = $Attack
 @onready var _ability: TouchScreenButton = $Ability
 @onready var _switch: TouchScreenButton = $Switch
@@ -62,7 +63,7 @@ func _remove_mouse_bindings() -> void:
 
 
 func _buttons() -> Array[TouchScreenButton]:
-	return [_left, _right, _up, _down, _attack, _ability, _switch, _pause]
+	return [_left, _right, _up, _down, _jump, _attack, _ability, _switch, _pause]
 
 
 ## Place les boutons dans les coins, quelle que soit la largeur de l'écran.
@@ -89,14 +90,16 @@ func _layout() -> void:
 	_right.position = corner + Vector2(step, 0.0)
 
 	# --- Les actions, de l'autre côté --------------------------------------
-	# La hache, l'action la plus fréquente, dans le coin sous le pouce ; la capacité
-	# juste à côté ; le changement de héros, plus rare, au-dessus.
-	# (Le saut se fait avec la flèche haut de la croix.)
+	# Le saut, le plus gros bouton, dans le coin sous le pouce : on peut ainsi sauter
+	# tout en tenant une direction avec l'autre pouce (la flèche haut saute aussi,
+	# mais elle oblige à lâcher la direction). La hache, la capacité et le changement
+	# de héros sont disposés autour du saut.
 	# Distances mesurées depuis le bord de l'écran côté actions.
 	var actions_on_right: bool = not movement_on_right
-	_place(_attack, margin + 4.0, screen.y - margin - 44.0, actions_on_right)
-	_place(_ability, margin + 56.0, screen.y - margin - 64.0, actions_on_right)
-	_place(_switch, margin + 8.0, screen.y - margin - 98.0, actions_on_right)
+	_place(_jump, margin, screen.y - margin - 52.0, actions_on_right)
+	_place(_attack, margin + 64.0, screen.y - margin - 42.0, actions_on_right)
+	_place(_ability, margin + 6.0, screen.y - margin - 104.0, actions_on_right)
+	_place(_switch, margin + 60.0, screen.y - margin - 88.0, actions_on_right)
 
 	# En haut à droite : la pause, petite et à l'écart pour éviter les appuis involontaires.
 	_pause.position = Vector2(screen.x - margin - 28.0, margin)
