@@ -15,8 +15,17 @@ extends CanvasLayer
 ## Marge entre les boutons et les bords de l'écran, en pixels du jeu.
 @export var margin: float = 14.0
 
+## Côté de la croix de déplacement. Coché : flèches à droite, actions à gauche.
+## Décoché : l'inverse (disposition classique des jeux mobiles).
+@export var movement_on_right: bool = true
+
+## Écart entre les flèches de la croix, en pixels.
+@export var dpad_gap: float = 2.0
+
 @onready var _left: TouchScreenButton = $Left
 @onready var _right: TouchScreenButton = $Right
+@onready var _up: TouchScreenButton = $Up
+@onready var _down: TouchScreenButton = $Down
 @onready var _jump: TouchScreenButton = $Jump
 @onready var _attack: TouchScreenButton = $Attack
 @onready var _ability: TouchScreenButton = $Ability
@@ -25,6 +34,8 @@ extends CanvasLayer
 
 
 func _ready() -> void:
+	if DisplayServer.is_touchscreen_available():
+		_remove_mouse_bindings()
 	if always_visible:
 		for button: TouchScreenButton in _buttons():
 			button.visibility_mode = TouchScreenButton.VISIBILITY_ALWAYS
@@ -34,8 +45,20 @@ func _ready() -> void:
 	_layout()
 
 
+## Sur écran tactile, chaque appui est aussi converti en faux clic de souris (c'est ce qui
+## permet de toucher les boutons des menus). Or la hache et la capacité répondent aussi
+## au clic : sans précaution, toucher n'importe où sur l'écran lancerait la hache.
+## On retire donc les clics de souris de ces actions : sur mobile, seuls les boutons
+## tactiles les déclenchent. Le clavier et la manette ne sont pas touchés.
+func _remove_mouse_bindings() -> void:
+	for action: StringName in [&"attack", &"ability"]:
+		for event: InputEvent in InputMap.action_get_events(action):
+			if event is InputEventMouseButton:
+				InputMap.action_erase_event(action, event)
+
+
 func _buttons() -> Array[TouchScreenButton]:
-	return [_left, _right, _jump, _attack, _ability, _switch, _pause]
+	return [_left, _right, _up, _down, _jump, _attack, _ability, _switch, _pause]
 
 
 ## Place les boutons dans les coins, quelle que soit la largeur de l'écran.
@@ -46,15 +69,37 @@ func _buttons() -> Array[TouchScreenButton]:
 func _layout() -> void:
 	var screen: Vector2 = get_viewport().get_visible_rect().size
 
-	# À gauche : les deux flèches de déplacement.
-	_left.position = Vector2(margin, screen.y - margin - 44.0)
-	_right.position = Vector2(margin + 52.0, screen.y - margin - 44.0)
+	# --- La croix de déplacement (haut, bas, gauche, droite) ---------------
+	# Quatre flèches de 44 px autour d'un centre ; la croix occupe 3 × 44 px + les écarts.
+	var arrow: float = 44.0
+	var step: float = arrow + dpad_gap          # d'une flèche à sa voisine
+	var half_cross: float = arrow * 1.5 + dpad_gap
+	var center := Vector2(
+		screen.x - margin - half_cross if movement_on_right else margin + half_cross,
+		screen.y - margin - half_cross)
+	# Position = coin supérieur gauche : on retire la moitié d'une flèche.
+	var corner: Vector2 = center - Vector2(arrow, arrow) / 2.0
+	_up.position = corner + Vector2(0.0, -step)
+	_down.position = corner + Vector2(0.0, step)
+	_left.position = corner + Vector2(-step, 0.0)
+	_right.position = corner + Vector2(step, 0.0)
 
-	# À droite : le saut, le plus gros bouton, sous le pouce ; les actions autour de lui.
-	_jump.position = Vector2(screen.x - margin - 52.0, screen.y - margin - 52.0)
-	_attack.position = Vector2(screen.x - margin - 104.0, screen.y - margin - 42.0)
-	_ability.position = Vector2(screen.x - margin - 46.0, screen.y - margin - 104.0)
-	_switch.position = Vector2(screen.x - margin - 92.0, screen.y - margin - 88.0)
+	# --- Les actions, de l'autre côté --------------------------------------
+	# Le saut, le plus gros bouton, dans le coin, sous le pouce ; les autres autour de lui.
+	# Distances mesurées depuis le bord de l'écran côté actions.
+	var actions_on_right: bool = not movement_on_right
+	_place(_jump, margin, screen.y - margin - 52.0, actions_on_right)
+	_place(_attack, margin + 64.0, screen.y - margin - 42.0, actions_on_right)
+	_place(_ability, margin + 6.0, screen.y - margin - 104.0, actions_on_right)
+	_place(_switch, margin + 60.0, screen.y - margin - 88.0, actions_on_right)
 
 	# En haut à droite : la pause, petite et à l'écart pour éviter les appuis involontaires.
 	_pause.position = Vector2(screen.x - margin - 28.0, margin)
+
+
+## Place un bouton à « from_edge » pixels du bord gauche (ou droit si « on_right »),
+## à la hauteur « y ». Fonctionne quelle que soit la largeur de l'écran.
+func _place(button: TouchScreenButton, from_edge: float, y: float, on_right: bool) -> void:
+	var width: float = button.texture_normal.get_width()
+	var x: float = get_viewport().get_visible_rect().size.x - from_edge - width if on_right else from_edge
+	button.position = Vector2(x, y)
