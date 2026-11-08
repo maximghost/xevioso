@@ -26,7 +26,7 @@ extends CharacterBody2D
 @export var gravity: float = 900.0
 
 ## Recul quand elle est touchée, en pixels par seconde.
-@export var knockback_speed: float = 110.0
+@export var knockback_speed: float = 170.0
 
 ## Durée pendant laquelle elle est sonnée après un coup (elle ne marche plus).
 @export var stun_time: float = 0.25

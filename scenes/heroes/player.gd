@@ -162,6 +162,9 @@ var _falling_back: bool = false
 # Vrai entre la mort et la réapparition : le héros ne fait plus rien.
 var _respawning: bool = false
 
+## Faux quand il n'y a plus de vie : le héros ne réapparaît pas (le niveau affiche le game over).
+var respawn_allowed: bool = true
+
 # Point de réapparition : la position de départ, puis la dernière stèle.
 var _respawn_point: Vector2 = Vector2.ZERO
 
@@ -664,7 +667,8 @@ func _on_died() -> void:
 	died.emit()
 	# La minuterie respecte la pause (elle ne s'écoule pas pendant le menu).
 	await get_tree().create_timer(respawn_delay, false).timeout
-	_respawn()
+	if respawn_allowed:
+		_respawn()
 
 
 ## Replace le héros au point de réapparition, avec toute sa vie et un peu d'invincibilité.

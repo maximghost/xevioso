@@ -13,7 +13,11 @@ extends CanvasLayer
 @export var always_visible: bool = false
 
 ## Marge entre les boutons et les bords de l'écran, en pixels du jeu.
-@export var margin: float = 14.0
+@export var margin: float = 12.0
+
+## Zone de toucher plus large que le dessin, en pixels : un doigt qui tombe
+## juste à côté du bouton le déclenche quand même.
+@export var touch_padding: float = 5.0
 
 ## Côté de la croix de déplacement, vu par le joueur qui tient le téléphone.
 ## Décoché (par défaut) : croix sous le pouce gauche, actions sous le pouce droit.
@@ -39,6 +43,7 @@ func _ready() -> void:
 		_remove_mouse_bindings()
 	# La flèche haut sert à sauter (son action est « jump ») ; elle déclenche aussi
 	# « move_up », pour les mécaniques à venir (portes, grimper, viser vers le haut).
+	_fit_touch_zones()
 	_up.pressed.connect(Input.action_press.bind(&"move_up"))
 	_up.released.connect(Input.action_release.bind(&"move_up"))
 	if always_visible:
@@ -74,35 +79,41 @@ func _buttons() -> Array[TouchScreenButton]:
 func _layout() -> void:
 	var screen: Vector2 = get_viewport().get_visible_rect().size
 
-	# --- La croix de déplacement (haut, bas, gauche, droite) ---------------
-	# Quatre flèches de 44 px autour d'un centre ; la croix occupe 3 × 44 px + les écarts.
-	var arrow: float = 44.0
-	var step: float = arrow + dpad_gap          # d'une flèche à sa voisine
+	# --- La croix de déplacement, sous le pouce gauche --------------------------
+	# Quatre flèches de 52 px autour d'un centre (environ 56 points sur un iPhone).
+	var arrow: float = _left.texture_normal.get_width()
+	var step: float = arrow + dpad_gap
 	var half_cross: float = arrow * 1.5 + dpad_gap
 	var center := Vector2(
 		screen.x - margin - half_cross if movement_on_right else margin + half_cross,
 		screen.y - margin - half_cross)
-	# Position = coin supérieur gauche : on retire la moitié d'une flèche.
 	var corner: Vector2 = center - Vector2(arrow, arrow) / 2.0
 	_up.position = corner + Vector2(0.0, -step)
 	_down.position = corner + Vector2(0.0, step)
 	_left.position = corner + Vector2(-step, 0.0)
 	_right.position = corner + Vector2(step, 0.0)
 
-	# --- Les actions, de l'autre côté --------------------------------------
-	# Le saut, le plus gros bouton, dans le coin sous le pouce : on peut ainsi sauter
-	# tout en tenant une direction avec l'autre pouce (la flèche haut saute aussi,
-	# mais elle oblige à lâcher la direction). La hache, la capacité et le changement
-	# de héros sont disposés autour du saut.
-	# Distances mesurées depuis le bord de l'écran côté actions.
-	var actions_on_right: bool = not movement_on_right
-	_place(_jump, margin, screen.y - margin - 52.0, actions_on_right)
-	_place(_attack, margin + 64.0, screen.y - margin - 42.0, actions_on_right)
-	_place(_ability, margin + 6.0, screen.y - margin - 104.0, actions_on_right)
-	_place(_switch, margin + 60.0, screen.y - margin - 88.0, actions_on_right)
+	# --- Les actions, en arc sous le pouce droit --------------------------------
+	# Le saut (doré, le plus gros) dans le coin ; la hache (rouge) à sa gauche, à portée
+	# immédiate ; la capacité (bleue) au-dessus du saut ; le changement de héros (vert),
+	# plus rare, en diagonale. Chaque action garde sa couleur et sa place : on les retient vite.
+	var right: bool = not movement_on_right
+	_place(_jump, margin, screen.y - margin - 64.0, right)
+	_place(_attack, margin + 72.0, screen.y - margin - 58.0, right)
+	_place(_ability, margin + 6.0, screen.y - margin - 64.0 - 60.0, right)
+	_place(_switch, margin + 72.0, screen.y - margin - 58.0 - 58.0, right)
 
-	# En haut à droite : la pause, petite et à l'écart pour éviter les appuis involontaires.
-	_pause.position = Vector2(screen.x - margin - 28.0, margin)
+	# En haut à droite : la pause, à l'écart pour éviter les appuis involontaires.
+	_pause.position = Vector2(screen.x - margin - _pause.texture_normal.get_width(), margin)
+
+
+## Donne à chaque bouton une zone de toucher ronde, un peu plus grande que son dessin.
+func _fit_touch_zones() -> void:
+	for button: TouchScreenButton in _buttons():
+		var zone := CircleShape2D.new()
+		zone.radius = button.texture_normal.get_width() / 2.0 + touch_padding
+		button.shape = zone
+		button.shape_centered = true
 
 
 ## Place un bouton à « from_edge » pixels du bord gauche (ou droit si « on_right »),

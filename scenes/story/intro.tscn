@@ -1,0 +1,144 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/story/intro.gd" id="1_intro"]
+[ext_resource type="Texture2D" path="res://assets/backgrounds/village/bg_sky.png" id="2_sky"]
+[ext_resource type="Texture2D" path="res://assets/backgrounds/village/bg_far.png" id="3_far"]
+[ext_resource type="Texture2D" path="res://assets/backgrounds/village/bg_mid.png" id="4_mid"]
+[ext_resource type="Texture2D" path="res://assets/backgrounds/village/bg_near.png" id="5_near"]
+[ext_resource type="Texture2D" path="res://assets/ui/title/ground.png" id="6_ground"]
+[ext_resource type="Texture2D" path="res://assets/backgrounds/village/bg_storm.png" id="7_storm"]
+[ext_resource type="Texture2D" path="res://assets/ui/xevioso/emblem.png" id="8_emblem"]
+[ext_resource type="Texture2D" path="res://assets/ui/xevioso/emblem_glow.png" id="9_glow"]
+[ext_resource type="SpriteFrames" path="res://assets/heroes/kodjo/kodjo_frames.tres" id="10_kodjo"]
+[ext_resource type="SpriteFrames" path="res://assets/heroes/afi/afi_frames.tres" id="11_afi"]
+
+[node name="Intro" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_intro")
+
+[node name="Night" type="Node2D" parent="."]
+modulate = Color(0.34, 0.36, 0.52, 1)
+
+[node name="Sky" type="Parallax2D" parent="Night"]
+repeat_size = Vector2(640, 0)
+autoscroll = Vector2(0, 0)
+repeat_times = 3
+
+[node name="Image" type="Sprite2D" parent="Night/Sky"]
+position = Vector2(0, 0)
+texture = ExtResource("2_sky")
+centered = false
+
+[node name="Far" type="Parallax2D" parent="Night"]
+repeat_size = Vector2(640, 0)
+autoscroll = Vector2(-2, 0)
+repeat_times = 3
+
+[node name="Image" type="Sprite2D" parent="Night/Far"]
+position = Vector2(0, -26)
+texture = ExtResource("3_far")
+centered = false
+
+[node name="Mid" type="Parallax2D" parent="Night"]
+repeat_size = Vector2(640, 0)
+autoscroll = Vector2(-5, 0)
+repeat_times = 3
+
+[node name="Image" type="Sprite2D" parent="Night/Mid"]
+position = Vector2(0, -34)
+texture = ExtResource("4_mid")
+centered = false
+
+[node name="Near" type="Parallax2D" parent="Night"]
+repeat_size = Vector2(640, 0)
+autoscroll = Vector2(-10, 0)
+repeat_times = 3
+
+[node name="Image" type="Sprite2D" parent="Night/Near"]
+position = Vector2(0, -44)
+texture = ExtResource("5_near")
+centered = false
+
+[node name="Ground" type="Parallax2D" parent="Night"]
+repeat_size = Vector2(640, 0)
+repeat_times = 3
+
+[node name="Image" type="Sprite2D" parent="Night/Ground"]
+position = Vector2(0, 302)
+texture = ExtResource("6_ground")
+centered = false
+
+[node name="Storm" type="Parallax2D" parent="."]
+repeat_size = Vector2(640, 0)
+autoscroll = Vector2(-14, 0)
+repeat_times = 3
+
+[node name="Image" type="Sprite2D" parent="Storm"]
+position = Vector2(0, -20)
+texture = ExtResource("7_storm")
+centered = false
+
+[node name="Emblem" type="Node2D" parent="."]
+position = Vector2(320, 150)
+
+[node name="Glow" type="Sprite2D" parent="Emblem"]
+texture = ExtResource("9_glow")
+
+[node name="Axe" type="Sprite2D" parent="Emblem"]
+texture = ExtResource("8_emblem")
+
+[node name="Kodjo" type="AnimatedSprite2D" parent="."]
+modulate = Color(0.62, 0.62, 0.78, 1)
+position = Vector2(300, 283)
+sprite_frames = ExtResource("10_kodjo")
+animation = &"idle"
+autoplay = "idle"
+
+[node name="Afi" type="AnimatedSprite2D" parent="."]
+modulate = Color(0.62, 0.62, 0.78, 1)
+position = Vector2(340, 283)
+scale = Vector2(-1, 1)
+sprite_frames = ExtResource("11_afi")
+animation = &"idle"
+autoplay = "idle"
+
+[node name="Flash" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.92, 0.94, 1, 0)
+
+[node name="Fade" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0, 0, 0, 1)
+
+[node name="Skip" type="Button" parent="."]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -84.0
+offset_top = -34.0
+offset_right = -10.0
+offset_bottom = -10.0
+grow_horizontal = 0
+grow_vertical = 0
+theme_override_font_sizes/font_size = 10
+text = "Passer ▶"

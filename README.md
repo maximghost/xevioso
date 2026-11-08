@@ -14,6 +14,19 @@ cadre d'un projet d'équipe à l'IFRI (cinq étudiants). J'y avais conçu les mo
 personnage et son armement. Ce dépôt repart uniquement de mon propre travail, avec un
 nouveau gameplay, cinq héros, un nouvel univers et un nouveau décor.
 
+## La voix de Xɛvioso
+
+Xɛvioso n'apparaît jamais sous forme humaine : c'est une voix venue de l'orage, représentée
+par son emblème, la hache double. Il ouvre la partie et guide les Envoyés par des paroles
+énigmatiques, accompagnées d'une aide discrète aux commandes. Ses paroles sont réunies dans
+`scripts/story/voices.gd`.
+
+## Vies
+
+Trois cœurs ; perdre tous ses cœurs coûte une vie (on repart de la dernière stèle).
+Deux vies par niveau : à la seconde, c'est la fin de la partie et l'on recommence le niveau.
+Tomber dans le vide coûte un cœur.
+
 ## Les Envoyés
 
 | Héros | Capacité |

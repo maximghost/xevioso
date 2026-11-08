@@ -13,10 +13,14 @@ extends CanvasLayer
 @export var heart_full: Texture2D = preload("res://assets/ui/hud/heart_full.png")
 @export var heart_empty: Texture2D = preload("res://assets/ui/hud/heart_empty.png")
 
-@onready var _hearts: HBoxContainer = $Margin/Box/Hearts
+@onready var _hearts: HBoxContainer = $Margin/Box/Top/Hearts
 @onready var _hero_name: Label = $Margin/Box/HeroName
 @onready var _sokpe_count: Label = $Margin/Box/Sokpe/Count
 @onready var _toast: Label = $Toast
+@onready var _lives: HBoxContainer = $Margin/Box/Top/Lives
+
+const LIFE_FULL := preload("res://assets/ui/xevioso/vie.png")
+const LIFE_LOST := preload("res://assets/ui/xevioso/vie_perdue.png")
 
 # L'animation du message en cours (pour l'interrompre si un autre arrive).
 var _toast_tween: Tween
@@ -26,6 +30,8 @@ func _ready() -> void:
 	# Pierres sokpe et messages : ils viennent de Game, même sans héros.
 	Game.sokpe_changed.connect(_on_sokpe_changed)
 	Game.message.connect(show_message)
+	Game.lives_changed.connect(_on_lives_changed)
+	_on_lives_changed(Game.lives)
 	_on_sokpe_changed(Game.total_sokpe())
 	_toast.modulate.a = 0.0
 	if player == null:
@@ -64,6 +70,17 @@ func _on_health_changed(current: int, maximum: int) -> void:
 
 func _on_hero_changed(hero: HeroData) -> void:
 	_hero_name.text = hero.display_name
+
+
+## Les vies : une petite hache double par vie, éteinte quand elle est perdue.
+func _on_lives_changed(lives: int) -> void:
+	for child in _lives.get_children():
+		child.queue_free()
+	for i in Game.LIVES_PER_LEVEL:
+		var icon := TextureRect.new()
+		icon.texture = LIFE_FULL if i < lives else LIFE_LOST
+		icon.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
+		_lives.add_child(icon)
 
 
 func _on_sokpe_changed(total: int) -> void:

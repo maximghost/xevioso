@@ -1,5 +1,7 @@
 [gd_resource type="Theme" format=3]
 
+[ext_resource type="FontFile" path="res://assets/fonts/DejaVuSansCondensed-Bold.ttf" id="1_font"]
+
 [sub_resource type="StyleBoxFlat" id="btn_normal"]
 content_margin_left = 10.0
 content_margin_top = 4.0
@@ -81,6 +83,8 @@ expand_margin_right = 2.0
 expand_margin_bottom = 2.0
 
 [resource]
+default_font = ExtResource("1_font")
+default_font_size = 12
 Button/colors/font_color = Color(1, 0.92, 0.76, 1)
 Button/colors/font_hover_color = Color(1, 0.97, 0.88, 1)
 Button/colors/font_focus_color = Color(1, 0.97, 0.88, 1)

@@ -44,11 +44,13 @@ extends Node2D
 
 var _weather: Weather
 var _completed: bool = false
+var _dialogue: DialogueBox
 
 
 func _ready() -> void:
 	# Un niveau de développement (terrain d'essai) ne touche jamais à la vraie sauvegarde.
 	Game.saving_enabled = not level_id in Game.DEV_LEVELS
+	Game.reset_lives()
 	if level_id == &"":
 		push_warning("Niveau sans level_id : la sauvegarde ne pourra pas s'y retrouver.")
 	if terrain != null and player != null:
@@ -56,6 +58,31 @@ func _ready() -> void:
 	if use_weather:
 		_setup_mood()
 	_place_player_at_checkpoint()
+	if player != null:
+		player.died.connect(_on_player_died)
+
+
+## Fait parler Xɛvioso (le jeu est figé pendant ce temps). À attendre avec « await ».
+func say(lines: Array) -> void:
+	if lines.is_empty():
+		return
+	if _dialogue == null:
+		_dialogue = preload("res://scenes/ui/dialogue_box.tscn").instantiate()
+		add_child(_dialogue)
+	# Un petit éclair annonce la voix.
+	_flash(0.25)
+	await _dialogue.play(lines, true)
+
+
+## Le héros a perdu tous ses cœurs : une vie de moins. S'il n'en reste plus, game over.
+func _on_player_died() -> void:
+	if Game.lose_life() > 0:
+		return
+	player.respawn_allowed = false
+	await get_tree().create_timer(0.9).timeout
+	var screen: Node = preload("res://scenes/ui/game_over.tscn").instantiate()
+	screen.set("level_id", level_id)
+	add_child(screen)
 
 
 ## Retrouve le niveau qui contient un nœud (pour les pierres, points de contrôle...).
@@ -122,6 +149,8 @@ func complete() -> void:
 		return
 	_completed = true
 	Game.complete_level(level_id)
+	# Xɛvioso parle d'abord, puis la foudre répond.
+	await say(Voices.lines(StringName(String(level_id).split("_")[0] + "_fin")))
 
 	# L'éclair de Xɛvioso : deux flashs blancs et la terre qui tremble.
 	_flash(0.9)

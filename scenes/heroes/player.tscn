@@ -34,5 +34,5 @@ position_smoothing_speed = 8.0
 
 [node name="Health" type="Node" parent="." unique_id=771203455]
 script = ExtResource("7_health")
-max_health = 5
+max_health = 3
 invincibility_time = 1.0

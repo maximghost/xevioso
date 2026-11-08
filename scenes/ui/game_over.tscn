@@ -1,0 +1,78 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/ui/game_over.gd" id="1_go"]
+[ext_resource type="Texture2D" path="res://assets/ui/xevioso/emblem.png" id="2_emblem"]
+
+[sub_resource type="LabelSettings" id="title"]
+font_size = 22
+font_color = Color(1, 0.86, 0.5, 1)
+outline_size = 5
+outline_color = Color(0.1, 0.05, 0.06, 1)
+
+[sub_resource type="LabelSettings" id="voice"]
+font_size = 11
+font_color = Color(0.96, 0.92, 0.84, 1)
+outline_size = 3
+outline_color = Color(0.1, 0.05, 0.06, 1)
+
+[node name="GameOver" type="CanvasLayer"]
+layer = 26
+script = ExtResource("1_go")
+
+[node name="Panel" type="ColorRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.05, 0.03, 0.06, 0.82)
+
+[node name="Box" type="VBoxContainer" parent="Panel"]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -160.0
+offset_top = -110.0
+offset_right = 160.0
+offset_bottom = 110.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 6
+alignment = 1
+
+[node name="Emblem" type="TextureRect" parent="Panel/Box"]
+modulate = Color(1, 1, 1, 0.6)
+layout_mode = 2
+size_flags_horizontal = 4
+texture = ExtResource("2_emblem")
+stretch_mode = 2
+
+[node name="Title" type="Label" parent="Panel/Box"]
+layout_mode = 2
+text = "Les Envoyés sont tombés"
+label_settings = SubResource("title")
+horizontal_alignment = 1
+
+[node name="Voice" type="Label" parent="Panel/Box"]
+layout_mode = 2
+text = "« La foudre tombe et se relève. Recommencez. »"
+label_settings = SubResource("voice")
+horizontal_alignment = 1
+
+[node name="Space" type="Control" parent="Panel/Box"]
+custom_minimum_size = Vector2(0, 6)
+layout_mode = 2
+
+[node name="Retry" type="Button" parent="Panel/Box"]
+custom_minimum_size = Vector2(170, 28)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "Recommencer le niveau"
+
+[node name="Menu" type="Button" parent="Panel/Box"]
+custom_minimum_size = Vector2(170, 28)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "Menu principal"

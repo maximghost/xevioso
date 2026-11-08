@@ -15,6 +15,8 @@ extends Node
 signal sokpe_changed(total: int)
 ## Émis quand un héros rejoint l'équipe.
 signal hero_unlocked(hero_id: StringName)
+## Émis quand le nombre de vies change.
+signal lives_changed(lives: int)
 ## Message à afficher brièvement à l'écran (« Point de contrôle », « Yawa rejoint... »).
 signal message(text: String)
 
@@ -32,6 +34,12 @@ const FIRST_LEVEL: StringName = &"village_1"
 const DEV_LEVELS: Array[StringName] = [&"test"]
 ## L'écran titre.
 const TITLE_SCREEN := "res://scenes/ui/title_screen.tscn"
+## La scène d'ouverture, avant le premier niveau d'une nouvelle partie.
+const INTRO := "res://scenes/story/intro.tscn"
+
+## Nombre de vies par tentative de niveau : perdre tous ses cœurs coûte une vie ;
+## à la dernière, c'est la fin de la partie (game over) et on recommence le niveau.
+const LIVES_PER_LEVEL := 2
 
 ## Les héros disponibles dès le début.
 const STARTING_HEROES: Array[StringName] = [&"kodjo", &"afi"]
@@ -45,9 +53,14 @@ var checkpoint_level: StringName = &""
 var checkpoint_name: StringName = &""
 ## Niveaux terminés.
 var completed_levels: Array[StringName] = []
+## Paroles de Xɛvioso déjà entendues (on ne les répète pas).
+var heard_voices: Array[StringName] = []
 ## Faux dans un niveau de développement : rien n'est écrit sur le disque, et tout ce qui
 ## s'y est passé (héros débloqués, pierres, stèles) est oublié en revenant au menu.
 var saving_enabled: bool = true
+## Vies restantes dans la tentative en cours (non sauvegardées : chaque entrée dans un niveau
+## redonne toutes les vies).
+var lives: int = LIVES_PER_LEVEL
 
 
 func _ready() -> void:
@@ -121,6 +134,36 @@ func checkpoint_for(level_id: StringName) -> StringName:
 # Niveaux
 # ---------------------------------------------------------------------------
 
+func has_heard(voice_id: StringName) -> bool:
+	return voice_id in heard_voices
+
+
+func mark_heard(voice_id: StringName) -> void:
+	if not voice_id in heard_voices:
+		heard_voices.append(voice_id)
+		save_game()
+
+
+func reset_lives() -> void:
+	lives = LIVES_PER_LEVEL
+	lives_changed.emit(lives)
+
+
+## Retire une vie ; renvoie le nombre restant.
+func lose_life() -> int:
+	lives = maxi(lives - 1, 0)
+	lives_changed.emit(lives)
+	return lives
+
+
+## Oublie le point de contrôle d'un niveau (après un game over : on repart du début).
+func clear_checkpoint(level_id: StringName) -> void:
+	if checkpoint_level == level_id:
+		checkpoint_level = &""
+		checkpoint_name = &""
+		save_game()
+
+
 func complete_level(level_id: StringName) -> void:
 	if not level_id in completed_levels:
 		completed_levels.append(level_id)
@@ -148,6 +191,11 @@ func go_to_level(level_id: StringName) -> void:
 	get_tree().change_scene_to_file(LEVELS.get(level_id, LEVELS[FIRST_LEVEL]))
 
 
+func go_to_intro() -> void:
+	get_tree().paused = false
+	get_tree().change_scene_to_file(INTRO)
+
+
 func go_to_title() -> void:
 	get_tree().paused = false
 	if not saving_enabled:
@@ -170,6 +218,7 @@ func save_game() -> void:
 		"sokpe": sokpe,
 		"checkpoint": {"level": String(checkpoint_level), "name": String(checkpoint_name)},
 		"completed_levels": completed_levels.map(func(id): return String(id)),
+		"heard_voices": heard_voices.map(func(id): return String(id)),
 	}
 	var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if file == null:
@@ -198,6 +247,8 @@ func load_game() -> void:
 	checkpoint_name = StringName(point.get("name", ""))
 	for id in data.get("completed_levels", []):
 		completed_levels.append(StringName(id))
+	for id in data.get("heard_voices", []):
+		heard_voices.append(StringName(id))
 
 
 ## Efface toute la progression (bouton de test du menu pause, plus tard « Nouvelle partie »).
@@ -214,3 +265,4 @@ func _reset_state() -> void:
 	checkpoint_level = &""
 	checkpoint_name = &""
 	completed_levels = []
+	heard_voices = []

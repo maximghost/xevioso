@@ -32,7 +32,7 @@ func _on_new_game() -> void:
 		_new_game.text = "Effacer la partie ?"
 		return
 	Game.reset_progress()
-	Game.go_to_level(Game.FIRST_LEVEL)
+	Game.go_to_intro()
 
 
 func _unhandled_input(event: InputEvent) -> void:

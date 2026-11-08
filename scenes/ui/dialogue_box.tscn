@@ -1,0 +1,99 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/ui/dialogue_box.gd" id="1_box"]
+[ext_resource type="Texture2D" path="res://assets/ui/xevioso/emblem_small.png" id="2_emblem"]
+
+[sub_resource type="StyleBoxFlat" id="panel"]
+bg_color = Color(0.07, 0.05, 0.09, 0.9)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 2
+border_color = Color(0.9, 0.7, 0.36, 0.95)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="LabelSettings" id="speaker"]
+font_size = 10
+font_color = Color(1, 0.82, 0.42, 1)
+outline_size = 2
+outline_color = Color(0.1, 0.05, 0.06, 1)
+
+[sub_resource type="LabelSettings" id="text"]
+font_size = 12
+font_color = Color(0.98, 0.95, 0.88, 1)
+line_spacing = 1.0
+
+[sub_resource type="LabelSettings" id="hint"]
+font_size = 9
+font_color = Color(0.62, 0.8, 1, 1)
+
+[sub_resource type="LabelSettings" id="next"]
+font_size = 10
+font_color = Color(1, 0.82, 0.42, 1)
+
+[node name="DialogueBox" type="CanvasLayer"]
+layer = 22
+script = ExtResource("1_box")
+
+[node name="Panel" type="PanelContainer" parent="."]
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -230.0
+offset_top = 8.0
+offset_right = 230.0
+offset_bottom = 82.0
+grow_horizontal = 2
+mouse_filter = 2
+theme_override_styles/panel = SubResource("panel")
+
+[node name="Margin" type="MarginContainer" parent="Panel"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 6
+theme_override_constants/margin_right = 14
+theme_override_constants/margin_bottom = 6
+
+[node name="Row" type="HBoxContainer" parent="Panel/Margin"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 8
+
+[node name="Emblem" type="TextureRect" parent="Panel/Margin/Row"]
+layout_mode = 2
+size_flags_vertical = 0
+texture = ExtResource("2_emblem")
+stretch_mode = 2
+
+[node name="Column" type="VBoxContainer" parent="Panel/Margin/Row"]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+theme_override_constants/separation = 2
+
+[node name="Speaker" type="Label" parent="Panel/Margin/Row/Column"]
+layout_mode = 2
+text = "Xɛvioso"
+label_settings = SubResource("speaker")
+
+[node name="Text" type="Label" parent="Panel/Margin/Row/Column"]
+custom_minimum_size = Vector2(390, 0)
+layout_mode = 2
+label_settings = SubResource("text")
+autowrap_mode = 3
+
+[node name="Hint" type="Label" parent="Panel/Margin/Row/Column"]
+layout_mode = 2
+label_settings = SubResource("hint")
+autowrap_mode = 3
+
+[node name="Next" type="Label" parent="Panel"]
+layout_mode = 2
+size_flags_horizontal = 8
+size_flags_vertical = 8
+text = "▼"
+label_settings = SubResource("next")
