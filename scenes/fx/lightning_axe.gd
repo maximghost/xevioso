@@ -23,6 +23,10 @@ var direction: int = 1
 
 var _travelled: float = 0.0
 
+# Vrai dès que la hache a touché quelque chose : un seul coup par hache, même si elle
+# touche deux choses dans la même image (le corps et la zone d'un ennemi, par exemple).
+var _spent: bool = false
+
 
 func _ready() -> void:
 	body_entered.connect(_on_hit)
@@ -39,9 +43,23 @@ func _physics_process(delta: float) -> void:
 		queue_free()
 
 
-## Appelée quand la hache touche un corps (mur, sol) ou une zone (ennemi).
+## Appelée quand la hache touche un corps (mur, sol, ennemi) ou une zone (Hitbox d'ennemi).
 func _on_hit(target: Node) -> void:
-	# Les ennemis exposeront une méthode take_hit() : la hache leur inflige ses dégâts.
-	if target.has_method("take_hit"):
-		target.take_hit(damage, direction)
+	if _spent:
+		return
+	_spent = true
+	var victim := _find_damageable(target)
+	if victim != null:
+		victim.take_hit(damage, direction)
 	queue_free()
+
+
+## Trouve qui doit recevoir le coup : la cible elle-même si elle sait encaisser
+## (méthode take_hit), sinon la scène à laquelle appartient la zone touchée
+## (la Hitbox d'un ennemi transmet le coup à son ennemi).
+func _find_damageable(target: Node) -> Node:
+	if target.has_method("take_hit"):
+		return target
+	if target.owner != null and target.owner.has_method("take_hit"):
+		return target.owner
+	return null

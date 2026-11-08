@@ -5,6 +5,7 @@
 [ext_resource type="Resource" path="res://assets/heroes/kodjo/kodjo_data.tres" id="4_kodjo_data"]
 [ext_resource type="Resource" path="res://assets/heroes/afi/afi_data.tres" id="5_afi_data"]
 [ext_resource type="Script" path="res://scripts/heroes/hero_data.gd" id="6_herodata"]
+[ext_resource type="Script" path="res://scripts/core/health.gd" id="7_health"]
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_mxjp5"]
 radius = 7.0
@@ -29,3 +30,8 @@ autoplay = "idle"
 [node name="Camera2D" type="Camera2D" parent="." unique_id=1365893825]
 position_smoothing_enabled = true
 position_smoothing_speed = 8.0
+
+[node name="Health" type="Node" parent="." unique_id=771203455]
+script = ExtResource("7_health")
+max_health = 5
+invincibility_time = 1.0

@@ -1,0 +1,56 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/enemies/crawler/crawler.gd" id="1_script"]
+[ext_resource type="SpriteFrames" path="res://assets/enemies/crawler/crawler_frames.tres" id="2_frames"]
+[ext_resource type="Script" path="res://scripts/core/health.gd" id="3_health"]
+
+[sub_resource type="RectangleShape2D" id="body_shape"]
+size = Vector2(18, 12)
+
+[sub_resource type="RectangleShape2D" id="hurt_shape"]
+size = Vector2(16, 10)
+
+[sub_resource type="RectangleShape2D" id="hit_shape"]
+size = Vector2(20, 20)
+
+[node name="Crawler" type="CharacterBody2D"]
+collision_layer = 4
+collision_mask = 1
+floor_snap_length = 4.0
+script = ExtResource("1_script")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -6)
+shape = SubResource("body_shape")
+
+[node name="Sprite" type="AnimatedSprite2D" parent="."]
+position = Vector2(0, -10)
+sprite_frames = ExtResource("2_frames")
+animation = &"walk"
+
+[node name="LedgeRay" type="RayCast2D" parent="."]
+position = Vector2(10, -2)
+target_position = Vector2(0, 8)
+collision_mask = 1
+
+[node name="Hurtbox" type="Area2D" parent="."]
+collision_layer = 0
+collision_mask = 2
+monitorable = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Hurtbox"]
+position = Vector2(0, -6)
+shape = SubResource("hurt_shape")
+
+[node name="Hitbox" type="Area2D" parent="."]
+collision_layer = 4
+collision_mask = 0
+monitoring = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Hitbox"]
+position = Vector2(0, -10)
+shape = SubResource("hit_shape")
+
+[node name="Health" type="Node" parent="."]
+script = ExtResource("3_health")
+max_health = 2

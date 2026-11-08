@@ -1,0 +1,34 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/ui/hud.gd" id="1_hud"]
+
+[sub_resource type="LabelSettings" id="name_settings"]
+font_size = 10
+font_color = Color(1, 0.88, 0.55, 1)
+outline_size = 3
+outline_color = Color(0.12, 0.06, 0.04, 1)
+
+[node name="HUD" type="CanvasLayer"]
+layer = 10
+script = ExtResource("1_hud")
+
+[node name="Margin" type="MarginContainer" parent="."]
+offset_right = 200.0
+offset_bottom = 40.0
+mouse_filter = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+
+[node name="Box" type="VBoxContainer" parent="Margin"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 2
+
+[node name="Hearts" type="HBoxContainer" parent="Margin/Box"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 2
+
+[node name="HeroName" type="Label" parent="Margin/Box"]
+layout_mode = 2
+label_settings = SubResource("name_settings")

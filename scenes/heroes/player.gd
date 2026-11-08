@@ -1,6 +1,6 @@
 class_name Player
 extends CharacterBody2D
-## Contrôleur des Envoyés : course, saut, chute, hache de foudre et changement de héros.
+## Contrôleur des Envoyés : course, saut, hache de foudre, capacités, coups reçus et réapparition.
 ##
 ## Un seul nœud Player représente toute l'équipe : changer de héros change son apparence
 ## et sa capacité, mais le corps physique reste le même, à la même place.
@@ -28,6 +28,33 @@ extends CharacterBody2D
 
 ## Délai minimal entre deux lancers de hache, en secondes.
 @export var throw_cooldown: float = 0.35
+
+
+# ---------------------------------------------------------------------------
+# Coups reçus
+# ---------------------------------------------------------------------------
+@export_group("Coups reçus")
+
+## Recul quand le héros est touché (x : en arrière, y : vers le haut), en pixels par seconde.
+@export var hurt_knockback: Vector2 = Vector2(150.0, -170.0)
+
+## Durée pendant laquelle le héros, sonné, ne répond plus aux commandes.
+@export var hurt_stun_time: float = 0.3
+
+## Sous cette hauteur, le héros est tombé dans le vide : il réapparaît.
+@export var death_height: float = 600.0
+
+## Délai entre la mort et la réapparition, en secondes.
+@export var respawn_delay: float = 0.8
+
+## Invincibilité accordée à la réapparition, en secondes.
+@export var respawn_invincibility: float = 1.5
+
+
+## Émis quand on change de héros (pour l'interface).
+signal hero_changed(hero: HeroData)
+## Émis quand le héros meurt (avant de réapparaître).
+signal died
 
 
 # ---------------------------------------------------------------------------
@@ -102,6 +129,21 @@ var _jump_buffer_timer: float = 0.0
 # Le sprite animé, à l'intérieur du visuel.
 @onready var _sprite: AnimatedSprite2D = $Visual/Sprite
 
+# Les points de vie, partagés par toute l'équipe (un seul corps).
+@onready var health: Health = $Health
+
+# Temps restant pendant lequel le héros, touché, est sonné.
+var _hurt_timer: float = 0.0
+
+# Sens du dernier coup reçu, pour orienter le recul.
+var _last_hit_direction: float = 1.0
+
+# Vrai entre la mort et la réapparition : le héros ne fait plus rien.
+var _respawning: bool = false
+
+# Point de réapparition : la position de départ (plus tard, le dernier point de contrôle).
+var _respawn_point: Vector2 = Vector2.ZERO
+
 # Le héros joué : sa position dans la liste « heroes ».
 var _hero_index: int = 0
 
@@ -126,7 +168,8 @@ static func _make_additive() -> CanvasItemMaterial:
 	return material
 
 # Point de départ de la hache, par rapport au centre du héros (vers la droite).
-const AXE_OFFSET := Vector2(12.0, -14.0)
+# Lancée à hauteur de hanche : elle touche aussi les ennemis bas (comme la Motte sèche).
+const AXE_OFFSET := Vector2(12.0, -2.0)
 
 
 # ---------------------------------------------------------------------------
@@ -140,14 +183,34 @@ func _ready() -> void:
 		_apply_hero(0)
 	# Le lancer se termine quand son animation est finie.
 	_sprite.animation_finished.connect(_on_animation_finished)
+	_respawn_point = global_position
+	health.damaged.connect(_on_damaged)
+	health.died.connect(_on_died)
 
 
 func _physics_process(delta: float) -> void:
+	if _respawning:
+		return  # entre la mort et la réapparition, le héros est figé et invisible
+
 	# -1 à gauche, 1 à droite, 0 au repos ; une valeur intermédiaire avec un stick.
 	var direction: float = Input.get_axis("move_left", "move_right")
 
 	_update_timers(delta)
 	_tick_abilities(delta)
+	_update_blink()
+
+	if _hurt_timer > 0.0:
+		# Sonné : il subit son recul et la gravité, sans répondre aux commandes.
+		_hurt_timer -= delta
+		direction = 0.0
+		_apply_gravity(delta)
+		velocity.x = move_toward(velocity.x, 0.0, air_friction * delta)
+		_throw_timer = maxf(_throw_timer - delta, 0.0)
+		move_and_slide()
+		_update_animation()
+		_check_fall()
+		return
+
 	_handle_switch()
 	_handle_ability()
 
@@ -166,6 +229,7 @@ func _physics_process(delta: float) -> void:
 
 	_update_facing(direction)
 	_update_animation()
+	_check_fall()
 
 
 # ---------------------------------------------------------------------------
@@ -265,6 +329,10 @@ func set_facing(new_facing: int) -> void:
 
 ## Choisit l'animation qui correspond à ce que fait le héros.
 func _update_animation() -> void:
+	if _hurt_timer > 0.0:
+		_sprite.speed_scale = 1.0
+		_sprite.play(&"hurt")
+		return
 	# Une capacité active impose son animation (si elle en a une et que le héros la possède).
 	if _ability != null and _ability.active and _ability.animation != &"":
 		if _sprite.sprite_frames.has_animation(_ability.animation):
@@ -346,6 +414,7 @@ func _apply_hero(index: int) -> void:
 	_hero_index = index
 	_sprite.sprite_frames = heroes[index].frames
 	_ability = _abilities[index]
+	hero_changed.emit(heroes[index])
 
 
 ## Le héros joué (sa fiche), par exemple pour afficher son nom.
@@ -392,11 +461,6 @@ func _ability_in_control() -> bool:
 	return _ability != null and _ability.active and _ability.takes_control
 
 
-## Vrai si le héros ne peut pas être blessé (servira avec les ennemis).
-func is_invulnerable() -> bool:
-	return _ability != null and _ability.grants_invulnerability()
-
-
 # ---------------------------------------------------------------------------
 # Effets visuels
 # ---------------------------------------------------------------------------
@@ -417,3 +481,85 @@ func spawn_afterimage(color: Color, lifetime: float = 0.22) -> void:
 	var tween := ghost.create_tween()
 	tween.tween_property(ghost, "modulate:a", 0.0, lifetime)
 	tween.tween_callback(ghost.queue_free)
+
+
+# ---------------------------------------------------------------------------
+# Coups reçus, mort et réapparition
+# ---------------------------------------------------------------------------
+
+## Reçoit un coup (appelée par les ennemis). « from_direction » : sens du coup,
+## 1 s'il vient de la gauche (le héros recule vers la droite), -1 sinon.
+func take_hit(damage: int, from_direction: float) -> void:
+	if _respawning or is_invulnerable():
+		return
+	# Le recul est appliqué dans _on_damaged, seulement si le coup porte vraiment.
+	_last_hit_direction = signf(from_direction) if from_direction != 0.0 else -float(facing)
+	health.damage(damage)
+
+
+## Le coup a porté : recul, héros sonné, capacité ou lancer interrompus.
+func _on_damaged(_amount: int) -> void:
+	if health.is_dead():
+		return  # la mort prend le relais (_on_died)
+	if _ability != null and _ability.active:
+		_ability.cancel()
+	_throwing = false
+	_hurt_timer = hurt_stun_time
+	velocity = Vector2(hurt_knockback.x * _last_hit_direction, hurt_knockback.y)
+	# Le héros regarde d'où vient le coup.
+	set_facing(-int(_last_hit_direction))
+
+
+## Vrai si le héros ne peut pas être blessé : capacité protectrice (Ruée)
+## ou invincibilité après un coup.
+func is_invulnerable() -> bool:
+	return (_ability != null and _ability.grants_invulnerability()) or health.is_invincible()
+
+
+## Fait clignoter le héros pendant son invincibilité après un coup.
+func _update_blink() -> void:
+	if health.is_invincible():
+		# Visible une image sur deux, à 15 alternances par seconde environ.
+		_visual.visible = int(Time.get_ticks_msec() / 66.0) % 2 == 0
+	else:
+		_visual.visible = true
+
+
+## Tombé dans le vide : mort immédiate.
+func _check_fall() -> void:
+	if global_position.y > death_height:
+		health.kill()
+
+
+## Mort : le héros disparaît, puis réapparaît au point de départ.
+func _on_died() -> void:
+	if _respawning:
+		return
+	_respawning = true
+	if _ability != null and _ability.active:
+		_ability.cancel()
+	_throwing = false
+	_hurt_timer = 0.0
+	velocity = Vector2.ZERO
+	_visual.visible = false
+	died.emit()
+	# La minuterie respecte la pause (elle ne s'écoule pas pendant le menu).
+	await get_tree().create_timer(respawn_delay, false).timeout
+	_respawn()
+
+
+## Replace le héros au point de réapparition, avec toute sa vie et un peu d'invincibilité.
+func _respawn() -> void:
+	global_position = _respawn_point
+	velocity = Vector2.ZERO
+	health.refill()
+	health.make_invincible(respawn_invincibility)
+	_visual.visible = true
+	_respawning = false
+	# La caméra rejoint le héros d'un coup, sans glisser à travers tout le niveau.
+	$Camera2D.reset_smoothing()
+
+
+## Change le point de réapparition (servira aux points de contrôle).
+func set_respawn_point(point: Vector2) -> void:
+	_respawn_point = point

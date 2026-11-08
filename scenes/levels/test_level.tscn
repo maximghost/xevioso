@@ -9,6 +9,8 @@
 [ext_resource type="Resource" path="res://assets/heroes/kokou/kokou_data.tres" id="h_kokou"]
 [ext_resource type="PackedScene" path="res://scenes/ui/pause_menu.tscn" id="3_pause"]
 [ext_resource type="Script" path="res://scripts/heroes/hero_data.gd" id="h_data"]
+[ext_resource type="PackedScene" path="res://scenes/ui/hud.tscn" id="4_hud"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/crawler/crawler.tscn" id="5_crawler"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_v45ci"]
 size = Vector2(800, 40)
@@ -102,3 +104,18 @@ heroes = Array[ExtResource("h_data")]([ExtResource("h_kodjo"), ExtResource("h_af
 [node name="TouchControls" parent="." instance=ExtResource("2_touch")]
 
 [node name="PauseMenu" parent="." instance=ExtResource("3_pause")]
+
+[node name="Enemies" type="Node2D" parent="." unique_id=880112001]
+
+[node name="Crawler1" parent="Enemies" unique_id=880112002 instance=ExtResource("5_crawler")]
+position = Vector2(-60, 140)
+
+[node name="Crawler2" parent="Enemies" unique_id=880112003 instance=ExtResource("5_crawler")]
+position = Vector2(560, 140)
+start_direction = 1
+
+[node name="Crawler3" parent="Enemies" unique_id=880112004 instance=ExtResource("5_crawler")]
+position = Vector2(330, 62)
+
+[node name="HUD" parent="." unique_id=880112005 node_paths=PackedStringArray("player") instance=ExtResource("4_hud")]
+player = NodePath("../Player")
