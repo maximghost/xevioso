@@ -6,6 +6,7 @@
 
 [resource]
 script = ExtResource("1_data")
+id = &"kodjo"
 display_name = "Kodjo"
 frames = ExtResource("2_frames")
 ability_scene = ExtResource("3_ability")

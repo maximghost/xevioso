@@ -1,11 +1,18 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://scenes/ui/hud.gd" id="1_hud"]
+[ext_resource type="Texture2D" path="res://assets/props/sokpe.png" id="2_sokpe"]
 
 [sub_resource type="LabelSettings" id="name_settings"]
 font_size = 10
 font_color = Color(1, 0.88, 0.55, 1)
 outline_size = 3
+outline_color = Color(0.12, 0.06, 0.04, 1)
+
+[sub_resource type="LabelSettings" id="toast_settings"]
+font_size = 14
+font_color = Color(1, 0.9, 0.6, 1)
+outline_size = 4
 outline_color = Color(0.12, 0.06, 0.04, 1)
 
 [node name="HUD" type="CanvasLayer"]
@@ -32,3 +39,29 @@ theme_override_constants/separation = 2
 [node name="HeroName" type="Label" parent="Margin/Box"]
 layout_mode = 2
 label_settings = SubResource("name_settings")
+
+[node name="Sokpe" type="HBoxContainer" parent="Margin/Box"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 3
+
+[node name="Icon" type="TextureRect" parent="Margin/Box/Sokpe"]
+layout_mode = 2
+mouse_filter = 2
+texture = ExtResource("2_sokpe")
+stretch_mode = 2
+
+[node name="Count" type="Label" parent="Margin/Box/Sokpe"]
+layout_mode = 2
+text = "0"
+label_settings = SubResource("name_settings")
+
+[node name="Toast" type="Label" parent="."]
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = 40.0
+offset_bottom = 60.0
+grow_horizontal = 2
+mouse_filter = 2
+label_settings = SubResource("toast_settings")
+horizontal_alignment = 1

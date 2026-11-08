@@ -1,0 +1,21 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/props/checkpoint.gd" id="1_cp"]
+[ext_resource type="Texture2D" path="res://assets/props/checkpoint_off.png" id="2_off"]
+
+[sub_resource type="RectangleShape2D" id="cp_shape"]
+size = Vector2(20, 40)
+
+[node name="Checkpoint" type="Area2D"]
+collision_layer = 0
+collision_mask = 2
+monitorable = false
+script = ExtResource("1_cp")
+
+[node name="Sprite" type="Sprite2D" parent="."]
+position = Vector2(0, -15)
+texture = ExtResource("2_off")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -20)
+shape = SubResource("cp_shape")

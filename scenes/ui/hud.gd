@@ -1,5 +1,6 @@
 extends CanvasLayer
-## Interface en jeu : les cœurs (points de vie de l'équipe) et le nom du héros joué.
+## Interface en jeu : les cœurs, le nom du héros joué, le compteur de pierres sokpe,
+## et les messages brefs (point de contrôle, nouveau héros).
 ##
 ## Le HUD ne fait qu'afficher : il écoute les signaux du Player et de sa Health,
 ## il ne modifie rien. On peut donc le retirer ou le refaire sans toucher au jeu.
@@ -14,9 +15,19 @@ extends CanvasLayer
 
 @onready var _hearts: HBoxContainer = $Margin/Box/Hearts
 @onready var _hero_name: Label = $Margin/Box/HeroName
+@onready var _sokpe_count: Label = $Margin/Box/Sokpe/Count
+@onready var _toast: Label = $Toast
+
+# L'animation du message en cours (pour l'interrompre si un autre arrive).
+var _toast_tween: Tween
 
 
 func _ready() -> void:
+	# Pierres sokpe et messages : ils viennent de Game, même sans héros.
+	Game.sokpe_changed.connect(_on_sokpe_changed)
+	Game.message.connect(show_message)
+	_on_sokpe_changed(Game.total_sokpe())
+	_toast.modulate.a = 0.0
 	if player == null:
 		push_warning("HUD : aucun Player renseigné dans l'inspecteur.")
 		return
@@ -53,3 +64,24 @@ func _on_health_changed(current: int, maximum: int) -> void:
 
 func _on_hero_changed(hero: HeroData) -> void:
 	_hero_name.text = hero.display_name
+
+
+func _on_sokpe_changed(total: int) -> void:
+	var was: String = _sokpe_count.text
+	_sokpe_count.text = str(total)
+	# Le compteur sursaute quand on ramasse une pierre.
+	if was != "" and was != str(total):
+		_sokpe_count.pivot_offset = _sokpe_count.size / 2.0
+		_sokpe_count.scale = Vector2(1.5, 1.5)
+		create_tween().tween_property(_sokpe_count, "scale", Vector2.ONE, 0.2)
+
+
+## Affiche un message en haut de l'écran pendant deux secondes, puis l'efface.
+func show_message(text: String) -> void:
+	_toast.text = text
+	if _toast_tween != null:
+		_toast_tween.kill()
+	_toast_tween = create_tween()
+	_toast_tween.tween_property(_toast, "modulate:a", 1.0, 0.15)
+	_toast_tween.tween_interval(1.8)
+	_toast_tween.tween_property(_toast, "modulate:a", 0.0, 0.4)

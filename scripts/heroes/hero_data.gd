@@ -8,6 +8,10 @@ extends Resource
 ## Pour ajouter un héros, on crée une fiche ; on ne touche pas au code du Player.
 
 
+## Identifiant stable (kodjo, afi...) : sert à la sauvegarde et au déblocage.
+## Ne jamais le changer une fois le jeu publié, sinon les sauvegardes ne le reconnaîtront plus.
+@export var id: StringName = &""
+
 ## Nom affiché (menus, interface).
 @export var display_name: String = ""
 

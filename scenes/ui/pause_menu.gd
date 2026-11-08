@@ -8,6 +8,7 @@ extends CanvasLayer
 @onready var _panel: Control = $Panel
 @onready var _resume: Button = $Panel/Box/Resume
 @onready var _restart: Button = $Panel/Box/Restart
+@onready var _reset: Button = $Panel/Box/ResetSave
 
 
 func _ready() -> void:
@@ -15,6 +16,7 @@ func _ready() -> void:
 	_panel.hide()
 	_resume.pressed.connect(toggle)
 	_restart.pressed.connect(_on_restart)
+	_reset.pressed.connect(_on_reset_save)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -35,3 +37,10 @@ func toggle() -> void:
 func _on_restart() -> void:
 	get_tree().paused = false
 	get_tree().reload_current_scene()
+
+
+## Bouton de test : efface toute la progression (héros, pierres, point de contrôle)
+## et relance le niveau. Il sera remplacé par « Nouvelle partie » dans le menu principal.
+func _on_reset_save() -> void:
+	Game.reset_progress()
+	_on_restart()

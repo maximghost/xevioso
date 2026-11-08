@@ -191,7 +191,8 @@ func _ready() -> void:
 	_compute_jump_physics()
 	_create_abilities()
 	if not heroes.is_empty():
-		_apply_hero(0)
+		# On commence avec le premier héros débloqué de la liste.
+		_apply_hero(maxi(_next_unlocked_index(-1), 0))
 	# Le lancer se termine quand son animation est finie.
 	_sprite.animation_finished.connect(_on_animation_finished)
 	_respawn_point = global_position
@@ -423,16 +424,19 @@ func _on_animation_finished() -> void:
 # Changement de héros
 # ---------------------------------------------------------------------------
 
-## Passe au héros suivant de la liste, avec un éclair de lumière.
+## Passe au héros débloqué suivant, avec un éclair de lumière.
 func _handle_switch() -> void:
-	if not Input.is_action_just_pressed("switch_hero") or heroes.size() < 2:
+	if not Input.is_action_just_pressed("switch_hero"):
 		return
+	var next: int = _next_unlocked_index(_hero_index)
+	if next == -1 or next == _hero_index:
+		return  # un seul héros disponible : rien à changer
 
 	# Une capacité en cours est interrompue : le nouveau héros ne la possède pas.
 	if _ability != null and _ability.active:
 		_ability.cancel()
 	_ability_buffer_timer = 0.0
-	_apply_hero((_hero_index + 1) % heroes.size())
+	_apply_hero(next)
 	_throwing = false
 
 	# L'éclair : le visuel devient éblouissant (couleurs au-delà du blanc),
@@ -451,6 +455,17 @@ func _apply_hero(index: int) -> void:
 	if _ability != null:
 		_ability.on_selected()
 	hero_changed.emit(heroes[index])
+
+
+## Le premier héros débloqué après la position « from » dans la liste (en boucle).
+## Renvoie -1 si aucun héros n'est débloqué. Un héros sans identifiant est toujours disponible.
+func _next_unlocked_index(from: int) -> int:
+	for step in range(1, heroes.size() + 1):
+		var index: int = (from + step) % heroes.size()
+		var hero: HeroData = heroes[index]
+		if hero != null and (hero.id == &"" or Game.is_hero_unlocked(hero.id)):
+			return index
+	return -1
 
 
 ## Le héros joué (sa fiche), par exemple pour afficher son nom.

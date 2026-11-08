@@ -1,0 +1,20 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/props/hero_shrine.gd" id="1_shrine"]
+
+[sub_resource type="RectangleShape2D" id="shrine_shape"]
+size = Vector2(20, 40)
+
+[node name="HeroShrine" type="Area2D"]
+collision_layer = 0
+collision_mask = 2
+monitorable = false
+script = ExtResource("1_shrine")
+
+[node name="Figure" type="AnimatedSprite2D" parent="."]
+modulate = Color(1.6, 1.35, 0.6, 0.75)
+position = Vector2(0, -22)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -20)
+shape = SubResource("shrine_shape")
