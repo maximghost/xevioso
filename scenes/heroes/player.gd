@@ -11,6 +11,17 @@ extends CharacterBody2D
 
 
 # ---------------------------------------------------------------------------
+# Apparence
+# ---------------------------------------------------------------------------
+@export_group("Apparence")
+
+## Les animations du héros (repos, course, saut, chute, lancer, coup reçu).
+## Une ressource par Envoyé : assets/heroes/<nom>/<nom>_frames.tres.
+## Laisser vide pour garder celles déjà réglées sur le nœud Sprite.
+@export var hero_frames: SpriteFrames
+
+
+# ---------------------------------------------------------------------------
 # Réglages de la course
 # ---------------------------------------------------------------------------
 @export_group("Course")
@@ -79,6 +90,9 @@ var _jump_buffer_timer: float = 0.0
 # Le visuel du héros : c'est lui qu'on retourne, jamais le corps physique.
 @onready var _visual: Node2D = $Visual
 
+# Le sprite animé, à l'intérieur du visuel.
+@onready var _sprite: AnimatedSprite2D = $Visual/Sprite
+
 
 # ---------------------------------------------------------------------------
 # Cycle de vie
@@ -86,6 +100,8 @@ var _jump_buffer_timer: float = 0.0
 
 func _ready() -> void:
 	_compute_jump_physics()
+	if hero_frames != null:
+		_sprite.sprite_frames = hero_frames
 
 
 func _physics_process(delta: float) -> void:
@@ -101,6 +117,7 @@ func _physics_process(delta: float) -> void:
 	move_and_slide()
 
 	_update_facing(direction)
+	_update_animation()
 
 
 # ---------------------------------------------------------------------------
@@ -190,3 +207,25 @@ func _update_facing(direction: float) -> void:
 		return  # au repos, le héros garde son orientation
 	facing = 1 if direction > 0.0 else -1
 	_visual.scale.x = facing
+
+
+## Choisit l'animation qui correspond à ce que fait le héros.
+func _update_animation() -> void:
+	var animation: StringName
+	if not is_on_floor():
+		# En l'air : « jump » tant qu'il monte, « fall » dès qu'il redescend.
+		animation = &"jump" if velocity.y < 0.0 else &"fall"
+	elif absf(velocity.x) > 10.0:
+		animation = &"run"
+	else:
+		animation = &"idle"
+
+	# La course est jouée plus ou moins vite selon la vitesse réelle :
+	# les pieds ne « patinent » pas quand le héros accélère ou freine.
+	if animation == &"run":
+		_sprite.speed_scale = clampf(absf(velocity.x) / max_speed, 0.5, 1.2)
+	else:
+		_sprite.speed_scale = 1.0
+
+	# play() ne relance pas une animation déjà en cours : on peut l'appeler à chaque image.
+	_sprite.play(animation)
