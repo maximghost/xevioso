@@ -64,6 +64,10 @@ signal hero_changed(hero: HeroData)
 ## Émis quand le héros meurt (avant de réapparaître).
 signal died
 
+## Vrai quand le niveau est gagné : plus rien ne peut blesser le héros (ni chute, ni coup),
+## pour que la victoire ne croise jamais une fin de partie.
+var protected: bool = false
+
 
 # ---------------------------------------------------------------------------
 # Réglages de la course
@@ -738,7 +742,7 @@ func _on_damaged(_amount: int) -> void:
 ## Vrai si le héros ne peut pas être blessé : capacité protectrice (Ruée)
 ## ou invincibilité après un coup.
 func is_invulnerable() -> bool:
-	return (_ability != null and _ability.grants_invulnerability()) or health.is_invincible()
+	return protected or (_ability != null and _ability.grants_invulnerability()) or health.is_invincible()
 
 
 ## Fait clignoter le héros pendant son invincibilité après un coup.
@@ -754,6 +758,11 @@ func _update_blink() -> void:
 ## S'il ne restait qu'un cœur, c'est la mort (retour à la dernière stèle).
 func _check_fall() -> void:
 	if global_position.y <= death_height or _respawning:
+		return
+	if protected:   # niveau gagné : on revient sur le sol, sans rien perdre
+		global_position = _last_safe_position
+		velocity = Vector2.ZERO
+		$Camera2D.reset_smoothing()
 		return
 	if health.current <= 1:
 		health.kill()

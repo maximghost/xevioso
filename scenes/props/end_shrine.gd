@@ -17,7 +17,8 @@ func _ready() -> void:
 func _on_body_entered(body: Node2D) -> void:
 	if _done or not body is Player:
 		return
-	_done = true
 	var level := Level.of(self)
-	if level != null:
-		level.complete()
+	if level == null or not level.can_complete():
+		return    # le héros est en train de tomber (fin de partie en cours) : pas de victoire
+	_done = true
+	level.complete(global_position)

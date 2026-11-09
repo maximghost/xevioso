@@ -49,6 +49,8 @@ extends Node2D
 var _weather: Weather
 var _ambience: Ambience
 var _completed: bool = false
+var _game_over: bool = false     # la dernière vie est perdue : plus de victoire possible
+var _sokpe_total: int = 0        # pierres sokpe du niveau (pour le bilan de fin)
 var _dialogue: DialogueBox
 
 
@@ -70,6 +72,7 @@ func _ready() -> void:
 		add_child(_ambience)
 		_ambience.setup(self)
 	_place_player_at_checkpoint()
+	_sokpe_total = find_children("*", "SokpeStone", true, false).size()
 	if player != null:
 		player.died.connect(_on_player_died)
 	Audio.music(music_track)
@@ -91,8 +94,11 @@ func say(lines: Array) -> void:
 
 ## Le héros a perdu tous ses cœurs : une vie de moins. S'il n'en reste plus, game over.
 func _on_player_died() -> void:
+	if _completed:
+		return
 	if Game.lose_life() > 0:
 		return
+	_game_over = true
 	player.respawn_allowed = false
 	Audio.stop_music(1.0)
 	await get_tree().create_timer(0.5).timeout
@@ -209,43 +215,144 @@ func _setup_mood() -> void:
 		player.get_node("Camera2D").add_child(_weather)
 
 
-## Le niveau est réussi : la foudre répond, la pluie revient, puis l'écran de fin.
-func complete() -> void:
-	if _completed:
+## Vrai si le niveau peut encore être gagné (pas de fin de partie en cours, héros vivant).
+func can_complete() -> bool:
+	return not _completed and not _game_over and (player == null or not player.health.is_dead())
+
+
+## Le niveau est réussi. Dès cet instant le héros ne craint plus rien et les ennemis se
+## figent ; Xɛvioso parle ; un grand éclair frappe l'autel, la foudre balaie les ennemis
+## restants, la pluie revient, l'herbe reverdit, les fleurs éclosent, un arc-en-ciel se lève ;
+## la bannière de victoire donne le bilan ; puis la suite de l'histoire et l'écran de fin.
+func complete(altar: Vector2 = Vector2.INF) -> void:
+	if not can_complete():
 		return
 	_completed = true
+	if player != null:
+		player.protected = true
+		if altar == Vector2.INF:
+			altar = player.global_position
+	_freeze_enemies()
 	Game.complete_level(level_id)
-	# Xɛvioso parle d'abord, puis la foudre répond.
+	# Xɛvioso parle d'abord.
 	await say(Voices.lines(StringName(String(level_id).split("_")[0] + "_fin")))
 
-	# L'éclair de Xɛvioso : deux flashs blancs et la terre qui tremble.
-	_flash(0.9)
+	# 1. La foudre répond : le ciel s'assombrit d'un coup, un grand éclair frappe l'autel.
+	if player != null:
+		player.cast_pose()
+	var mood: Color = modulate
+	create_tween().tween_property(self, "modulate", mood * Color(0.6, 0.6, 0.75), 0.15)
+	await get_tree().create_timer(0.2).timeout
+	var target: Vector2 = altar + Vector2(0, -18)
+	LightningBolt.strike(self, target + Vector2(randf_range(-20.0, 20.0), -380.0), target, 4.5, 0.7, 6)
+	_flash(1.0)
 	Audio.play(&"thunder_close")
 	Audio.jingle(&"victoire", &"fete")
 	Audio.ambience([&"rain", &"village_day"], 3.0)
+	Fx.ring(self, target, Color(1.0, 0.9, 0.55), 90.0, 0.7, 4.0)
+	Fx.ring(self, target, Color(0.7, 0.85, 1.0), 140.0, 1.0, 2.0)
+	Fx.sparks(self, target, Color(1.0, 0.9, 0.5), 30)
+	Fx.dust(self, altar, Color(0.72, 0.44, 0.24), 26, 140.0, 80.0)
 	if player != null:
-		player.shake_camera(4.0, 0.5)
-	await get_tree().create_timer(0.18).timeout
-	_flash(0.6)
+		player.shake_camera(6.0, 0.6)
+	await get_tree().create_timer(0.25).timeout
+	modulate = mood
 
-	# Sous le premier éclair, la végétation change d'un coup (l'éclat masque la bascule).
+	# 2. La foudre balaie les ennemis restants, du plus proche au plus lointain.
+	await _sweep_enemies(altar)
+
+	# 3. La pluie revient : l'herbe reverdit, les couleurs fraîchissent, les fleurs éclosent.
+	_flash(0.6)
 	_turn_green()
 	if _ambience != null:
 		_ambience.set_raining()
-	# La pluie revient : les couleurs passent du chaud au frais.
 	if _weather != null:
 		_weather.start_rain()
 	if use_weather:
 		create_tween().tween_property(self, "modulate", rain_color, 3.0)
-	Game.message.emit("La pluie revient sur le village !")
 	_bloom()
+	await get_tree().create_timer(1.6).timeout
+	_rainbow()
 
-	await get_tree().create_timer(end_screen_delay).timeout
-	# La première étape est franchie, mais l'histoire continue (si le niveau a une suite).
+	# 4. La bannière de victoire, avec le bilan.
+	var banner := VictoryBanner.new()
+	add_child(banner)
+	var collected: int = Game.sokpe.get(level_id, []).size()
+	await banner.play("La pluie est revenue !", "Première étape accomplie : le village est sauvé",
+		collected, _sokpe_total, Game.lives)
+	await get_tree().create_timer(1.0).timeout
+
+	# 5. L'histoire continue (si le niveau a une suite), puis l'écran de fin.
 	var suite: Array = Voices.lines(StringName(String(level_id).split("_")[0] + "_suite"))
 	if not suite.is_empty():
 		await say(suite)
-	add_child(preload("res://scenes/ui/demo_end.tscn").instantiate())
+	var end: Node = preload("res://scenes/ui/demo_end.tscn").instantiate()
+	end.set("level_id", level_id)
+	add_child(end)
+
+
+## Les ennemis se figent (et leurs projectiles s'éteignent) : plus rien ne bouge contre le héros.
+func _freeze_enemies() -> void:
+	for enemy in get_tree().get_nodes_in_group(&"enemies"):
+		if is_instance_valid(enemy) and is_ancestor_of(enemy):
+			enemy.set_physics_process(false)
+	for clod in find_children("*", "Clod", true, false):
+		clod.queue_free()
+
+
+## Un éclair par ennemi encore debout : du plus proche de l'autel au plus lointain.
+func _sweep_enemies(from: Vector2) -> void:
+	var enemies: Array = get_tree().get_nodes_in_group(&"enemies").filter(func(e: Node) -> bool:
+		return is_instance_valid(e) and is_ancestor_of(e) and not (e.has_method("is_dead") and e.is_dead()))
+	enemies.sort_custom(func(a: Node2D, b: Node2D) -> bool:
+		return a.global_position.distance_to(from) < b.global_position.distance_to(from))
+	var camera := get_viewport().get_camera_2d()
+	var top: float = (camera.get_screen_center_position().y if camera != null else from.y) - 220.0
+	var sounds := 0
+	for enemy in enemies:
+		if not is_instance_valid(enemy):
+			continue
+		var at: Vector2 = enemy.global_position
+		var on_screen: bool = camera != null and absf(at.x - camera.get_screen_center_position().x) < 340.0
+		if on_screen:
+			LightningBolt.strike(self, Vector2(at.x + randf_range(-20.0, 20.0), top), at, 2.5, 0.4, 3)
+			Fx.sparks(self, at, Color(1.0, 0.9, 0.5), 10)
+			if sounds < 4:
+				Audio.play_at(&"thunder_close", at, -6.0, 0.15)
+				sounds += 1
+		enemy.set_physics_process(true)    # (le temps de mourir)
+		if enemy.has_method("take_hit"):
+			enemy.take_hit(99, signf(at.x - from.x))
+		if on_screen:
+			await get_tree().create_timer(0.14).timeout
+
+
+## Un arc-en-ciel se lève au-dessus du village, derrière le décor.
+func _rainbow() -> void:
+	var camera := get_viewport().get_camera_2d()
+	if camera == null:
+		return
+	var arc := Rainbow.new()
+	arc.position = camera.get_screen_center_position() + Vector2(40.0, 150.0)
+	var background := get_node_or_null("Background")
+	add_child(arc)
+	if background != null:
+		move_child(arc, background.get_index() + 1)
+	arc.modulate.a = 0.0
+	create_tween().tween_property(arc, "modulate:a", 1.0, 3.0)
+
+
+## Les sept bandes de l'arc-en-ciel, en arcs concentriques translucides.
+class Rainbow:
+	extends Node2D
+	const BANDS := [Color(0.9, 0.3, 0.3), Color(0.95, 0.6, 0.25), Color(0.98, 0.9, 0.35),
+		Color(0.45, 0.85, 0.4), Color(0.35, 0.65, 0.95), Color(0.4, 0.4, 0.85), Color(0.6, 0.4, 0.8)]
+
+	func _draw() -> void:
+		for i in BANDS.size():
+			var c: Color = BANDS[i]
+			c.a = 0.32
+			draw_arc(Vector2.ZERO, 300.0 - i * 4.0, PI * 1.08, PI * 1.92, 64, c, 4.0)
 
 
 ## Herbe verte (on change l'image des tuiles : toutes les cases suivent), arbres et buissons

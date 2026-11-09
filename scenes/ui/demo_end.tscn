@@ -33,9 +33,9 @@ anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
 offset_left = -150.0
-offset_top = -60.0
+offset_top = -80.0
 offset_right = 150.0
-offset_bottom = 60.0
+offset_bottom = 80.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/separation = 8
@@ -43,16 +43,24 @@ alignment = 1
 
 [node name="Title" type="Label" parent="Panel/Box"]
 layout_mode = 2
-text = "Fin de la démo"
+text = "Fin de la première partie"
 label_settings = SubResource("title_settings")
 horizontal_alignment = 1
 
 [node name="Text" type="Label" parent="Panel/Box"]
 layout_mode = 2
 text = "La pluie est revenue sur le village.
-Merci d'avoir joué !"
+Mais Adaka court toujours : la forêt des irokos vous attend.
+
+Merci d'avoir joué ! La suite arrive bientôt."
 label_settings = SubResource("text_settings")
 horizontal_alignment = 1
+
+[node name="Replay" type="Button" parent="Panel/Box"]
+custom_minimum_size = Vector2(140, 28)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "Rejouer le niveau"
 
 [node name="Menu" type="Button" parent="Panel/Box"]
 custom_minimum_size = Vector2(140, 28)
