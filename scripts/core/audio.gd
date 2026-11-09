@@ -34,7 +34,7 @@ const SFX_DB := {
 	&"wave": -3.0, &"enemy_hit": -6.0, &"crawler_die": -5.0, &"locust_buzz": -14.0,
 	&"locust_die": -6.0, &"spitter_spit": -7.0, &"clod_splat": -8.0, &"spitter_die": -4.0,
 	&"enemy_poof": -8.0, &"crumble_crack": -6.0, &"crumble_fall": -6.0, &"block_smash": -3.0,
-	&"gate_open": -5.0, &"drum_target": -3.0, &"bloom": -2.0, &"thunder_far": -6.0,
+	&"gate_open": -5.0, &"drum_target": -3.0, &"bloom": -2.0, &"thunder_far": -5.0,
 	&"thunder_close": -2.0, &"wrath": 0.0, &"ui_click": -8.0, &"ui_move": -12.0,
 	&"ui_back": -9.0, &"pause_open": -8.0, &"pause_close": -8.0, &"dialogue_open": -8.0,
 	&"dialogue_next": -10.0, &"text_tick": -22.0, &"caption_next": -12.0, &"game_start": -3.0,
@@ -45,7 +45,7 @@ const SFX_DB := {
 
 ## Volume de base de chaque ambiance (dB).
 const AMB_DB := {
-	&"wind_dry": -14.0, &"storm_wind": -11.0, &"village_day": -12.0, &"rain": -10.0,
+	&"wind_dry": -14.0, &"storm_wind": -11.0, &"village_day": -12.0, &"rain": -9.0,
 	&"night": -14.0, &"fire": -12.0,
 }
 

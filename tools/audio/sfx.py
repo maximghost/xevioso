@@ -420,8 +420,8 @@ def _bloom():
 
 
 for v in range(2):
-    sfx(f"thunder_far_{v + 1}", 0.6)(lambda v=v: thunder(3.5, 1.0, close=0.0, seed=200 + v))
-    sfx(f"thunder_close_{v + 1}", 0.95)(lambda v=v: thunder(3.0, 1.0, close=1.2, seed=210 + v))
+    sfx(f"thunder_far_{v + 1}", 0.7)(lambda v=v: thunder(7.0, 1.0, close=0.0, seed=200 + v))
+    sfx(f"thunder_close_{v + 1}", 0.95)(lambda v=v: thunder(6.5, 1.0, close=1.0, seed=210 + v))
 
 
 @sfx("wrath", 0.95)
@@ -665,14 +665,45 @@ def _village():
 
 @amb("rain")
 def _rain():
-    L = 10.0
-    n = int((L + 0.5) * SR)
-    hiss = hp(noise(n, "pink"), 500) * 0.5
-    r = rng(420)
-    drops = (r.random(n) < 900 / SR) * r.standard_normal(n) * 2.5
-    drops = bp(drops, 1500, 8000)
-    low = lp(noise(n), 300) * 0.3
-    return normalize(loopify(hiss + drops + low, L, 0.5), 0.6)
+    """Pluie (stéréo) : un fond doux et feutré (pas un souffle aigu), des milliers d'impacts
+    discrets sur le sol et les feuilles, quelques « plocs » dans les flaques, de grosses
+    gouttes sourdes ; chaque canal a ses propres gouttes."""
+    L = 12.0
+    n = int((L + 0.6) * SR)
+    chans = []
+    for c in range(2):
+        r = rng(420 + c)
+        # le fond : bruit rose filtré et feutré, qui respire lentement
+        wash = bp(noise(n, "pink", r), 220, 2200, 2)
+        wash *= 0.75 + 0.25 * gusts(n, 421 + c, 0.2)
+        wash = wash / (np.abs(wash).max() + 1e-9) * 0.28
+        # les impacts : impulsions d'intensités très inégales, chacune un tic bref filtré
+        out = wash
+        for band, (lo, hi, rate) in enumerate(((700, 2200, 420), (1800, 4500, 520), (3200, 6500, 160))):
+            imp = (r.random(n) < rate / SR) * r.lognormal(0.0, 1.15, n)
+            kern_n = int(0.006 * SR)
+            kern = r.standard_normal(kern_n) * np.exp(-np.arange(kern_n) / (kern_n / 4))
+            ticks = signal.fftconvolve(imp, kern)[:n]
+            ticks = bp(ticks, lo, hi, 2)
+            out = out + ticks / (np.abs(ticks).max() + 1e-9) * (0.32, 0.26, 0.14)[band]
+        # les « plocs » dans les flaques : petite bulle qui sonne en montant
+        for k in range(int(L * 14)):
+            at = r.random() * L
+            m = int(0.04 * SR)
+            f0 = 900 + 2200 * r.random()
+            tt = np.arange(m) / SR
+            plink = np.sin(2 * np.pi * np.cumsum(f0 * (1 + 3.0 * tt)) / SR) * np.exp(-tt / 0.012)
+            place(out, plink * 0.08 * (0.3 + r.random()), at)
+        # grosses gouttes sourdes (toits de chaume, sol)
+        for k in range(int(L * 25)):
+            at = r.random() * L
+            m = int(0.03 * SR)
+            place(out, lp(r.standard_normal(m), 500) * np.exp(-np.arange(m) / (m / 4)) * 0.25 * r.random(), at)
+        out = lp(out, 7000, 4)                              # rien de sifflant au-dessus
+        out = reverb(out, 0.6, 3000, 0.15)[:n]
+        chans.append(loopify(out, L, 0.6))
+    st = np.stack(chans, axis=1)
+    return st / (np.abs(st).max() + 1e-9) * 0.7
 
 
 @amb("night")
@@ -726,5 +757,5 @@ if __name__ == "__main__":
         if only and name not in only:
             continue
         x = np.nan_to_num(fn())
-        write_ogg(f"{DEST}/amb/{name}.ogg", x, quality=3)
+        write_ogg(f"{DEST}/amb/{name}.ogg", x, quality=4 if x.ndim == 2 else 3)
     print(len(SFX), "bruitages,", len(AMB), "ambiances")

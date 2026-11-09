@@ -307,18 +307,71 @@ def choir(freqs, dur=3.0, vowel="a", vel=1.0, detune=0.004):
 
 
 def thunder(dur=3.0, vel=1.0, close=0.5, seed=0):
-    """Tonnerre : craquement (proche) puis grondement de bruit brun qui roule."""
+    """Tonnerre réaliste, mono.
+
+    Le son d'un éclair arrive par morceaux : chaque tronçon du canal de foudre est à une
+    distance différente, donc son bruit arrive plus tard et plus sourd (l'air absorbe les
+    aigus). On additionne donc des dizaines de « bouffées » graves, d'arrivées étalées,
+    de plus en plus sombres et faibles : c'est le roulement. Si l'éclair est proche
+    (close > 0.3), le début est un déchirement sec (train d'impulsions) suivi d'un « boum ».
+    Le tout dans une grande réverbération sombre (échos du relief).
+    """
     rng = np.random.default_rng(seed)
+    dur = max(dur, 2.5)
     n = int(dur * SR)
+    out = np.zeros(n)
+    onset = 0.0 if close > 0.3 else 0.25 + 0.4 * rng.random()
+    # --- le déchirement (éclair proche) : impulsions serrées, de plus en plus espacées ---
+    if close > 0.3:
+        t = 0.0
+        k = 0
+        rip_len = 0.25 + 0.25 * rng.random()
+        while t < rip_len:
+            m = int((0.002 + 0.006 * rng.random()) * SR)
+            burst = rng.standard_normal(m) * np.exp(-np.arange(m) / (m / 3))
+            amp = (1 - t / rip_len) ** 1.5 * (0.5 + 0.5 * rng.random())
+            i = int(t * SR)
+            out[i:i + m] += burst[:max(0, min(m, n - i))] * amp
+            t += 0.003 + 0.02 * rng.random() * (t / rip_len + 0.2)
+            k += 1
+        out = hp(out, 250) * 0.8 * close
+        # le « boum » : grosse bouffée grave, attaque immédiate
+        m = int(1.2 * SR)
+        boom = lp(rng.standard_normal(m), 160, 4) * np.exp(-np.arange(m) / SR / 0.35)
+        boom = boom / (np.abs(boom).max() + 1e-9)
+        out[:m] += boom[:min(m, n)] * 1.1 * close
+    # --- le roulement : bouffées d'arrivées étalées, de plus en plus sombres ---
+    count = int(16 + 12 * rng.random())
+    span = dur * (0.55 + 0.2 * rng.random())
+    for j in range(count):
+        a = onset + span * rng.gamma(1.6, 0.35) / 1.2
+        if a >= dur - 0.2:
+            continue
+        frac = a / dur
+        length = 0.3 + 1.0 * rng.random()
+        m = int(length * SR)
+        att = 0.02 + 0.12 * rng.random() + 0.25 * (1 - close) * rng.random()
+        env = np.minimum(np.arange(m) / SR / att, 1.0) * np.exp(-np.arange(m) / SR / (length * 0.35))
+        cutoff = (600 if close > 0.3 else 260) * (1 - 0.75 * frac) * (0.6 + 0.6 * rng.random())
+        puff = lp(rng.standard_normal(m + 2048), max(cutoff, 45), 3)[2048:] * env
+        tail = max(1, m // 8)
+        puff[-tail:] *= np.linspace(1, 0, tail)          # pas de clic en fin de bouffée
+        amp = (1 - frac) ** 1.6 * (0.12 + 0.88 * rng.random() ** 3)
+        i = int(a * SR)
+        j2 = min(n, i + m)
+        out[i:j2] += puff[:j2 - i] / (np.abs(puff).max() + 1e-9) * amp
+    # --- le corps grave qui tient tout le roulement ---
     t = np.arange(n) / SR
-    rumble = lp(noise(n, "white", rng), 140, 4)
-    mod = lp(np.abs(rng.standard_normal(n)), 6, 2)
-    mod = mod / (mod.max() + 1e-9)
-    rumble *= (0.4 + mod) * np.exp(-t / (dur * 0.45)) * np.clip(t / 0.15, 0, 1)
-    rumble = normalize(rumble, 1.0)
-    crack = hp(noise(n, "white", rng), 800) * env_exp(n, 0.25, 0.001)
-    crack += bp(noise(n, "white", rng), 200, 3000) * env_exp(n, 0.6, 0.002) * 0.6
-    return (rumble * 0.9 + crack * close * 0.7) * vel
+    body = lp(rng.standard_normal(n), 70, 4)
+    body = body / (np.abs(body).max() + 1e-9)
+    body *= np.minimum(np.maximum(t - onset, 0) / 0.4, 1.0) * np.exp(-np.maximum(t - onset, 0) / (dur * 0.35))
+    out += body * 0.3
+    out = reverb(out, 3.2, 900, 0.5, pre=0.03)[:n]
+    # légère saturation : la force de l'onde de choc
+    out = np.tanh(out / (np.abs(out).max() + 1e-9) * 0.9) / np.tanh(0.9)
+    fade_n = int(0.4 * SR)
+    out[-fade_n:] *= np.linspace(1, 0, fade_n)
+    return out * vel
 
 
 def to_stereo(x, width=0.0, pan=0.0):
