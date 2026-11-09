@@ -67,6 +67,7 @@ func _activate() -> void:
 	# En l'air, la Ruée est consommée jusqu'au prochain atterrissage.
 	_charged = player.is_on_floor()
 	player.velocity = Vector2(_direction * dash_speed, 0.0)
+	Audio.play(&"dash")
 
 	# Le départ : un claquement de foudre derrière lui, et la poussière s'il est au sol.
 	var level: Node = player.get_parent()

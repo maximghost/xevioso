@@ -81,6 +81,8 @@ func _activate() -> void:
 	var radial: Vector2 = offset.normalized()
 	player.velocity -= radial * player.velocity.dot(radial)
 	_pole.visible = true
+	Audio.play(&"grapple_throw")
+	Audio.play(&"grapple_attach", -2.0)
 
 
 func physics_update(delta: float) -> void:

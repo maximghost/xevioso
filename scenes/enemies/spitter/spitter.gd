@@ -75,6 +75,7 @@ func _fire_at(target: Vector2) -> void:
 	clod.velocity = Vector2((target.x - start.x) / maxf(t, 0.2), -launch_up)
 	clod.position = start
 	get_parent().add_child(clod)
+	Audio.play_at(&"spitter_spit", start)
 
 
 func take_hit(damage: int, _from_direction: float, _stun: float = -1.0) -> void:
@@ -82,12 +83,14 @@ func take_hit(damage: int, _from_direction: float, _stun: float = -1.0) -> void:
 		return
 	_sprite.modulate = Color(4, 4, 4)
 	create_tween().tween_property(_sprite, "modulate", Color.WHITE, 0.15)
+	Audio.play_at(&"enemy_hit", global_position + Vector2(0, -12))
 
 
 func _on_died() -> void:
 	_dead = true
 	$CollisionShape2D.set_deferred("disabled", true)
 	$Hurtbox.set_deferred("monitoring", false)
+	Audio.play_at(&"spitter_die", global_position)
 	Fx.dust(get_parent(), global_position + Vector2(0, -16), Color(0.72, 0.44, 0.24), 24, 110.0, 160.0)
 	Fx.ring(get_parent(), global_position + Vector2(0, -12), Color(1.0, 0.9, 0.55), 26.0, 0.3, 2.5)
 	Fx.puff(get_parent(), global_position, Color(0.86, 0.72, 0.56), 7, Vector2.ZERO, 40.0, 0.8)

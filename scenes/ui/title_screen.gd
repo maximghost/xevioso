@@ -22,6 +22,8 @@ func _ready() -> void:
 	# Le bouton sélectionné d'avance (clavier, manette) : celui qui sert le plus.
 	(_new_game if _continue.disabled else _continue).grab_focus()
 	_flash.color.a = 0.0
+	Audio.music(&"titre", 2.0)
+	Audio.ambience([&"wind_dry"])
 	_lightning_loop()
 
 
@@ -32,6 +34,7 @@ func _on_new_game() -> void:
 		_new_game.text = "Effacer la partie ?"
 		return
 	Game.reset_progress()
+	Audio.play(&"game_start")
 	Game.go_to_intro()
 
 
@@ -44,6 +47,7 @@ func _unhandled_input(event: InputEvent) -> void:
 func _lightning_loop() -> void:
 	while is_inside_tree():
 		await get_tree().create_timer(randf_range(5.0, 10.0)).timeout
+		Audio.play(&"thunder_far", -6.0, 0.1)
 		for strength in [0.55, 0.3]:
 			_flash.color.a = strength
 			create_tween().tween_property(_flash, "color:a", 0.0, 0.3)

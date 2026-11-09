@@ -23,6 +23,7 @@ boot_splash/use_filter=false
 
 Display="*res://scripts/core/display.gd"
 Game="*res://scripts/core/game.gd"
+Audio="*res://scripts/core/audio.gd"
 
 [display]
 

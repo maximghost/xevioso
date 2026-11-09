@@ -35,6 +35,7 @@ func _on_body_entered(body: Node2D) -> void:
 		return
 	set_deferred("monitoring", false)
 	Game.unlock_hero(hero.id, hero.display_name)
+	Audio.play(&"hero_unlock")
 	Fx.dust(get_parent(), global_position + Vector2(0.0, -20.0), Color(1.0, 0.85, 0.4), 24, 110.0, 180.0)
 	var tween := create_tween().set_parallel()
 	tween.tween_property(_figure, "modulate", Color(4.0, 4.0, 2.5, 0.0), 0.4)

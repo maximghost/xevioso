@@ -42,6 +42,8 @@ func _ready() -> void:
 ## Ouvre le portail pour « seconds » secondes (0 = pour toujours).
 func open_for(seconds: float) -> void:
 	_time_left = seconds if seconds > 0.0 else INF
+	if _open_amount < 0.5:
+		Audio.play_at(&"gate_open", global_position)
 	if _close_tween != null:
 		_close_tween.kill()
 	_close_tween = create_tween()

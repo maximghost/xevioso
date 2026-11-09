@@ -32,12 +32,15 @@ var _dead: bool = false
 @onready var _hurtbox: Area2D = $Hurtbox
 
 
+var _buzz: AudioStreamPlayer2D
+
 func _ready() -> void:
 	add_to_group(&"enemies")   # cibles possibles de la foudre de Xɛvioso
 	_home = global_position
 	_time = randf() * TAU
 	_sprite.play(&"fly")
 	$Health.died.connect(_on_died)
+	_buzz = Audio.loop_on(self, &"locust_buzz", 0.0, 360.0)   # le bourdonnement des ailes
 
 
 func _physics_process(delta: float) -> void:
@@ -90,6 +93,7 @@ func _find_target() -> Node2D:
 
 func take_hit(damage: int, _from_direction: float, _stun: float = -1.0) -> void:
 	if not _dead:
+		Audio.play_at(&"enemy_hit", global_position, -2.0)
 		$Health.damage(damage)
 
 
@@ -97,6 +101,9 @@ func _on_died() -> void:
 	_dead = true
 	_hurtbox.set_deferred("monitoring", false)
 	$CollisionShape2D.set_deferred("disabled", true)
+	if _buzz != null:
+		_buzz.queue_free()
+	Audio.play_at(&"locust_die", global_position)
 	Fx.dust(get_parent(), global_position, Color(0.66, 0.64, 0.3), 10, 70.0, 180.0)
 	Fx.ring(get_parent(), global_position, Color(1.0, 0.9, 0.55), 16.0, 0.25)
 	Fx.sparks(get_parent(), global_position, Color(1.0, 0.85, 0.35), 8)

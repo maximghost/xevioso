@@ -396,6 +396,7 @@ func _handle_jump() -> void:
 	if _jump_buffer_timer > 0.0 and _coyote_timer > 0.0:
 		velocity.y = _jump_velocity
 		_squash = Vector2(0.86, 1.14)  # étirement à l'impulsion
+		Audio.play(&"jump")
 		_land_timer = 0.0
 		if is_on_floor():   # le pied pousse sur le sol : deux petites bouffées de côté
 			var feet: Vector2 = global_position + Vector2(0, 19)
@@ -481,6 +482,9 @@ func _detect_landing(fall_speed: float) -> void:
 		Fx.puff(get_parent(), feet, DUST_COLOR, n, Vector2(1, -0.2), 20.0 + fall_speed * 0.06, 0.5)
 		if fall_speed > 430.0:   # réception lourde : une onde au ras du sol
 			Fx.ring(get_parent(), feet, Color(0.95, 0.85, 0.7), 22.0, 0.3, 2.0, 0.25)
+			Audio.play(&"land_hard")
+		else:
+			Audio.play(&"land", linear_to_db(clampf(fall_speed / 430.0, 0.35, 1.0)))
 		if _sprite.sprite_frames.has_animation(&"land") and not _throwing:
 			_land_timer = 0.14
 			_sprite.play(&"land")
@@ -509,6 +513,7 @@ func _handle_throw(delta: float) -> void:
 
 	_throw_timer = throw_cooldown
 	_throwing = true
+	Audio.play(&"throw")
 	_sprite.speed_scale = 1.0
 	_sprite.play(&"throw")
 
@@ -526,6 +531,7 @@ func _on_frame_changed() -> void:
 	if _sprite.animation == &"run" and (_sprite.frame == 0 or _sprite.frame == 4) and is_on_floor():
 		Fx.puff(get_parent(), global_position + Vector2(-facing * 3.0, 19.0), DUST_COLOR, 1,
 			Vector2(-facing, -0.5), 16.0, 0.4)
+		Audio.play(&"step", 0.0, 0.12)   # un pas dans la terre sèche
 
 
 # ---------------------------------------------------------------------------
@@ -580,6 +586,7 @@ func _handle_switch() -> void:
 	_ability_buffer_timer = 0.0
 	_apply_hero(next)
 	_throwing = false
+	Audio.play(&"switch")
 
 	# L'éclair : le visuel devient éblouissant (couleurs au-delà du blanc),
 	# puis revient à la normale en un quart de seconde.
@@ -717,6 +724,7 @@ func _on_damaged(_amount: int) -> void:
 	_throwing = false
 	_hurt_timer = hurt_stun_time
 	velocity = Vector2(hurt_knockback.x * _last_hit_direction, hurt_knockback.y)
+	Audio.play(&"hurt")
 	# Le coup se sent : flash rouge, micro-arrêt, caméra secouée, éclats.
 	_visual.modulate = Color(2.6, 0.7, 0.6)
 	create_tween().tween_property(_visual, "modulate", Color.WHITE, 0.3)
@@ -756,6 +764,7 @@ func _check_fall() -> void:
 	_hurt_timer = 0.0
 	# Le coup est infligé sans recul (on n'est pas « touché ») : on retire le cœur directement.
 	_falling_back = true
+	Audio.play(&"fall_void")
 	health.damage(1, true)
 	_falling_back = false
 	global_position = _last_safe_position
@@ -791,6 +800,7 @@ func _on_died() -> void:
 	_hurt_timer = 0.0
 	velocity = Vector2.ZERO
 	_visual.visible = false
+	Audio.play(&"death")
 	died.emit()
 	# La minuterie respecte la pause (elle ne s'écoule pas pendant le menu).
 	await get_tree().create_timer(respawn_delay, false).timeout
@@ -807,6 +817,7 @@ func _respawn() -> void:
 	health.make_invincible(respawn_invincibility)
 	_visual.visible = true
 	_respawning = false
+	Audio.play(&"respawn")
 	# La caméra rejoint le héros d'un coup, sans glisser à travers tout le niveau.
 	$Camera2D.reset_smoothing()
 

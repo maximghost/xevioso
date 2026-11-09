@@ -76,6 +76,8 @@ func _set_state(state: State) -> void:
 			_sprite.play(&"idle")
 		State.PECK:
 			_timer = 0.5
+			if _rng.randf() < 0.12:
+				Audio.play_at(&"chicken", global_position, 0.0, 0.12)
 			_sprite.play(&"peck")
 			_sprite.frame = 0
 		State.WALK:
@@ -86,6 +88,7 @@ func _set_state(state: State) -> void:
 			_timer = 1.1
 			_sprite.play(&"flap")
 			_drop_feather()
+			Audio.play_at(&"chicken_flap", global_position, 0.0, 0.15)
 
 
 func _process(delta: float) -> void:

@@ -446,6 +446,10 @@ func _make_fire() -> Node2D:
 	flames.play()
 	flames.frame = _rng.randi() % 4
 	root.add_child(flames)
+	# Le crépitement du feu, qu'on entend en passant à côté.
+	var crackle := Audio.loop_on(root, &"fire", 0.0, 260.0)
+	if crackle != null:
+		crackle.name = "Crepitement"
 	# Braises qui s'envolent.
 	var embers := CPUParticles2D.new()
 	embers.name = "Braises"
@@ -677,6 +681,9 @@ func set_raining() -> void:
 		smoke.emitting = false   # les feux s'éteignent sous l'averse
 	for fire in _fires:
 		fire.get_node("Flammes").hide()
+		var crackle := fire.get_node_or_null("Crepitement")
+		if crackle != null:
+			crackle.queue_free()
 		fire.get_node("Braises").emitting = false
 
 

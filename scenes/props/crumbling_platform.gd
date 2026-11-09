@@ -58,6 +58,7 @@ func _on_stepped(body: Node2D) -> void:
 	if _crumbling or not body is Player:
 		return
 	_crumbling = true
+	Audio.play_at(&"crumble_crack", global_position)
 	# Elle tremble de plus en plus, puis cède.
 	var shake := create_tween()
 	for i in 6:
@@ -68,6 +69,7 @@ func _on_stepped(body: Node2D) -> void:
 func _collapse() -> void:
 	_sprite.position.x = 0.0
 	_shape.set_deferred("disabled", true)
+	Audio.play_at(&"crumble_fall", global_position)
 	Fx.dust(get_parent(), global_position + Vector2(0, 4), Color(0.78, 0.5, 0.31), 6 * width_tiles, 60.0, 120.0)
 	_sprite.visible = false
 	await get_tree().create_timer(respawn_time, false).timeout

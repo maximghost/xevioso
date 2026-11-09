@@ -146,6 +146,9 @@ func _ready() -> void:
 	for hero in [_kodjo, _afi]:
 		hero.visible = false
 		hero.modulate = Color.WHITE
+		hero.frame_changed.connect(func() -> void:
+			if hero.visible and hero.animation == &"run" and (hero.frame == 0 or hero.frame == 4):
+				Audio.play(&"step", -3.0, 0.12))
 	_build_villager_frames()
 	RenderingServer.global_shader_parameter_set(&"player_world", Vector2(0, -10000))
 	_run()
@@ -207,6 +210,8 @@ func _run() -> void:
 func _tableau_village() -> void:
 	_season(true)
 	_build_village(false)
+	Audio.music(&"intro_village", 3.0)
+	Audio.ambience([&"village_day"], 3.0)
 	_clouds(true)
 	_rain_light.emitting = true
 	_birds_on = true
@@ -223,6 +228,9 @@ func _tableau_village() -> void:
 	await _pause(0.8)
 	if _leaving: return
 	_rain_heavy.emitting = true
+	Audio.play(&"thunder_far")
+	Audio.ambience([&"village_day", &"rain"], 2.0)
+	Audio.music(&"fete", 2.5)            # le tambour répond au tonnerre : tout le village danse
 	_birds_on = false
 	_wind = 1.0
 	_kids_running = false
@@ -244,6 +252,10 @@ func _tableau_village() -> void:
 func _tableau_sanctuaire() -> void:
 	_rain_heavy.emitting = false
 	_rain_light.emitting = false
+	Audio.ambience([&"village_day"], 4.0)
+	Audio.music(&"intro_village", 4.0)
+	if is_instance_valid(_stone):
+		Audio.loop_on(_stone, &"stone_hum", 0.0, 380.0)     # la pierre chante doucement
 	_wind = 0.6
 	create_tween().tween_property(_tint, "color", DUSK, 7.0)
 	var pan := create_tween()
@@ -280,6 +292,8 @@ func _tableau_vol() -> void:
 	_camera.position.x = ALTAR_X - 90.0
 	_spawn_night_clouds()
 	_fireflies.emitting = true
+	Audio.stop_music(1.5)
+	Audio.ambience([&"night"], 1.5)
 	_wind = 0.5
 	await _fade_in(2.0)
 	await _pause(2.0)
@@ -287,6 +301,8 @@ func _tableau_vol() -> void:
 	create_tween().tween_property(self, "_wind", 0.0, 1.2)
 	_set_idle_sway(false)
 	_fireflies.emitting = false
+	Audio.play(&"wind_stop")
+	Audio.ambience([], 1.5)                # même les grillons se taisent
 	await _tell(&"vol", 0)
 	await _pause(1.0)
 	if _leaving: return
@@ -297,6 +313,8 @@ func _tableau_vol() -> void:
 	adaka.modulate.a = 0.0
 	_world.add_child(adaka)
 	adaka.play(&"float")
+	Audio.play(&"adaka_appear")
+	Audio.music(&"intro_drame", 3.0)
 	Fx.puff(_world, adaka.position + Vector2(-10, 56), Color(0.5, 0.38, 0.3), 8, Vector2(1, -0.2), 30.0, 1.0)
 	var glide := create_tween().set_parallel(true)
 	glide.tween_property(adaka, "modulate:a", 1.0, 2.0)
@@ -323,13 +341,16 @@ func _tableau_vol() -> void:
 	Fx.ring(_lit, at, Color(0.7, 0.85, 1.0), 56.0, 0.5, 3.0)
 	LightningBolt.strike(_lit, at + Vector2(0, -220), at, 2.5, 0.4, 3)
 	_shatter(at)
+	Audio.play(&"stone_shatter")
 	_stone.queue_free()
 	adaka.play(&"gloat")
+	Audio.play(&"adaka_laugh")
 	await _tell(&"vol", 3)
 	if _leaving: return
 
 	# Puis il avale les nuages, jusqu'au dernier.
 	adaka.play(&"inhale")
+	Audio.play(&"adaka_inhale")
 	_swallow_clouds(adaka.position + ADAKA_MOUTH)
 	create_tween().tween_property(_tint, "color", Color(0.22, 0.2, 0.3), 3.0)
 	await _tell(&"vol", 4)
@@ -340,6 +361,7 @@ func _tableau_vol() -> void:
 	Fx.puff(_world, adaka.position + Vector2(0, 40), Color(0.55, 0.42, 0.32), 14, Vector2(-1, -0.3), 50.0, 1.2)
 	var away := create_tween().set_parallel(true)
 	away.tween_property(adaka, "modulate:a", 0.0, 2.2)
+	Audio.ambience([&"wind_dry"], 2.0)     # il part, et le vent sec se lève
 	away.tween_property(adaka, "position:x", adaka.position.x - 120.0, 2.2).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	await _tell(&"vol", 5)
 	await _pause(1.0)
@@ -358,6 +380,8 @@ func _tableau_malheurs() -> void:
 	_tint.color = DROUGHT
 	_wind = 0.9
 	_camera.position.x = ALTAR_X - 120.0
+	Audio.music(&"intro_malheurs", 2.0)
+	Audio.ambience([&"wind_dry"], 2.0)
 	await _fade_in(2.0)
 	var pan := create_tween()
 	pan.tween_property(_camera, "position:x", 300.0, 36.0).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
@@ -370,9 +394,11 @@ func _tableau_malheurs() -> void:
 	_storm.visible = true
 	_storm.modulate.a = 0.0
 	create_tween().tween_property(_storm, "modulate:a", 1.0, 5.0)
+	Audio.stop_music(4.0)
 	await _pause(1.5)
 	_strike(0.25)
 	_shake(2.0, 0.8)
+	Audio.play(&"thunder_far")
 	await _tell(&"malheurs", 3)
 	pan.kill()
 
@@ -388,6 +414,7 @@ func _tableau_appel() -> void:
 	_skip_at_top(false)
 	_tint.color = STORM_NIGHT
 	_storm.modulate.a = 1.0
+	Audio.ambience([&"storm_wind"], 2.0)
 	_wind = 1.1
 	# Plan plus large et plus haut : le ciel d'orage, l'emblème, et tout le village rassemblé.
 	_camera.zoom = Vector2(1.3, 1.3)
@@ -427,9 +454,11 @@ func _tableau_appel() -> void:
 	await _pause(2.0)
 	_strike(0.2)
 	_shake(1.5, 0.6)
+	Audio.play(&"thunder_far", -2.0)
 	await _pause(1.8)
 	_strike(0.4)
 	_shake(3.0, 0.8)
+	Audio.play(&"thunder_close", -4.0)
 	await _pause(1.2)
 	if _leaving: return
 	# L'emblème paraît au-dessus du sanctuaire, à droite (la parole de Xɛvioso s'affiche en haut).
@@ -441,6 +470,8 @@ func _tableau_appel() -> void:
 	appear.tween_property(_emblem, "scale", Vector2.ONE, 3.0).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	LightningBolt.strike(_lit, Vector2(ALTAR_X + 100.0, 40.0), Vector2(ALTAR_X + 100.0, 110.0), 3.0, 0.5, 4)
 	_strike(0.9)
+	Audio.play(&"emblem_appear")
+	Audio.music(&"intro_appel", 4.0)
 	_v["ancien"].play(&"ancien_joy")          # l'ancien lève les bras vers le ciel
 	await appear.finished
 	# Les villageois lèvent les yeux et s'agenouillent... (ils baissent la tête, recueillis).
@@ -466,6 +497,7 @@ func _tableau_appel() -> void:
 	await _xevioso(&"intro_mission")
 	if _leaving: return
 	# Les Envoyés partent sur la route ; le village reprend espoir.
+	Audio.music(&"fete", 2.0)
 	for role in ["pileuse", "porteuse", "cultivateur", "ancien"]:
 		_v[role].play(StringName(role + "_joy"))
 	_v["garcon"].play(&"garcon_dance")
@@ -487,6 +519,7 @@ func _designate(hero: AnimatedSprite2D, color: Color) -> void:
 	if _leaving: return
 	var target: Vector2 = hero.position + Vector2(0, -6)
 	LightningBolt.strike(_lit, _emblem.position + Vector2(-10, 20), target, 3.0, 0.55, 3)
+	Audio.play(&"designate")
 	_strike(0.8)
 	_shake(3.0, 0.4)
 	Fx.ring(_lit, hero.position + Vector2(0, 18), color, 30.0, 0.5, 2.0, 0.35)
@@ -544,6 +577,7 @@ func _demo_ruee() -> void:
 		Fx.puff(_world, _kodjo.position + Vector2(0, 19), Color(0.8, 0.68, 0.5), 5,
 			Vector2(-1 if not leg[1] else 1, -0.3), 26.0, 0.6)
 		var dist: float = absf(leg[0] - _kodjo.position.x)
+		Audio.play(&"dash")
 		var dash := create_tween()
 		dash.tween_property(_kodjo, "position:x", leg[0], dist / 520.0)
 		while dash.is_running() and not _leaving:
@@ -566,12 +600,15 @@ func _demo_pagne() -> void:
 	canopy.scale = Vector2(0.2, 0.2)
 	_afi.add_child(canopy)
 	_afi.play(&"jump")
+	Audio.play(&"jump")
 	await create_tween().tween_property(_afi, "position:y", start.y - 70.0, 0.9) \
 		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT).finished
 	# Le voile claque et s'ouvre.
 	Fx.ring(_lit, _afi.position + Vector2(2, -30), Color(0.35, 0.9, 0.85), 20.0, 0.35, 2.0, 0.5)
 	create_tween().tween_property(canopy, "scale", Vector2.ONE, 0.25).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	_afi.play(&"fall")
+	Audio.play(&"glide_open")
+	var flutter := Audio.loop_on(_afi, &"glide_loop")
 	# Elle plane : une boucle au-dessus du village, puis elle se pose doucement à sa place.
 	var glide := create_tween()
 	glide.tween_method(func(k: float) -> void:
@@ -583,6 +620,10 @@ func _demo_pagne() -> void:
 	await create_tween().tween_property(_afi, "position:y", start.y, 0.4).finished
 	_afi.flip_h = false
 	_afi.play(&"land")
+	if flutter != null:
+		flutter.queue_free()
+	Audio.play(&"glide_close")
+	Audio.play(&"land")
 	Fx.puff(_world, _afi.position + Vector2(0, 19), Color(0.8, 0.68, 0.5), 5, Vector2.ZERO, 20.0, 0.6)
 	await create_tween().tween_property(canopy, "scale", Vector2(0.1, 0.1), 0.25).finished
 	canopy.queue_free()
@@ -992,6 +1033,7 @@ class Hen:
 					flip_h = away < 0.0
 					fleeing = 0.7
 					play(&"flap")
+					Audio.play_at(&"chicken_flap", global_position, -2.0, 0.15)
 					break
 		if fleeing > 0.0:
 			fleeing -= delta
@@ -1209,6 +1251,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		or event.is_action_pressed("ui_accept") or event.is_action_pressed("jump")
 	if pressed:
 		_advance_requested = true
+		Audio.play(&"caption_next")
 		get_viewport().set_input_as_handled()
 
 
@@ -1266,5 +1309,7 @@ func _leave() -> void:
 		_box.queue_free()
 		_box = null
 	_strike(1.0)
+	Audio.play(&"thunder_close", -3.0)
+	Audio.stop_music(1.0)
 	await create_tween().tween_property(_fade, "color:a", 1.0, 1.0).finished
 	Game.go_to_level(Game.FIRST_LEVEL)

@@ -48,6 +48,7 @@ func light_up(celebrate: bool) -> void:
 	_lit = true
 	_sprite.texture = texture_on
 	if celebrate:
+		Audio.play_at(&"checkpoint", global_position)
 		_sprite.modulate = Color(3.0, 3.0, 2.0)
 		create_tween().tween_property(_sprite, "modulate", Color.WHITE, 0.4)
 		Fx.dust(get_parent(), global_position + Vector2(0.0, -16.0), Color(1.0, 0.85, 0.4), 16, 90.0, 180.0)

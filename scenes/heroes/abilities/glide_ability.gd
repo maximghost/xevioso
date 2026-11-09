@@ -30,6 +30,8 @@ extends HeroAbility
 
 # Le voile affiché au-dessus de la tête (créé au démarrage, caché quand replié).
 var _canopy: Sprite2D
+# Le bruit du vent dans le voile (boucle), le temps du vol.
+var _flutter: AudioStreamPlayer2D
 # Filets de vent qui suivent Afi pendant qu'elle plane.
 var _wind: CPUParticles2D
 # Temps écoulé sous le voile, pour le balancement.
@@ -87,6 +89,11 @@ func _activate() -> void:
 	# Le voile claque : petite onde turquoise.
 	Fx.ring(player.get_parent(), player.global_position + Vector2(0, -30), Color(0.55, 0.9, 0.85), 16.0, 0.25, 2.0, 0.5)
 	_wind.emitting = true
+	# Le claquement du pagne, puis le vent dans le tissu tant qu'elle plane.
+	Audio.play(&"glide_open")
+	if _flutter != null:
+		_flutter.queue_free()
+	_flutter = Audio.loop_on(player, &"glide_loop")
 
 
 func physics_update(delta: float) -> void:
@@ -109,6 +116,10 @@ func limit_fall_speed(default_speed: float) -> float:
 
 func _on_finish() -> void:
 	_canopy.visible = false
+	if _flutter != null:
+		_flutter.queue_free()
+		_flutter = null
+	Audio.play(&"glide_close")
 	if _wind != null:
 		_wind.emitting = false
 

@@ -45,6 +45,7 @@ static func cast(player: Player, targets: Array[Node2D]) -> void:
 
 	# 1. L'appel : le héros brandit la main, une onde violette, le ciel se couvre.
 	player.cast_pose()
+	Audio.play(&"lightning_cast")
 	Fx.ring(level, player.global_position, Color(0.78, 0.6, 1.0), 30.0, 0.3, 2.5)
 	Fx.sparks(level, player.global_position + Vector2(0, -22), Color(0.85, 0.75, 1.0), 10)
 	var mood: Color = level.modulate

@@ -71,10 +71,35 @@ un grand vide à franchir avec la Ruée ou le Pagne-voile, l'énigme du portail 
 Huit pierres sokpe, dont une qu'on ne peut atteindre qu'en revenant avec Abla. Au bout,
 l'autel de la foudre : la pluie revient et le village refleurit.
 
+## Le son
+
+Tout l'audio est original, calculé par des scripts Python (`tools/audio/`) : aucun
+échantillon extérieur.
+
+- **Musiques**, sur des rythmes du sud du Bénin :
+  - la cloche gankogui joue la « ligne du temps » à 7 frappes ; le hochet axatsɛ et les
+    tambours kaganu, kidi, sogo et atsimevu lui répondent ;
+  - **agbadja** pour le village ;
+  - **zinli** (jarre frappée, lent et grave) pour les malheurs ;
+  - **tchinkoumé** (tambour d'eau) pour la saison des pluies ;
+  - les mélodies sont jouées à l'agidigbo (lamellophone) et par des voix en appel et réponse.
+- **Morceaux** : titre, village, fête de la pluie, quatre ambiances de la scène d'ouverture,
+  et deux jingles (victoire, fin de partie).
+- **Bruitages** : 75 sons. Pas, saut, réception, hache, Ruée, pagne, coups, ennemis,
+  sokpe, foudre, stèles, plateformes, interface, scène d'ouverture.
+- **Ambiances** : vent sec, village, pluie, nuit, feu, vent d'orage.
+- **Volume** : trois réglages dans le menu pause (Musique, Bruitages, Ambiances), gardés
+  d'une partie à l'autre.
+
+Régénérer les sons :
+`python3 tools/audio/sfx.py assets/audio` et `python3 tools/audio/music.py assets/audio`
+(Python 3, numpy, scipy, pyloudnorm, ffmpeg).
+
 ## Structure
 
 ```
-assets/       images : héros, ennemis, décor, tuiles, arrière-plans, interface
+assets/       images : héros, ennemis, décor, tuiles, arrière-plans, interface ;
+              audio/ : musiques, bruitages, ambiances
 scenes/
   heroes/     le héros (player) et les capacités des cinq Envoyés
   enemies/    les ennemis : Motte sèche, Criquet, Termitière cracheuse
@@ -83,7 +108,8 @@ scenes/
   levels/     les niveaux (script commun level.gd, village/, terrain d'essai)
   fx/         effets : hache, onde, météo
   ui/         écran titre, interface en jeu, menus, contrôles tactiles
-scripts/core/ services globaux : Game (progression, sauvegarde), Display, Fx, Health
+scripts/core/ services globaux : Game (progression, sauvegarde), Audio, Display, Fx, Health
+tools/audio/  générateurs des musiques et des bruitages (Python)
 ```
 
 L'export web est automatique : à chaque `git push` sur `main`, GitHub Actions exporte le jeu

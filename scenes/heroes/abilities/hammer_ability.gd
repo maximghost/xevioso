@@ -47,6 +47,7 @@ func _activate() -> void:
 		animation = &"throw"
 		_time_left = strike_time
 		player.velocity = Vector2.ZERO
+		Audio.play(&"throw", -3.0)
 		var offset := Vector2(strike_offset.x * player.facing, strike_offset.y)
 		if _strike(offset, strike_size) > 0:
 			player.shake_camera(2.0, 0.1)
@@ -75,6 +76,7 @@ func _update_slam() -> void:
 	Fx.puff(player.get_parent(), feet, Color(0.86, 0.72, 0.56), 4, Vector2(-1, -0.2), 70.0, 0.7)
 	Fx.puff(player.get_parent(), feet, Color(0.86, 0.72, 0.56), 4, Vector2(1, -0.2), 70.0, 0.7)
 	player.shake_camera(3.0, 0.15)
+	Audio.play(&"hammer_slam")
 	var broken: int = _strike(impact_offset, impact_size)
 	if broken > 0:
 		# Le plancher a cédé : le piqué continue à travers.

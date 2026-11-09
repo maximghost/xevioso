@@ -27,4 +27,5 @@ func _on_body_entered(body: Node2D) -> void:
 	if body is Player:
 		body.take_hit(1, signf(velocity.x) if velocity.x != 0.0 else 1.0)
 	Fx.dust(get_parent(), global_position, Color(0.72, 0.44, 0.24), 6, 50.0, 120.0)
+	Audio.play_at(&"clod_splat", global_position)
 	queue_free()

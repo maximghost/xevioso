@@ -94,6 +94,7 @@ func take_hit(damage: int, from_direction: float, stun: float = -1.0) -> void:
 		return
 	_stun_timer = stun if stun >= 0.0 else stun_time
 	velocity.x = from_direction * knockback_speed
+	Audio.play_at(&"enemy_hit", global_position)
 	# Éclair blanc : le coup se voit.
 	_sprite.modulate = Color(4.0, 4.0, 4.0)
 	create_tween().tween_property(_sprite, "modulate", Color.WHITE, 0.15)
@@ -116,6 +117,7 @@ func _on_died() -> void:
 	$CollisionShape2D.set_deferred("disabled", true)
 	_sprite.stop()
 	_spawn_dust()
+	Audio.play_at(&"crawler_die", global_position)
 	var tween := create_tween().set_parallel()
 	tween.tween_property(_sprite, "scale", Vector2(1.4, 0.4), 0.18)
 	tween.tween_property(_sprite, "modulate:a", 0.0, 0.18)

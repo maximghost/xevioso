@@ -31,6 +31,7 @@ func _activate() -> void:
 	# L'onde naît à hauteur du tambour (la taille de Kokou) et reste sur place.
 	wave.global_position = player.global_position + Vector2(0.0, -4.0)
 	player.get_parent().add_child(wave)
+	Audio.play(&"wave")
 
 
 func physics_update(delta: float) -> void:

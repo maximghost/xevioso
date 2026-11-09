@@ -42,8 +42,12 @@ func _on_body_entered(body: Node2D) -> void:
 		return
 	_taken = true
 	var level := Level.of(self)
+	var was_ready: bool = Game.lightning_ready()
 	if level != null and not _collected_before:
 		Game.collect_sokpe(level.level_id, name)
+	Audio.play(&"sokpe")
+	if Game.lightning_ready() and not was_ready:
+		Audio.play(&"lightning_ready")      # la quatrième pierre : la foudre est prête
 	# Elle monte en grossissant puis disparaît dans un éclat bleuté.
 	set_deferred("monitoring", false)
 	Fx.dust(get_parent(), global_position, Color(0.6, 0.75, 1.0), 12, 70.0, 180.0)

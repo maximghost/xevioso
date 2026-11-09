@@ -29,6 +29,7 @@ var _travelled: float = 0.0
 var _time: float = 0.0
 var _crackle_timer: float = 0.0
 var _trail: Line2D
+var _whirr: AudioStreamPlayer2D
 
 # Vrai dès que la hache a touché quelque chose : un seul coup par hache, même si elle
 # touche deux choses dans la même image (le corps et la zone d'un ennemi, par exemple).
@@ -62,6 +63,8 @@ func _ready() -> void:
 	_trail.material = add
 	add_child(_trail)
 	move_child(_trail, 0)            # derrière la hache
+	# Le vrombissement de la hache qui tournoie, tant qu'elle vole.
+	_whirr = Audio.loop_on(self, &"axe_whirr", 0.0, 500.0)
 
 
 func _physics_process(delta: float) -> void:
@@ -93,6 +96,9 @@ func _fizzle() -> void:
 	set_physics_process(false)
 	set_deferred("monitoring", false)
 	Fx.sparks(get_parent(), global_position, Color(1.0, 0.9, 0.6), 4)
+	if _whirr != null:
+		create_tween().tween_property(_whirr, "volume_db", -40.0, 0.12)
+	Audio.play_at(&"axe_fizzle", global_position, -6.0)
 	var tween := create_tween().set_parallel(true)
 	tween.tween_property(self, "modulate:a", 0.0, 0.12)
 	tween.tween_property(self, "scale", Vector2(0.4, 0.4), 0.12)
@@ -108,6 +114,7 @@ func _on_hit(target: Node) -> void:
 	var victim := _find_damageable(target)
 	if victim != null:
 		victim.take_hit(damage, direction)
+		Audio.play_at(&"axe_hit", global_position, -2.0)
 		# Impact sur une cible : éclats, onde, arcs, micro-arrêt, secousse.
 		Fx.sparks(level, global_position, Color(1.0, 0.85, 0.35), 16)
 		Fx.ring(level, global_position, Color(1.0, 0.9, 0.55), 18.0, 0.22, 2.0)
@@ -120,6 +127,7 @@ func _on_hit(target: Node) -> void:
 			player.shake_camera(2.0, 0.1)
 	else:
 		# Contre le décor : étincelles et petite onde.
+		Audio.play_at(&"axe_fizzle", global_position)
 		Fx.sparks(level, global_position, Color(1.0, 0.9, 0.6), 8)
 		Fx.ring(level, global_position, Color(1.0, 0.9, 0.6), 10.0, 0.18, 1.5)
 	queue_free()

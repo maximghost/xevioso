@@ -42,6 +42,9 @@ extends Node2D
 @export_range(0.0, 1.0) var flower_density: float = 0.55
 ## Vitesse de la vague de floraison, en pixels par seconde.
 @export var bloom_speed: float = 420.0
+## Musique du niveau, et ses ambiances (boucles) tant qu'il fait sec.
+@export var music_track: StringName = &"village"
+@export var ambiences: Array[StringName] = [&"wind_dry", &"village_day"]
 
 var _weather: Weather
 var _ambience: Ambience
@@ -69,6 +72,8 @@ func _ready() -> void:
 	_place_player_at_checkpoint()
 	if player != null:
 		player.died.connect(_on_player_died)
+	Audio.music(music_track)
+	Audio.ambience(ambiences)
 
 
 ## Fait parler Xɛvioso (le jeu est figé pendant ce temps). À attendre avec « await ».
@@ -78,8 +83,9 @@ func say(lines: Array) -> void:
 	if _dialogue == null:
 		_dialogue = preload("res://scenes/ui/dialogue_box.tscn").instantiate()
 		add_child(_dialogue)
-	# Un petit éclair annonce la voix.
+	# Un petit éclair et un grondement lointain annoncent la voix.
 	_flash(0.25)
+	Audio.play(&"thunder_far", -10.0, 0.1)
 	await _dialogue.play(lines, true)
 
 
@@ -88,8 +94,10 @@ func _on_player_died() -> void:
 	if Game.lose_life() > 0:
 		return
 	player.respawn_allowed = false
+	Audio.stop_music(1.0)
 	await get_tree().create_timer(0.5).timeout
 	await _xevioso_wrath()
+	Audio.jingle(&"game_over")
 	var screen: Node = preload("res://scenes/ui/game_over.tscn").instantiate()
 	screen.set("level_id", level_id)
 	add_child(screen)
@@ -108,6 +116,7 @@ func _xevioso_wrath() -> void:
 	# Le ciel s'assombrit (teinte d'orage sec, rougeâtre).
 	var mood: Color = modulate
 	create_tween().tween_property(self, "modulate", mood * Color(0.5, 0.42, 0.5), 0.4)
+	Audio.play(&"wrath")
 	# La terre gronde : secousse continue qui enfle puis retombe.
 	var rumble := create_tween()
 	rumble.tween_method(func(k: float) -> void:
@@ -129,6 +138,7 @@ func _xevioso_wrath() -> void:
 		Fx.puff(self, ground, Color(0.86, 0.72, 0.56), 4, Vector2.ZERO, 40.0, 0.8)
 		Fx.ring(self, ground, Color(1.0, 0.85, 0.5), 30.0, 0.35, 2.5, 0.3)
 		_flash(0.35 if i < 6 else 0.8)
+		Audio.play_at(&"thunder_close", ground, -4.0 if i < 6 else 2.0, 0.15)
 		await get_tree().create_timer(maxf(0.38 - i * 0.04, 0.14)).timeout
 	await get_tree().create_timer(0.5).timeout
 	modulate = mood
@@ -210,6 +220,9 @@ func complete() -> void:
 
 	# L'éclair de Xɛvioso : deux flashs blancs et la terre qui tremble.
 	_flash(0.9)
+	Audio.play(&"thunder_close")
+	Audio.jingle(&"victoire", &"fete")
+	Audio.ambience([&"rain", &"village_day"], 3.0)
 	if player != null:
 		player.shake_camera(4.0, 0.5)
 	await get_tree().create_timer(0.18).timeout
@@ -262,6 +275,7 @@ func _turn_green() -> void:
 func _bloom() -> void:
 	if terrain == null or flowers.is_empty():
 		return
+	Audio.play(&"bloom")
 	var origin: Vector2 = player.global_position if player != null else Vector2.ZERO
 	var layer := Node2D.new()
 	layer.name = "Flowers"

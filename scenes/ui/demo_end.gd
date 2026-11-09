@@ -11,3 +11,4 @@ func _ready() -> void:
 	create_tween().tween_property(_panel, "modulate:a", 1.0, 1.2)
 	_menu.pressed.connect(Game.go_to_title)
 	_menu.grab_focus()
+	Audio.music(&"fete")

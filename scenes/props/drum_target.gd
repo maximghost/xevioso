@@ -23,6 +23,7 @@ func _ready() -> void:
 ## Appelée par la hache ou l'Onde, comme pour un ennemi.
 func take_hit(_damage: int, _from_direction: float, _stun: float = -1.0) -> void:
 	_sprite.texture = preload("res://assets/props/gong_hit.png")
+	Audio.play_at(&"drum_target", global_position)
 	var tween := create_tween()
 	tween.tween_property(_sprite, "rotation_degrees", 8.0, 0.06)
 	tween.tween_property(_sprite, "rotation_degrees", -6.0, 0.1)

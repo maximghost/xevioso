@@ -44,6 +44,7 @@ func play(lines: Array, pause_game: bool = true) -> Signal:
 	if _paused_game:
 		get_tree().paused = true
 	_panel.visible = true
+	Audio.play(&"dialogue_open")
 	_panel.modulate.a = 0.0
 	create_tween().tween_property(_panel, "modulate:a", 1.0, 0.2)
 	_show_line()
@@ -68,8 +69,12 @@ func _process(delta: float) -> void:
 		return
 	_cooldown = maxf(_cooldown - delta, 0.0)
 	if _typing:
+		var before: int = int(_shown)
 		_shown += delta * chars_per_second
 		_text.visible_characters = int(_shown)
+		# Un léger cliquetis toutes les trois lettres : la parole « s'écrit ».
+		if int(_shown) / 3 != before / 3:
+			Audio.play(&"text_tick", 0.0, 0.15)
 		if _text.visible_characters >= _text.get_total_character_count():
 			_finish_typing()
 	else:
@@ -104,6 +109,7 @@ func _input(event: InputEvent) -> void:
 		return
 	_index += 1
 	if _index < _lines.size():
+		Audio.play(&"dialogue_next")
 		_show_line()
 	else:
 		_close()
