@@ -24,6 +24,8 @@ uniform float speed = 1.6;
 // Herbe : de combien de pixels elle s'écarte quand le héros la traverse (0 = jamais).
 uniform float push = 0.0;
 uniform float push_radius = 12.0;
+// Tissu suspendu (pagne sur une corde) : c'est le bas qui flotte, le haut reste accroché.
+uniform bool hanging = false;
 // Marge ajoutée de chaque côté de l'image (en pixels).
 uniform float pad = 4.0;
 
@@ -41,7 +43,8 @@ void vertex() {
 }
 
 void fragment() {
-	float h = clamp(1.0 - UV.y, 0.0, 1.0);          // 0 au pied, 1 au sommet
+	// 0 au point d'attache (le pied, ou le haut d'un tissu suspendu), 1 à l'autre bout.
+	float h = hanging ? clamp(UV.y, 0.0, 1.0) : clamp(1.0 - UV.y, 0.0, 1.0);
 	float bend = pow(h, stiffness);
 
 	// Rafale qui « passe » d'une plante à l'autre, plus balancement de fond.
