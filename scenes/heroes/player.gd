@@ -279,6 +279,7 @@ func _physics_process(delta: float) -> void:
 		_handle_run(direction, delta)
 		_handle_jump()
 		_handle_throw(delta)
+		_handle_lightning()
 		# Capacité active qui laisse le héros bouger (Pagne-voile, Onde) : elle se met à jour
 		# en plus du mouvement normal.
 		if _ability != null and _ability.active:
@@ -525,6 +526,35 @@ func _on_frame_changed() -> void:
 	if _sprite.animation == &"run" and (_sprite.frame == 0 or _sprite.frame == 4) and is_on_floor():
 		Fx.puff(get_parent(), global_position + Vector2(-facing * 3.0, 19.0), DUST_COLOR, 1,
 			Vector2(-facing, -0.5), 16.0, 0.4)
+
+
+# ---------------------------------------------------------------------------
+# Foudre de Xɛvioso (pouvoir de circonstance, chargé par 4 pierres sokpe)
+# ---------------------------------------------------------------------------
+
+## Touche L (ou bouton violet) : la foudre frappe jusqu'à deux ennemis à portée.
+func _handle_lightning() -> void:
+	if not Input.is_action_just_pressed("lightning"):
+		return
+	if not Game.lightning_ready():
+		Game.message.emit("La foudre se charge : %d / %d pierres sokpe" % [Game.lightning_charge, Game.LIGHTNING_COST])
+		return
+	var targets := XeviosoStrike.find_targets(self)
+	if targets.is_empty():
+		Game.message.emit("Aucun ennemi à portée de la foudre")
+		return
+	Game.spend_lightning()
+	XeviosoStrike.cast(self, targets)
+
+
+## Le héros brandit la main vers le ciel (geste du lancer, sans hache), dans un éclat violet.
+func cast_pose() -> void:
+	_throwing = true
+	_sprite.speed_scale = 1.0
+	_sprite.play(&"throw")
+	_sprite.frame = 0
+	_visual.modulate = Color(2.2, 1.8, 3.0)
+	create_tween().tween_property(_visual, "modulate", Color.WHITE, 0.35)
 
 
 func _on_animation_finished() -> void:

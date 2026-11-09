@@ -13,6 +13,8 @@ extends Node
 
 ## Émis quand le nombre total de pierres sokpe change.
 signal sokpe_changed(total: int)
+## La charge de la foudre de Xɛvioso a changé (0 à LIGHTNING_COST).
+signal lightning_changed(charge: int)
 ## Émis quand un héros rejoint l'équipe.
 signal hero_unlocked(hero_id: StringName)
 ## Émis quand le nombre de vies change.
@@ -41,6 +43,9 @@ const INTRO := "res://scenes/story/intro.tscn"
 ## à la dernière, c'est la fin de la partie (game over) et on recommence le niveau.
 const LIVES_PER_LEVEL := 2
 
+## Pierres sokpe nécessaires pour charger la foudre de Xɛvioso.
+const LIGHTNING_COST := 4
+
 ## Les héros disponibles dès le début.
 const STARTING_HEROES: Array[StringName] = [&"kodjo", &"afi"]
 
@@ -55,6 +60,9 @@ var checkpoint_name: StringName = &""
 var completed_levels: Array[StringName] = []
 ## Paroles de Xɛvioso déjà entendues (on ne les répète pas).
 var heard_voices: Array[StringName] = []
+
+## Charge de la foudre : une pierre sokpe nouvellement ramassée = un cran (jusqu'à 4).
+var lightning_charge: int = 0
 ## Faux dans un niveau de développement : rien n'est écrit sur le disque, et tout ce qui
 ## s'y est passé (héros débloqués, pierres, stèles) est oublié en revenant au menu.
 var saving_enabled: bool = true
@@ -101,8 +109,25 @@ func collect_sokpe(level_id: StringName, stone_name: StringName) -> bool:
 		sokpe[level_id] = []
 	sokpe[level_id].append(stone_name)
 	sokpe_changed.emit(total_sokpe())
+	if lightning_charge < LIGHTNING_COST:
+		lightning_charge += 1
+		lightning_changed.emit(lightning_charge)
+		if lightning_charge == LIGHTNING_COST:
+			message.emit("La foudre de Xɛvioso est prête !")
 	save_game()
 	return true
+
+
+## Vrai si la foudre est chargée (4 pierres).
+func lightning_ready() -> bool:
+	return lightning_charge >= LIGHTNING_COST
+
+
+## La foudre a frappé : la jauge se vide.
+func spend_lightning() -> void:
+	lightning_charge = 0
+	lightning_changed.emit(0)
+	save_game()
 
 
 func total_sokpe() -> int:
@@ -219,6 +244,7 @@ func save_game() -> void:
 		"checkpoint": {"level": String(checkpoint_level), "name": String(checkpoint_name)},
 		"completed_levels": completed_levels.map(func(id): return String(id)),
 		"heard_voices": heard_voices.map(func(id): return String(id)),
+		"lightning_charge": lightning_charge,
 	}
 	var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if file == null:
@@ -249,6 +275,7 @@ func load_game() -> void:
 		completed_levels.append(StringName(id))
 	for id in data.get("heard_voices", []):
 		heard_voices.append(StringName(id))
+	lightning_charge = clampi(int(data.get("lightning_charge", 0)), 0, LIGHTNING_COST)
 
 
 ## Efface toute la progression (bouton de test du menu pause, plus tard « Nouvelle partie »).
@@ -257,6 +284,7 @@ func reset_progress() -> void:
 	if FileAccess.file_exists(SAVE_PATH):
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(SAVE_PATH))
 	sokpe_changed.emit(0)
+	lightning_changed.emit(0)
 
 
 func _reset_state() -> void:
@@ -266,3 +294,4 @@ func _reset_state() -> void:
 	checkpoint_name = &""
 	completed_levels = []
 	heard_voices = []
+	lightning_charge = 0

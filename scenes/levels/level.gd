@@ -234,6 +234,11 @@ func _bloom() -> void:
 		tween.tween_property(flower, "scale", Vector2.ONE, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 
+## Un flash blanc plein écran (public : la foudre de Xɛvioso s'en sert aussi).
+func flash(strength: float) -> void:
+	_flash(strength)
+
+
 ## Un flash blanc plein écran qui s'éteint aussitôt.
 func _flash(strength: float) -> void:
 	var layer := CanvasLayer.new()

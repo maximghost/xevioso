@@ -40,8 +40,21 @@ extends CanvasLayer
 @onready var _switch: TouchScreenButton = $Switch
 @onready var _pause: TouchScreenButton = $Pause
 
+# Bouton de la foudre de Xɛvioso : n'apparaît que lorsque la jauge est pleine.
+var _lightning: TouchScreenButton
+var _time: float = 0.0
+
 
 func _ready() -> void:
+	_lightning = TouchScreenButton.new()
+	_lightning.name = "Lightning"
+	_lightning.texture_normal = preload("res://assets/ui/touch/lightning.png")
+	_lightning.texture_pressed = preload("res://assets/ui/touch/lightning_pressed.png")
+	_lightning.action = "lightning"
+	_lightning.visibility_mode = TouchScreenButton.VISIBILITY_TOUCHSCREEN_ONLY
+	add_child(_lightning)
+	Game.lightning_changed.connect(_on_lightning_changed)
+	_on_lightning_changed(Game.lightning_charge)
 	if DisplayServer.is_touchscreen_available():
 		_remove_mouse_bindings()
 	# La flèche haut sert à sauter (son action est « jump ») ; elle déclenche aussi
@@ -74,7 +87,7 @@ func _remove_mouse_bindings() -> void:
 
 
 func _buttons() -> Array[TouchScreenButton]:
-	return [_left, _right, _up, _down, _jump, _attack, _ability, _switch, _pause]
+	return [_left, _right, _up, _down, _jump, _attack, _ability, _switch, _pause, _lightning]
 
 
 ## Place les boutons dans les coins, quelle que soit la largeur de l'écran.
@@ -110,9 +123,30 @@ func _layout() -> void:
 	_place_on_arc(_switch, jump_center, 180.0, jump_size, right)
 	_place_on_arc(_attack, jump_center, 133.0, jump_size, right, 20.0)
 	_place_on_arc(_ability, jump_center, 86.0, jump_size, right)
+	# La foudre (violette), au-dessus de la capacité, quand elle est chargée.
+	_place_on_arc(_lightning, jump_center, 88.0, jump_size, right,
+		_ability.texture_normal.get_width() + arc_gap)
 
 	# En haut à droite : la pause, à l'écart pour éviter les appuis involontaires.
 	_pause.position = Vector2(screen.x - margin - _pause.texture_normal.get_width(), margin)
+
+
+## La foudre chargée : le bouton apparaît en grandissant ; sinon il disparaît.
+func _on_lightning_changed(charge: int) -> void:
+	var ready: bool = charge >= Game.LIGHTNING_COST
+	if ready and not _lightning.visible:
+		_lightning.scale = Vector2(0.3, 0.3)
+		create_tween().tween_property(_lightning, "scale", Vector2.ONE, 0.25) \
+			.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	_lightning.visible = ready
+
+
+## Le bouton de la foudre palpite doucement pour attirer l'œil.
+func _process(delta: float) -> void:
+	if _lightning == null or not _lightning.visible:
+		return
+	_time += delta
+	_lightning.modulate = Color(1, 1, 1).lerp(Color(1.35, 1.2, 1.6), 0.5 + 0.5 * sin(_time * 5.0))
 
 
 ## Donne à chaque bouton une zone de toucher ronde, un peu plus grande que son dessin.

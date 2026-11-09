@@ -24,6 +24,7 @@ var _dead: bool = false
 
 
 func _ready() -> void:
+	add_to_group(&"enemies")   # cibles possibles de la foudre de Xɛvioso
 	collision_layer = 4
 	collision_mask = 0
 	_timer = fire_interval * (1.0 - phase)
@@ -94,3 +95,8 @@ func _on_died() -> void:
 	tween.tween_property(_sprite, "scale", Vector2(1.3, 0.2), 0.3)
 	tween.tween_property(_sprite, "modulate:a", 0.0, 0.3)
 	tween.chain().tween_callback(queue_free)
+
+
+## Vrai une fois vaincu (pendant son animation de disparition) : la foudre l'ignore.
+func is_dead() -> bool:
+	return _dead

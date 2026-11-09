@@ -1,6 +1,6 @@
 extends CanvasLayer
 ## Interface en jeu : les cœurs, le nom du héros joué, le compteur de pierres sokpe,
-## et les messages brefs (point de contrôle, nouveau héros).
+## la jauge de la foudre de Xɛvioso, et les messages brefs (point de contrôle, nouveau héros).
 ##
 ## Le HUD ne fait qu'afficher : il écoute les signaux du Player et de sa Health,
 ## il ne modifie rien. On peut donc le retirer ou le refaire sans toucher au jeu.
@@ -49,6 +49,11 @@ func _ready() -> void:
 	_vignette.modulate.a = 0.0
 	add_child(_vignette)
 	move_child(_vignette, 0)   # sous les cœurs et les messages
+	# Jauge de la foudre, juste sous le compteur de pierres.
+	var gauge := LightningGauge.new()
+	var box: Node = $Margin/Box
+	box.add_child(gauge)
+	box.move_child(gauge, $Margin/Box/Sokpe.get_index() + 1)
 	if player == null:
 		push_warning("HUD : aucun Player renseigné dans l'inspecteur.")
 		return

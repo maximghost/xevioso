@@ -37,6 +37,10 @@ Tomber dans le vide coûte un cœur.
 | Abla, la Forgeronne | **Marteau** : brise les blocs fragiles, piqué dévastateur |
 | Kokou, le Tambourinaire | **Onde** : une onde de choc qui sonne les ennemis alentour |
 
+Tous les Envoyés partagent un pouvoir de circonstance, **la foudre de Xɛvioso** :
+chaque pierre sokpe ramassée remplit un cran de la jauge ; à quatre, la foudre peut
+tomber du ciel sur les deux ennemis les plus proches à portée et les vaincre d'un coup.
+
 Kodjo et Afi sont disponibles dès le début ; les trois autres rejoignent l'équipe en cours
 de route. Tous lancent la hache de foudre.
 
@@ -49,6 +53,7 @@ de route. Tous lancent la hache de foudre.
 | Hache de foudre | J ou clic gauche | X | Bouton hache |
 | Capacité du héros | K ou clic droit (à maintenir : Pagne-voile, Perche) | B | Bouton éclair |
 | Changer de héros | Tab | RB | Bouton flèches |
+| Foudre de Xɛvioso (4 pierres sokpe) | L | — | Bouton violet (apparaît quand la foudre est prête) |
 | Pause | Échap | Start | Bouton pause |
 
 ## Le village (région 1, niveau 1)

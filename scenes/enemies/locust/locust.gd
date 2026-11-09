@@ -33,6 +33,7 @@ var _dead: bool = false
 
 
 func _ready() -> void:
+	add_to_group(&"enemies")   # cibles possibles de la foudre de Xɛvioso
 	_home = global_position
 	_time = randf() * TAU
 	_sprite.play(&"fly")
@@ -104,3 +105,8 @@ func _on_died() -> void:
 	tween.tween_property(_sprite, "position:y", 20.0, 0.35)
 	tween.tween_property(_sprite, "modulate:a", 0.0, 0.35)
 	tween.chain().tween_callback(queue_free)
+
+
+## Vrai une fois vaincu (pendant son animation de disparition) : la foudre l'ignore.
+func is_dead() -> bool:
+	return _dead

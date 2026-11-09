@@ -48,6 +48,7 @@ var _ledge_ray_offset: float = 0.0
 
 
 func _ready() -> void:
+	add_to_group(&"enemies")   # cibles possibles de la foudre de Xɛvioso
 	_ledge_ray_offset = absf(_ledge_ray.position.x)
 	_set_direction(start_direction)
 	_health.died.connect(_on_died)
@@ -126,3 +127,8 @@ func _spawn_dust() -> void:
 	Fx.dust(get_parent(), global_position + Vector2(0.0, -4.0), Color(0.72, 0.44, 0.24))
 	Fx.ring(get_parent(), global_position + Vector2(0.0, -4.0), Color(1.0, 0.9, 0.55), 18.0, 0.25)
 	Fx.puff(get_parent(), global_position, Color(0.86, 0.72, 0.56), 5, Vector2.ZERO, 30.0, 0.6)
+
+
+## Vrai une fois vaincu (pendant son animation de disparition) : la foudre l'ignore.
+func is_dead() -> bool:
+	return _dead
