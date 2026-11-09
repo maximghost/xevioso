@@ -112,6 +112,17 @@ pause={
 
 3d/physics_engine="Jolt Physics"
 
+[shader_globals]
+
+wind_gust={
+"type": "float",
+"value": -0.3
+}
+player_world={
+"type": "vec2",
+"value": Vector2(0, -10000)
+}
+
 [rendering]
 
 textures/canvas_textures/default_texture_filter=0

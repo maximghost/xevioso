@@ -8,6 +8,7 @@ extends Node2D
 ##   - les limites : la caméra s'arrête aux bords du terrain, des murs invisibles
 ##     empêchent de sortir à gauche et à droite, tomber sous le terrain tue ;
 ##   - l'ambiance : couleur générale (teinte du niveau) et météo (poussière, pluie) ;
+##   - le décor vivant (Ambience) : vent, herbes, fumée, nuages, oiseaux, poules ;
 ##   - la fin du niveau (complete) : l'éclair de Xɛvioso, le retour de la pluie,
 ##     puis la floraison (bon présage) : l'herbe reverdit, les arbres reprennent des feuilles,
 ##     et des fleurs éclosent en vague, depuis l'autel jusqu'au bout du village.
@@ -43,6 +44,7 @@ extends Node2D
 @export var bloom_speed: float = 420.0
 
 var _weather: Weather
+var _ambience: Ambience
 var _completed: bool = false
 var _dialogue: DialogueBox
 
@@ -57,6 +59,10 @@ func _ready() -> void:
 		_setup_bounds()
 	if use_weather:
 		_setup_mood()
+		_ambience = Ambience.new()
+		_ambience.name = "Ambience"
+		add_child(_ambience)
+		_ambience.setup(self)
 	_place_player_at_checkpoint()
 	if player != null:
 		player.died.connect(_on_player_died)
@@ -161,6 +167,8 @@ func complete() -> void:
 
 	# Sous le premier éclair, la végétation change d'un coup (l'éclat masque la bascule).
 	_turn_green()
+	if _ambience != null:
+		_ambience.set_raining()
 	# La pluie revient : les couleurs passent du chaud au frais.
 	if _weather != null:
 		_weather.start_rain()
@@ -217,6 +225,8 @@ func _bloom() -> void:
 		flower.offset = Vector2(0, -6)                 # la base de la touffe au point de pose
 		flower.position = Vector2(cell.x * 16 + rng.randi_range(2, 14), cell.y * 16 + 6)
 		flower.scale = Vector2.ZERO
+		if _ambience != null:
+			flower.material = _ambience.sway_material("flower")   # elles ploient sous l'averse
 		layer.add_child(flower)
 		var delay: float = flower.position.distance_to(origin) / bloom_speed
 		var tween := flower.create_tween()
