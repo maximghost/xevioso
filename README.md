@@ -7,8 +7,9 @@ Au pays des collines rouges, un sanctuaire gardait la Pierre de foudre, don de X
 divinité du tonnerre. Une nuit, **Adaka**, le Mangeur de pluie (« adaka » : la méchanceté,
 en fon), l'arrache : elle se brise en éclats, les sokpe, et il avale les nuages. Depuis,
 les malheurs s'enchaînent. Xɛvioso choisit ses Envoyés pour reprendre son pouvoir, étape
-par étape, de leur village jusqu'au ciel d'orage ; la première : ramener la pluie pour
-soulager le village et sauver les récoltes.
+par étape, de leur village jusqu'au ciel d'orage. Les deux premiers sont désignés par sa
+foudre : Kodjo reçoit la Ruée et la vitesse, Afi le pagne volant et la sagesse. Première
+étape : ramener la pluie pour soulager le village et sauver les récoltes.
 
 ## Origine du projet
 

@@ -22,31 +22,55 @@ const ADAKA := "Adaka"
 
 ## Narration de la scène d'ouverture, un tableau après l'autre (voix du conteur, pas de Xɛvioso).
 const STORY := {
+	# Le village vivant, à la saison des pluies
 	&"avant": [
-		"Au pays des collines rouges, la pluie venait à chaque saison. Elle remplissait les jarres, gonflait le mil, et les greniers ne connaissaient pas la faim.",
-		"Au cœur du village, un sanctuaire gardait la Pierre de foudre, don de Xɛvioso, maître du tonnerre. Tant qu'elle brillait, le ciel tenait parole.",
+		"Il y a bien des saisons, au pays des collines rouges, vivait un village que le ciel aimait.",
+		"On y semait le mil quand l'harmattan s'en allait. On y pilait le grain au son des rires, et les jarres ne restaient jamais vides.",
+		"Car la pluie venait à son heure. Et quand tombaient les premières gouttes, les enfants dansaient, le tambour répondait au tonnerre, et les anciens remerciaient le ciel.",
 	],
+	# Le sanctuaire, au crépuscule
+	&"sanctuaire": [
+		"Au bout du village, un petit sanctuaire gardait un trésor : la Pierre de foudre, don de Xɛvioso, maître du tonnerre.",
+		"Tant qu'elle brillait sur son autel, le ciel tenait parole.",
+	],
+	# La nuit du vol
 	&"vol": [
-		"Mais une nuit, une ombre se glissa jusqu'au sanctuaire.",
-		"Adaka. Le Mangeur de pluie. Un corps d'argile craquelée, qui a soif depuis toujours.",
-		"Il arracha la Pierre de foudre. Elle se brisa, et ses éclats s'envolèrent aux quatre vents.",
-		"Puis il ouvrit sa bouche immense et avala les nuages, jusqu'au dernier.",
+		"Mais une nuit sans lune, le vent tomba d'un coup. Même les lucioles s'éteignirent.",
+		"Une ombre glissa jusqu'au sanctuaire. Adaka, le Mangeur de pluie.",
+		"Un corps d'argile craquelée, une soif sans fond, et dans la poitrine, un gouffre que rien ne remplit.",
+		"Il arracha la Pierre de foudre. Elle se brisa dans un éclair, et ses éclats s'envolèrent aux quatre vents.",
+		"Puis il ouvrit sa gueule immense et avala les nuages, jusqu'au dernier.",
+		"Et il s'effaça dans la poussière, emportant la pluie avec lui.",
 	],
+	# Les malheurs
 	&"malheurs": [
-		"Depuis, le ciel est muet. La terre se fend, le mil meurt sur pied, les greniers sonnent creux.",
-		"Les malheurs s'enchaînent, et les anciens lèvent les yeux vers un ciel qui ne répond plus.",
+		"Depuis, le ciel est muet.",
+		"La terre se fend, le mil meurt sur pied, les jarres sonnent creux. Le tambour s'est tu.",
+		"Les malheurs s'enchaînent, et chaque soir, les anciens interrogent un ciel qui ne répond plus.",
+		"Jusqu'à cette nuit où, sans un nuage, le tonnerre se mit à gronder.",
 	],
 }
 
 const LINES := {
-	# Scène d'ouverture (nouvelle partie)
-	&"intro": [
-		{"text": "Écoutez… Le ciel s'est tu."},
-		{"text": "Adaka a brisé ma pierre et bu mes nuages. La terre se fend. Les greniers ont soif."},
+	# Scène d'ouverture : l'appel de Xɛvioso, en quatre temps (la scène joue ses effets entre chaque).
+	&"intro_appel": [
+		{"text": "Enfants du village… levez les yeux."},
+		{"text": "Je suis Xɛvioso. Le tonnerre est ma voix, l'éclair est ma hache."},
+		{"text": "Adaka a brisé ma pierre et bu mes nuages. Sans elle, ma pluie ne peut plus descendre."},
 		{"text": "Je ne descends pas parmi les hommes. Je frappe, et ma foudre désigne."},
-		{"text": "Enfants du lundi, du mardi, du mercredi, du jeudi et du vendredi : vous êtes mes Envoyés."},
-		{"text": "Deux marchent déjà. Les trois autres attendent là où l'eau dort, où le fer chante, où le tambour gronde."},
-		{"text": "Ma hache vole avec vous. Qu'elle fende ce qui se dresse.",
+	],
+	&"intro_kodjo": [
+		{"text": "Kodjo, enfant du lundi. Toi qui cours plus vite que le vent du soir."},
+		{"text": "Je te donne la Ruée. Quand tu t'élances, ni l'épine ni le bec ne peuvent te blesser."},
+		{"text": "Et tes pieds seront les plus rapides de tous les Envoyés."},
+	],
+	&"intro_afi": [
+		{"text": "Afi, enfant du vendredi. Toi qui regardes longtemps avant d'agir."},
+		{"text": "Je te donne le pagne volant. Il te portera au-dessus des gouffres, aussi loin que porte le vent."},
+		{"text": "Et je te donne la sagesse : vois ce que les autres ne voient pas, et montre-leur le chemin."},
+	],
+	&"intro_mission": [
+		{"text": "Vous êtes mes Envoyés. Ma hache vole avec vous : qu'elle fende ce qui se dresse.",
 			"pc": "J ou clic gauche : lancer la hache", "mobile": "Bouton rouge : lancer la hache"},
 		{"text": "Le chemin sera long : on ne reprend pas la foudre d'un seul pas."},
 		{"text": "D'abord, rendez la pluie à ce village. Que la terre boive, que le mil reverdisse, que les greniers se remplissent."},
