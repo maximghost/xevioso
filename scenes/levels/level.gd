@@ -53,6 +53,9 @@ func _ready() -> void:
 	# Un niveau de développement (terrain d'essai) ne touche jamais à la vraie sauvegarde.
 	Game.saving_enabled = not level_id in Game.DEV_LEVELS
 	Game.reset_lives()
+	# On entre par le début du niveau (pas de point de contrôle) : nouvelle tentative.
+	if Game.checkpoint_for(level_id) == &"":
+		Game.begin_attempt(level_id)
 	if level_id == &"":
 		push_warning("Niveau sans level_id : la sauvegarde ne pourra pas s'y retrouver.")
 	if terrain != null and player != null:
@@ -85,10 +88,57 @@ func _on_player_died() -> void:
 	if Game.lose_life() > 0:
 		return
 	player.respawn_allowed = false
-	await get_tree().create_timer(0.9).timeout
+	await get_tree().create_timer(0.5).timeout
+	await _xevioso_wrath()
 	var screen: Node = preload("res://scenes/ui/game_over.tscn").instantiate()
 	screen.set("level_id", level_id)
 	add_child(screen)
+
+
+## Game over : la colère de Xɛvioso. Le ciel s'assombrit, la terre tremble, et des éclairs
+## secs frappent le sol l'un après l'autre — sans présage de pluie : ni nuage qui s'ouvre,
+## ni goutte. Environ 2,6 secondes, puis l'écran de fin.
+func _xevioso_wrath() -> void:
+	var camera := get_viewport().get_camera_2d()
+	if camera == null:
+		return
+	var view: Vector2 = get_viewport().get_visible_rect().size / camera.zoom
+	var center: Vector2 = camera.get_screen_center_position()
+	var top: float = center.y - view.y / 2.0
+	# Le ciel s'assombrit (teinte d'orage sec, rougeâtre).
+	var mood: Color = modulate
+	create_tween().tween_property(self, "modulate", mood * Color(0.5, 0.42, 0.5), 0.4)
+	# La terre gronde : secousse continue qui enfle puis retombe.
+	var rumble := create_tween()
+	rumble.tween_method(func(k: float) -> void:
+		if is_instance_valid(player):
+			player.shake_camera(2.0 + 5.0 * k, 0.12),
+		0.0, 1.0, 1.4)
+	rumble.tween_method(func(k: float) -> void:
+		if is_instance_valid(player):
+			player.shake_camera(7.0 * (1.0 - k), 0.12),
+		0.0, 1.0, 1.2)
+	# Les éclairs : sept frappes, de part et d'autre de l'écran, de plus en plus serrées.
+	var space := get_world_2d().direct_space_state
+	for i in 7:
+		var x: float = center.x + randf_range(-view.x * 0.45, view.x * 0.45)
+		var ground: Vector2 = _ground_below(space, Vector2(x, top), center.y + view.y / 2.0)
+		LightningBolt.strike(self, Vector2(x + randf_range(-30.0, 30.0), top - 10.0), ground, 2.5, 0.4, 3)
+		Fx.sparks(self, ground, Color(1.0, 0.85, 0.45), 12)
+		Fx.dust(self, ground, Color(0.72, 0.44, 0.24), 14, 120.0, 70.0)
+		Fx.puff(self, ground, Color(0.86, 0.72, 0.56), 4, Vector2.ZERO, 40.0, 0.8)
+		Fx.ring(self, ground, Color(1.0, 0.85, 0.5), 30.0, 0.35, 2.5, 0.3)
+		_flash(0.35 if i < 6 else 0.8)
+		await get_tree().create_timer(maxf(0.38 - i * 0.04, 0.14)).timeout
+	await get_tree().create_timer(0.5).timeout
+	modulate = mood
+
+
+## Le premier sol sous un point (rayon vers le bas sur la couche « monde »), ou le bas de l'écran.
+func _ground_below(space: PhysicsDirectSpaceState2D, from: Vector2, bottom: float) -> Vector2:
+	var query := PhysicsRayQueryParameters2D.create(from, Vector2(from.x, bottom + 64.0), 1)
+	var hit: Dictionary = space.intersect_ray(query)
+	return hit.position if not hit.is_empty() else Vector2(from.x, bottom)
 
 
 ## Retrouve le niveau qui contient un nœud (pour les pierres, points de contrôle...).
@@ -178,6 +228,10 @@ func complete() -> void:
 	_bloom()
 
 	await get_tree().create_timer(end_screen_delay).timeout
+	# La première étape est franchie, mais l'histoire continue (si le niveau a une suite).
+	var suite: Array = Voices.lines(StringName(String(level_id).split("_")[0] + "_suite"))
+	if not suite.is_empty():
+		await say(suite)
 	add_child(preload("res://scenes/ui/demo_end.tscn").instantiate())
 
 

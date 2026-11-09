@@ -9,18 +9,49 @@ extends RefCounted
 ##
 ## Chaque réplique : { "text": parole de Xɛvioso, "pc": aide clavier, "mobile": aide tactile }.
 ## Les deux aides sont facultatives.
+##
+## L'histoire (à valider avec la personne ressource culturelle) :
+## au pays des collines rouges, un sanctuaire gardait la Pierre de foudre, don de Xɛvioso.
+## Une nuit, Adaka (« la méchanceté », en fon), le Mangeur de pluie, l'a arrachée : elle s'est
+## brisée en éclats, les sokpe, dispersés au vent ; puis il a avalé les nuages. Depuis, les
+## malheurs s'enchaînent. Xɛvioso désigne ses Envoyés pour reprendre son pouvoir, étape par
+## étape. Première étape : ramener la pluie au village, pour la population et les récoltes.
+
+## Le nom de l'antagoniste (validé : « adaka » signifie « méchanceté » en fon).
+const ADAKA := "Adaka"
+
+## Narration de la scène d'ouverture, un tableau après l'autre (voix du conteur, pas de Xɛvioso).
+const STORY := {
+	&"avant": [
+		"Au pays des collines rouges, la pluie venait à chaque saison. Elle remplissait les jarres, gonflait le mil, et les greniers ne connaissaient pas la faim.",
+		"Au cœur du village, un sanctuaire gardait la Pierre de foudre, don de Xɛvioso, maître du tonnerre. Tant qu'elle brillait, le ciel tenait parole.",
+	],
+	&"vol": [
+		"Mais une nuit, une ombre se glissa jusqu'au sanctuaire.",
+		"Adaka. Le Mangeur de pluie. Un corps d'argile craquelée, qui a soif depuis toujours.",
+		"Il arracha la Pierre de foudre. Elle se brisa, et ses éclats s'envolèrent aux quatre vents.",
+		"Puis il ouvrit sa bouche immense et avala les nuages, jusqu'au dernier.",
+	],
+	&"malheurs": [
+		"Depuis, le ciel est muet. La terre se fend, le mil meurt sur pied, les greniers sonnent creux.",
+		"Les malheurs s'enchaînent, et les anciens lèvent les yeux vers un ciel qui ne répond plus.",
+	],
+}
 
 const LINES := {
 	# Scène d'ouverture (nouvelle partie)
 	&"intro": [
 		{"text": "Écoutez… Le ciel s'est tu."},
-		{"text": "Celui qui mange la pluie a vidé mes nuages. La terre se fend. Les greniers ont soif."},
+		{"text": "Adaka a brisé ma pierre et bu mes nuages. La terre se fend. Les greniers ont soif."},
 		{"text": "Je ne descends pas parmi les hommes. Je frappe, et ma foudre désigne."},
 		{"text": "Enfants du lundi, du mardi, du mercredi, du jeudi et du vendredi : vous êtes mes Envoyés."},
 		{"text": "Deux marchent déjà. Les trois autres attendent là où l'eau dort, où le fer chante, où le tambour gronde."},
 		{"text": "Ma hache vole avec vous. Qu'elle fende ce qui se dresse.",
 			"pc": "J ou clic gauche : lancer la hache", "mobile": "Bouton rouge : lancer la hache"},
-		{"text": "Ramassez les pierres tombées de mes mains. Chaque sokpe garde un peu de mon souffle."},
+		{"text": "Le chemin sera long : on ne reprend pas la foudre d'un seul pas."},
+		{"text": "D'abord, rendez la pluie à ce village. Que la terre boive, que le mil reverdisse, que les greniers se remplissent."},
+		{"text": "Les éclats de ma pierre sont tombés sur votre route. Chaque sokpe garde un peu de mon souffle : réunis, ils rappellent ma foudre.",
+			"pc": "4 sokpe : la foudre est prête (touche L)", "mobile": "4 sokpe : la foudre est prête (bouton violet)"},
 		{"text": "Marchez jusqu'à l'iroko. Là où mon signe est planté, la pluie se souviendra."},
 	],
 	# Village, niveau 1
@@ -60,6 +91,11 @@ const LINES := {
 	&"village_fin": [
 		{"text": "Vous avez entendu. Vous avez marché."},
 		{"text": "Maintenant… écoutez la pluie."},
+	],
+	# Après la pluie et la floraison : la première étape est franchie, la route continue.
+	&"village_suite": [
+		{"text": "Le village boira. Mais Adaka garde encore ce qu'il a volé, et ma pierre reste en éclats."},
+		{"text": "La route continue vers la forêt des irokos. Mes Envoyés, ne vous endormez pas sous la pluie."},
 	],
 }
 

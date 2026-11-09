@@ -3,9 +3,12 @@
 Jeu de plateforme 2D en pixel art, développé avec **Godot 4.7**, pensé d'abord pour le
 web (ordinateur et mobile en paysage), puis pour le Play Store et l'App Store.
 
-La pluie a disparu : le Mangeur de Pluie l'a volée. Cinq Envoyés de Xɛvioso, divinité
-de la foudre, partent la reprendre, de leur village jusqu'au ciel d'orage, en
-rassemblant les pierres sokpe tombées du ciel.
+Au pays des collines rouges, un sanctuaire gardait la Pierre de foudre, don de Xɛvioso,
+divinité du tonnerre. Une nuit, **Adaka**, le Mangeur de pluie (« adaka » : la méchanceté,
+en fon), l'arrache : elle se brise en éclats, les sokpe, et il avale les nuages. Depuis,
+les malheurs s'enchaînent. Xɛvioso choisit ses Envoyés pour reprendre son pouvoir, étape
+par étape, de leur village jusqu'au ciel d'orage ; la première : ramener la pluie pour
+soulager le village et sauver les récoltes.
 
 ## Origine du projet
 
@@ -24,7 +27,9 @@ par son emblème, la hache double. Il ouvre la partie et guide les Envoyés par 
 ## Vies
 
 Trois cœurs ; perdre tous ses cœurs coûte une vie (on repart de la dernière stèle).
-Deux vies par niveau : à la seconde, c'est la fin de la partie et l'on recommence le niveau.
+Deux vies par niveau : à la seconde, c'est la fin de la partie. Xɛvioso fait trembler la
+terre, la foudre tombe sans une goutte de pluie, et l'on reprend le niveau depuis le début :
+les sokpe ramassés pendant la tentative et la charge de foudre sont remis en jeu.
 Tomber dans le vide coûte un cœur.
 
 ## Les Envoyés

@@ -57,7 +57,8 @@ horizontal_alignment = 1
 
 [node name="Voice" type="Label" parent="Panel/Box"]
 layout_mode = 2
-text = "« La foudre tombe et se relève. Recommencez. »"
+text = "« La terre a tremblé, et pas une goutte n'est tombée.
+Relevez-vous, Envoyés : tout recommence. »"
 label_settings = SubResource("voice")
 horizontal_alignment = 1
 

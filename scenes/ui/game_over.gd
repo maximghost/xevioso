@@ -1,7 +1,8 @@
 extends CanvasLayer
-## Fin de la partie : les deux vies sont perdues. Le jeu se fige, la voix de Xɛvioso
-## encourage à se relever ; on recommence le niveau depuis le début (les pierres sokpe
-## déjà ramassées restent acquises).
+## Fin de la partie : les deux vies sont perdues (la colère de Xɛvioso a déjà fait trembler
+## la terre, voir Level). Le jeu se fige, sa voix ordonne de se relever ; on recommence le
+## niveau vraiment du début : les pierres sokpe ramassées pendant cette tentative sont à
+## reprendre, la foudre revient à sa charge d'avant.
 
 
 ## Le niveau à recommencer (renseigné par le niveau).
@@ -23,6 +24,6 @@ func _ready() -> void:
 
 
 func _on_retry() -> void:
-	Game.clear_checkpoint(level_id)
+	Game.restart_attempt(level_id)
 	get_tree().paused = false
 	get_tree().reload_current_scene()

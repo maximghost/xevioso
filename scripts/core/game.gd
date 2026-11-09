@@ -63,6 +63,10 @@ var heard_voices: Array[StringName] = []
 
 ## Charge de la foudre : une pierre sokpe nouvellement ramassée = un cran (jusqu'à 4).
 var lightning_charge: int = 0
+
+## État au début de la tentative en cours d'un niveau (pierres de ce niveau, charge de la
+## foudre) : après un game over, on repart vraiment de zéro, comme si on n'était jamais venu.
+var attempt: Dictionary = {}
 ## Faux dans un niveau de développement : rien n'est écrit sur le disque, et tout ce qui
 ## s'y est passé (héros débloqués, pierres, stèles) est oublié en revenant au menu.
 var saving_enabled: bool = true
@@ -181,7 +185,33 @@ func lose_life() -> int:
 	return lives
 
 
-## Oublie le point de contrôle d'un niveau (après un game over : on repart du début).
+## Début d'une tentative (on entre dans le niveau par son début) : on retient ce qui était
+## acquis avant d'y entrer.
+func begin_attempt(level_id: StringName) -> void:
+	var stones: Array = []
+	for stone in sokpe.get(level_id, []):
+		stones.append(String(stone))
+	attempt = {"level": String(level_id), "sokpe": stones, "lightning": lightning_charge}
+	save_game()
+
+
+## Tout reprendre (après un game over) : les pierres ramassées
+## pendant la tentative redeviennent à ramasser, la foudre revient à sa charge d'avant,
+## et le point de contrôle est oublié.
+func restart_attempt(level_id: StringName) -> void:
+	if attempt.get("level", "") == String(level_id):
+		var stones: Array[StringName] = []
+		for stone in attempt.get("sokpe", []):
+			stones.append(StringName(stone))
+		sokpe[level_id] = stones
+		lightning_charge = int(attempt.get("lightning", 0))
+		sokpe_changed.emit(total_sokpe())
+		lightning_changed.emit(lightning_charge)
+	clear_checkpoint(level_id)
+	save_game()
+
+
+## Oublie le point de contrôle d'un niveau.
 func clear_checkpoint(level_id: StringName) -> void:
 	if checkpoint_level == level_id:
 		checkpoint_level = &""
@@ -245,6 +275,7 @@ func save_game() -> void:
 		"completed_levels": completed_levels.map(func(id): return String(id)),
 		"heard_voices": heard_voices.map(func(id): return String(id)),
 		"lightning_charge": lightning_charge,
+		"attempt": attempt,
 	}
 	var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if file == null:
@@ -276,6 +307,7 @@ func load_game() -> void:
 	for id in data.get("heard_voices", []):
 		heard_voices.append(StringName(id))
 	lightning_charge = clampi(int(data.get("lightning_charge", 0)), 0, LIGHTNING_COST)
+	attempt = data.get("attempt", {})
 
 
 ## Efface toute la progression (bouton de test du menu pause, plus tard « Nouvelle partie »).
@@ -295,3 +327,4 @@ func _reset_state() -> void:
 	completed_levels = []
 	heard_voices = []
 	lightning_charge = 0
+	attempt = {}
