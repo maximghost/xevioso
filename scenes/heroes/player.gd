@@ -190,6 +190,22 @@ var _ability: HeroAbility = null
 # Temps restant pendant lequel un appui sur la capacité est mémorisé.
 var _ability_buffer_timer: float = 0.0
 
+# Écrasement / étirement du sprite (1, 1 = forme normale) : étiré à l'impulsion du saut,
+# écrasé à la réception. Il revient en douceur à la normale ; les pieds restent au sol.
+var _squash: Vector2 = Vector2.ONE
+
+# Vrai si le héros touchait le sol à l'image précédente (pour détecter la réception).
+var _was_on_floor: bool = true
+
+# Temps restant pendant lequel l'animation de réception garde la main.
+var _land_timer: float = 0.0
+
+# Position du sprite dans le visuel : la cellule fait 40 x 60, le bassin est sur la
+# colonne 16 et la plante des pieds sur la ligne 50 (soit le bas de la capsule, y = 20).
+const SPRITE_OFFSET := Vector2(4.0, -1.0)
+# Distance entre le centre du sprite et le dessous des pieds.
+const SPRITE_FEET := 21.0
+
 # Matériau partagé des images rémanentes : mode de mélange additif (lumineux).
 static var _ADDITIVE: CanvasItemMaterial = _make_additive()
 
@@ -230,6 +246,7 @@ func _physics_process(delta: float) -> void:
 	var direction: float = Input.get_axis("move_left", "move_right")
 
 	_update_timers(delta)
+	_update_squash(delta)
 	_tick_abilities(delta)
 	_update_blink()
 
@@ -241,6 +258,7 @@ func _physics_process(delta: float) -> void:
 		velocity.x = move_toward(velocity.x, 0.0, air_friction * delta)
 		_throw_timer = maxf(_throw_timer - delta, 0.0)
 		move_and_slide()
+		_was_on_floor = is_on_floor()
 		_update_animation()
 		_check_fall()
 		return
@@ -263,7 +281,9 @@ func _physics_process(delta: float) -> void:
 			_ability.physics_update(delta)
 
 	# Déplace le corps selon sa vitesse et le fait glisser le long des obstacles.
+	var fall_speed: float = velocity.y
 	move_and_slide()
+	_detect_landing(fall_speed)
 
 	_update_facing(direction)
 	_update_animation()
@@ -364,6 +384,8 @@ func _handle_jump() -> void:
 	# et qu'on touche le sol, ou qu'on vient tout juste de le quitter (coyote time).
 	if _jump_buffer_timer > 0.0 and _coyote_timer > 0.0:
 		velocity.y = _jump_velocity
+		_squash = Vector2(0.86, 1.14)  # étirement à l'impulsion
+		_land_timer = 0.0
 		# On vide les deux comptes à rebours : un appui ne doit donner qu'un seul saut.
 		_jump_buffer_timer = 0.0
 		_coyote_timer = 0.0
@@ -402,6 +424,10 @@ func _update_animation() -> void:
 	if _throwing:
 		return  # le lancer garde la main jusqu'à la fin de son animation
 	var animation: StringName
+	if is_on_floor() and _land_timer > 0.0 and absf(velocity.x) < 60.0:
+		_sprite.speed_scale = 1.0
+		_sprite.play(&"land")  # réception : genoux pliés, puis il se redresse
+		return
 	if not is_on_floor():
 		# En l'air : « jump » tant qu'il monte, « fall » dès qu'il redescend.
 		animation = &"jump" if velocity.y < 0.0 else &"fall"
@@ -419,6 +445,28 @@ func _update_animation() -> void:
 
 	# play() ne relance pas une animation déjà en cours : on peut l'appeler à chaque image.
 	_sprite.play(animation)
+
+
+## Réception : écrase le sprite selon la vitesse de chute et joue l'amorti.
+func _detect_landing(fall_speed: float) -> void:
+	var on_floor: bool = is_on_floor()
+	if on_floor and not _was_on_floor and fall_speed > 120.0:
+		var k: float = clampf(fall_speed / 1400.0, 0.06, 0.22)
+		_squash = Vector2(1.0 + k, 1.0 - k)
+		if _sprite.sprite_frames.has_animation(&"land") and not _throwing:
+			_land_timer = 0.14
+			_sprite.play(&"land")
+			_sprite.frame = 0  # relance l'amorti même s'il jouait déjà
+	_was_on_floor = on_floor
+
+
+## Ramène l'écrasement à la normale et l'applique au sprite, pieds fixés au sol.
+func _update_squash(delta: float) -> void:
+	_land_timer = maxf(_land_timer - delta, 0.0)
+	_squash = _squash.lerp(Vector2.ONE, 1.0 - exp(-14.0 * delta))
+	_sprite.scale = _squash
+	# Le sprite grandit autour de son centre : on le recale pour garder les pieds en place.
+	_sprite.position = Vector2(SPRITE_OFFSET.x, SPRITE_OFFSET.y + SPRITE_FEET * (1.0 - _squash.y))
 
 
 # ---------------------------------------------------------------------------

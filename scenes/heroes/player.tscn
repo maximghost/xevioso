@@ -23,7 +23,7 @@ shape = SubResource("CapsuleShape2D_mxjp5")
 [node name="Visual" type="Node2D" parent="." unique_id=1541435163]
 
 [node name="Sprite" type="AnimatedSprite2D" parent="Visual" unique_id=51301826]
-position = Vector2(4, 1)
+position = Vector2(4, -1)
 sprite_frames = ExtResource("2_kodjo")
 animation = &"idle"
 autoplay = "idle"

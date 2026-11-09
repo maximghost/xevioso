@@ -27,7 +27,7 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	_time += delta
-	_figure.position.y = -22.0 + sin(_time * 2.5) * 2.0
+	_figure.position.y = -24.0 + sin(_time * 2.5) * 2.0
 
 
 func _on_body_entered(body: Node2D) -> void:
