@@ -12,7 +12,7 @@ dest_files=["res://.godot/imported/fete.ogg-2f655e9282f7a47495ace9462fc20746.ogg
 
 [params]
 
-loop=false
+loop=true
 loop_offset=0
 bpm=0
 beat_count=0

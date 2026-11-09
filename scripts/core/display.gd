@@ -29,6 +29,8 @@ func _ready() -> void:
 	if DisplayServer.is_touchscreen_available():
 		get_window().content_scale_stretch = Window.CONTENT_SCALE_STRETCH_FRACTIONAL
 		_build_overlay()
+		if OS.has_feature("web"):
+			_install_fullscreen_on_touch()
 		get_window().size_changed.connect(_check_orientation)
 		_check_orientation.call_deferred()
 
@@ -143,15 +145,20 @@ func _draw_phone() -> void:
 		Color(1.0, 0.86, 0.45, arc_alpha))
 
 
-## Un toucher sur l'écran de rotation : plein écran + verrouillage en paysage, si le
-## navigateur l'accepte (Android). Sans effet ailleurs (Safari sur iPhone).
-func _on_overlay_input(event: InputEvent) -> void:
-	var tapped: bool = (event is InputEventScreenTouch and event.pressed) \
-		or (event is InputEventMouseButton and event.pressed)
-	if not tapped or not OS.has_feature("web"):
-		return
+## Un toucher sur l'écran de rotation : le plein écran et le verrouillage en paysage sont
+## demandés par le navigateur lui-même (voir _install_fullscreen_on_touch) ; ici, rien à faire.
+func _on_overlay_input(_event: InputEvent) -> void:
+	pass
+
+
+## Au toucher (dans le geste lui-même, côté navigateur : sinon il refuse), on passe en plein
+## écran et on verrouille le paysage, si le navigateur l'accepte (Android). Sans effet sur
+## Safari pour iPhone, qui ne le permet pas aux pages web.
+func _install_fullscreen_on_touch() -> void:
 	JavaScriptBridge.eval("""
 		(function () {
+			if (window.__xevFullscreen) { return; }
+			window.__xevFullscreen = true;
 			var lock = function () {
 				try {
 					if (screen.orientation && screen.orientation.lock) {
@@ -159,11 +166,11 @@ func _on_overlay_input(event: InputEvent) -> void:
 					}
 				} catch (e) {}
 			};
-			var root = document.documentElement;
-			if (!document.fullscreenElement && root.requestFullscreen) {
-				root.requestFullscreen({ navigationUI: 'hide' }).then(lock).catch(lock);
-			} else {
-				lock();
-			}
+			document.addEventListener('touchend', function () {
+				var root = document.documentElement;
+				if (!document.fullscreenElement && root.requestFullscreen) {
+					root.requestFullscreen({ navigationUI: 'hide' }).then(lock).catch(lock);
+				}
+			}, true);
 		})();
 	""", true)

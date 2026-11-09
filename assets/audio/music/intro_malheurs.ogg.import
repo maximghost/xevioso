@@ -12,7 +12,7 @@ dest_files=["res://.godot/imported/intro_malheurs.ogg-2fe701916cbc90307ac4d932a4
 
 [params]
 
-loop=false
+loop=true
 loop_offset=0
 bpm=0
 beat_count=0

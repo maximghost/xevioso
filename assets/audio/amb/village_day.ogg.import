@@ -12,7 +12,7 @@ dest_files=["res://.godot/imported/village_day.ogg-a555a32cf073e8cf5a4273b190a85
 
 [params]
 
-loop=false
+loop=true
 loop_offset=0
 bpm=0
 beat_count=0

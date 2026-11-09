@@ -65,12 +65,11 @@ var _last_played: Dictionary = {}        # nom -> instant (évite les doublons d
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS     # la musique et l'interface continuent en pause
+	# Les bus sont décrits dans res://default_bus_layout.tres, chargé au démarrage : les créer
+	# en cours de jeu désorganise le graphe audio du navigateur (export web) et tout se tait.
 	for bus in ["Musique", "Effets", "Ambiance"]:
 		if AudioServer.get_bus_index(bus) == -1:
-			AudioServer.add_bus()
-			var i := AudioServer.bus_count - 1
-			AudioServer.set_bus_name(i, bus)
-			AudioServer.set_bus_send(i, &"Master")
+			push_warning("Bus audio manquant : " + bus)
 	for i in 16:
 		var p := AudioStreamPlayer.new()
 		p.bus = &"Effets"
@@ -82,6 +81,8 @@ func _ready() -> void:
 		add_child(m)
 		_music_players.append(m)
 	_load_settings()
+	if OS.has_feature("web"):
+		_unlock_web_audio()
 	# Tous les boutons du jeu (menus, écrans de fin) font un petit bruit de calebasse.
 	get_tree().node_added.connect(_on_node_added)
 
@@ -150,11 +151,17 @@ func loop_on(node: Node2D, sound: StringName, volume_db: float = 0.0, distance: 
 	p.max_distance = distance
 	p.attenuation = 2.0
 	p.panning_strength = 0.6
-	# Démarre dès que le nœud est dans l'arbre (tout de suite s'il y est déjà), à un endroit
-	# pris au hasard : deux boucles identiques ne jouent pas en même temps la même chose.
-	p.ready.connect(func() -> void: p.play(randf() * stream.get_length()), CONNECT_ONE_SHOT)
+	# Démarre dès que le nœud est dans l'arbre (tout de suite s'il y est déjà).
+	p.ready.connect(func() -> void: p.play(_loop_start(stream)), CONNECT_ONE_SHOT)
 	node.add_child(p)
 	return p
+
+
+## Où démarrer une boucle : au hasard sur ordinateur (deux boucles identiques ne jouent pas
+## la même chose en même temps) ; au début sur le web, qui reprend chaque tour de boucle
+## à l'endroit du premier départ (un départ au milieu couperait le début de la boucle).
+func _loop_start(stream: AudioStream) -> float:
+	return 0.0 if OS.has_feature("web") else randf() * stream.get_length()
 
 
 func _sfx_stream(sound: StringName) -> AudioStream:
@@ -181,13 +188,12 @@ func _stream(path: String, loop: bool) -> AudioStream:
 		push_warning("Son introuvable : " + path)
 		_cache[key] = null
 		return null
+	# Les boucles (musiques, ambiances, vrombissements) sont réglées dans les fichiers .import
+	# (loop=true) : sur le web, le son est joué d'après ce réglage d'import ; une copie
+	# modifiée en cours de jeu n'y changerait rien.
 	var stream: AudioStream = load(path)
-	if loop and stream is AudioStreamOggVorbis:
-		stream = stream.duplicate()
-		stream.loop = true
-	elif not loop and stream is AudioStreamOggVorbis and stream.loop:
-		stream = stream.duplicate()
-		stream.loop = false
+	if loop and stream is AudioStreamOggVorbis and not stream.loop:
+		push_warning("Boucle non réglée à l'import : " + path)
 	_cache[key] = stream
 	return stream
 
@@ -273,7 +279,7 @@ func ambience(names: Array, fade: float = 2.0) -> void:
 		p.stream = stream
 		p.volume_db = -40.0
 		add_child(p)
-		p.play(randf() * stream.get_length())
+		p.play(_loop_start(stream))
 		_tween_volume(p, AMB_DB.get(amb_name, -12.0), fade)
 		_ambiences[amb_name] = p
 
@@ -312,3 +318,34 @@ func _save_settings() -> void:
 	for bus in _volumes:
 		cfg.set_value("audio", bus, _volumes[bus])
 	cfg.save(SETTINGS_PATH)
+
+
+# ---------------------------------------------------------------------------
+# Navigateurs mobiles
+# ---------------------------------------------------------------------------
+
+## Sur iPhone, le son d'une page web est coupé tant que le téléphone est en mode silencieux,
+## et il n'est autorisé qu'après un geste du joueur. Au premier toucher (dans le geste
+## lui-même, côté navigateur), on déclare la page comme lecteur de média : un petit fichier
+## silencieux joué en boucle, et la « session audio » de Safari mise en lecture.
+## Le son du jeu passe alors même en mode silencieux, comme une vidéo.
+func _unlock_web_audio() -> void:
+	JavaScriptBridge.eval("""
+	(function () {
+		if (window.__xevAudioUnlock) { return; }
+		window.__xevAudioUnlock = true;
+		var unlock = function () {
+			try { if (navigator.audioSession) { navigator.audioSession.type = 'playback'; } } catch (e) {}
+			try {
+				var a = document.createElement('audio');
+				a.setAttribute('x-webkit-airplay', 'deny');
+				a.setAttribute('playsinline', '');
+				a.loop = true;
+				a.src = 'data:audio/mpeg;base64,SILENCE';
+				a.play().catch(function () {});
+			} catch (e) {}
+			['touchend', 'click', 'keydown'].forEach(function (t) { document.removeEventListener(t, unlock, true); });
+		};
+		['touchend', 'click', 'keydown'].forEach(function (t) { document.addEventListener(t, unlock, true); });
+	})();
+	""".replace("SILENCE", "SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjYwLjE2LjEwMAAAAAAAAAAAAAAA//NwwAAAAAAAAAAAAEluZm8AAAAPAAAAFgAABTQALCwsLDc3Nzc3QUFBQUtLS0tLVVVVVV9fX19faWlpaXNzc3NzfX19fYeHh4eHkZGRkZubm5ubpaWlpaWvr6+vubm5ubnDw8PDzc3Nzc3X19fX4eHh4eHr6+vr9fX19fX/////AAAAAExhdmM2MC4zMQAAAAAAAAAAAAAAACQELwAAAAAAAAU0bbRwgwAAAAAAAAAAAAAAAAD/8yDEAAAAA0gAAAAATEFNRTMuMTAwVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVV//MixCcAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMuMTAwVVVVVVVVVVVVVVX/8yDETwAAA0gAAAAAVVVVVVVVVVVVVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVVVVVVVVVVV//MgxHYAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMuMTAwVVVVVVVVVVVVVf/zIMSdAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVVVVVVVVVX/8yLExAAAA0gAAAAAVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVVVf/zIMTYAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMuMTAwVVVVVVVVVVVVVVX/8yDE2AAAA0gAAAAAVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVV//MgxNgAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMuMTAwVVVVVVVVVVVVVf/zIsTXAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVVVVVVVVVVV//MgxNgAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVVVf/zIMTYAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVVVVVVVVVX/8yDE2AAAA0gAAAAAVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVV//MixNcAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMuMTAwVVVVVVVVVVVVVVX/8yDE2AAAA0gAAAAAVVVVVVVVVVVVVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVVVVVVVVVVV//MgxNgAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMuMTAwVVVVVVVVVVVVVf/zIMTYAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVX/8yLE1wAAA0gAAAAAVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zIMTYAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVX/8yDE2AAAA0gAAAAAVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//MgxNgAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zIsTXAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV"), true)

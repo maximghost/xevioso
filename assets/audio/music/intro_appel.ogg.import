@@ -12,7 +12,7 @@ dest_files=["res://.godot/imported/intro_appel.ogg-c30c6ca401e606c08b4609018f1e6
 
 [params]
 
-loop=false
+loop=true
 loop_offset=0
 bpm=0
 beat_count=0

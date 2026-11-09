@@ -12,7 +12,7 @@ dest_files=["res://.godot/imported/wind_dry.ogg-38cff083ccb51fdcce62dcde79dba338
 
 [params]
 
-loop=false
+loop=true
 loop_offset=0
 bpm=0
 beat_count=0

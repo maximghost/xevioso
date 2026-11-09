@@ -12,7 +12,7 @@ dest_files=["res://.godot/imported/storm_wind.ogg-ac7e047f271495b184a72bdac43543
 
 [params]
 
-loop=false
+loop=true
 loop_offset=0
 bpm=0
 beat_count=0

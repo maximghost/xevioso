@@ -12,7 +12,7 @@ dest_files=["res://.godot/imported/axe_whirr.ogg-6766d0d01745545f1fa074ff9486206
 
 [params]
 
-loop=false
+loop=true
 loop_offset=0
 bpm=0
 beat_count=0
