@@ -59,6 +59,7 @@
 [node name="Village1" type="Node2D" unique_id=1138977107 node_paths=PackedStringArray("player", "terrain")]
 script = ExtResource("1_k2p12")
 level_id = &"village_1"
+outro_scene = "res://scenes/story/fin_partie1.tscn"
 player = NodePath("Player")
 terrain = NodePath("Terrain")
 use_weather = true

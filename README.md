@@ -11,6 +11,11 @@ par étape, de leur village jusqu'au ciel d'orage. Les deux premiers sont désig
 foudre : Kodjo reçoit la Ruée et la vitesse, Afi le pagne volant et la sagesse. Première
 étape : ramener la pluie pour soulager le village et sauver les récoltes.
 
+À la fin de la première partie, une scène annonce la suite : la nuit après la pluie, une lueur
+rouge au-dessus de la forêt, la carte du voyage à la manière des tentures d'Abomey, le vieil
+iroko malade dont le tronc bat d'une lueur de colère, et un tambour qui gronde sous les arbres.
+Partie 2 : la forêt des irokos.
+
 ## Origine du projet
 
 Xɛvioso est la reprise en solo de **Harvest World**, un jeu 2D réalisé avec Godot dans le

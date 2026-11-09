@@ -42,6 +42,17 @@ const STORY := {
 		"Puis il ouvrit sa gueule immense et avala les nuages, jusqu'au dernier.",
 		"Et il s'effaça dans la poussière, emportant la pluie avec lui.",
 	],
+	# Fin de la partie 1 : la nuit après la pluie, la carte, l'iroko malade, le tambour
+	&"fin1": [
+		"Cette nuit-là, pour la première fois depuis bien des lunes, le village s'endormit bercé par la pluie.",
+		"Les jarres débordaient, le mil buvait, et le tambour avait retrouvé sa voix.",
+		"Mais à l'est, au-dessus de la forêt, une lueur rouge battait entre les arbres.",
+		"Le chemin des Envoyés quitte le village et s'enfonce vers l'est, dans la forêt des irokos.",
+		"Là-bas se dressent les arbres sacrés, les plus vieux du pays. Depuis le vol, ils n'entendent plus Xɛvioso.",
+		"Au cœur de la forêt, le plus vieil iroko gémit. Ses feuilles grisent et tombent, une à une.",
+		"Dans son tronc, un éclat de la Pierre de foudre a été planté. Quelque chose s'en nourrit, qui bat comme un cœur en colère.",
+		"Pourtant, cette nuit-là, quelque part sous les grands arbres, un tambour se mit à gronder…",
+	],
 	# Les malheurs
 	&"malheurs": [
 		"Depuis, le ciel est muet.",
@@ -116,10 +127,11 @@ const LINES := {
 		{"text": "Vous avez entendu. Vous avez marché."},
 		{"text": "Maintenant… écoutez la pluie."},
 	],
-	# Après la pluie et la floraison : la première étape est franchie, la route continue.
-	&"village_suite": [
-		{"text": "Le village boira. Mais Adaka garde encore ce qu'il a volé, et ma pierre reste en éclats."},
-		{"text": "La route continue vers la forêt des irokos. Mes Envoyés, ne vous endormez pas sous la pluie."},
+	# Fin de la partie 1 : Xɛvioso tourne les Envoyés vers la forêt des irokos.
+	&"fin1_xevioso": [
+		{"text": "Envoyés. Vous avez rendu la pluie au village : c'est le premier pas du chemin."},
+		{"text": "Mais regardez vers l'est. La forêt des irokos souffre, et ses arbres sacrés ne m'entendent plus."},
+		{"text": "Un éclat de ma pierre y a été planté, et une colère s'en nourrit. Allez. Rendez-moi la forêt."},
 	],
 }
 

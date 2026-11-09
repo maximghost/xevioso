@@ -19,6 +19,8 @@ extends Control
 
 ## Pour la mise au point : commencer à un tableau donné (1 à 5).
 @export_range(1, 5) var start_at: int = 1
+## 0 : la scène d'ouverture ; 1 : la fin de la partie 1 (scenes/story/fin_partie1.tscn).
+@export var chapter: int = 0
 
 const GROUND_Y := 302.0
 const DECOR := "res://assets/decor/village/"
@@ -192,6 +194,9 @@ func _process(delta: float) -> void:
 
 
 func _run() -> void:
+	if chapter == 1:
+		await _fin_partie1()
+		return
 	if start_at in [2, 3]:   # (mise au point) commencer directement au sanctuaire
 		_season(true)
 		_build_village(false)
@@ -205,6 +210,325 @@ func _run() -> void:
 	if not _leaving and start_at <= 3: await _tableau_vol()
 	if not _leaving and start_at <= 4: await _tableau_malheurs()
 	if not _leaving: await _tableau_appel()
+
+
+# ---------------------------------------------------------------------------
+# Fin de la partie 1 : la nuit après la pluie, la carte, l'iroko malade, le tambour
+# ---------------------------------------------------------------------------
+
+var _screen: CanvasLayer          # les tableaux plein écran (carte, forêt, carton)
+
+
+func _fin_partie1() -> void:
+	# 1. La nuit après la pluie : le village fête doucement, les Envoyés regardent vers l'est.
+	_season(true)
+	_build_village(false)
+	if is_instance_valid(_stone):
+		_stone.queue_free()
+	_stone_hover = false
+	if _v.has("pretre"):
+		_v["pretre"].visible = false
+	if _porteuse_walk != null:
+		_porteuse_walk.kill()
+	for hen in _hens:
+		hen.visible = false
+	_kids_running = false
+	var night := {"garcon": [&"garcon_dance", 600.0], "fille": [&"fille_dance", 626.0],
+		"porteuse": [&"porteuse_joy", 560.0], "pileuse": [&"pileuse_joy", 470.0],
+		"tambour": [&"drum", 700.0], "cultivateur": [&"cultivateur_joy", 520.0], "ancien": [&"ancien_idle", 760.0]}
+	for role in night:
+		_v[role].flip_h = false
+		_v[role].position.x = night[role][1]
+		_v[role].play(night[role][0])
+	_tint.color = Color(0.42, 0.44, 0.64)
+	_rain_light.emitting = true
+	_fireflies.emitting = true
+	_kodjo.position = Vector2(ALTAR_X - 150.0, GROUND_Y - 19.0)
+	_afi.position = Vector2(ALTAR_X - 178.0, GROUND_Y - 19.0)
+	_afi.scale.x = 1.0
+	for hero in [_kodjo, _afi]:
+		hero.visible = true
+		hero.modulate = Color(1.2, 1.2, 1.2)
+		hero.play(&"idle")
+		move_child(hero, _world.get_index() + 1)
+	_camera.position = Vector2(540.0, 250.0)
+	Audio.music(&"intro_village", 2.5)
+	Audio.ambience([&"night", &"rain"], 2.0)
+	await _fade_in(2.0)
+	var pan := create_tween()
+	pan.tween_property(_camera, "position:x", ALTAR_X - 60.0, 20.0).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	await _pause(1.0)
+	await _tell(&"fin1", 0)
+	await _tell(&"fin1", 1)
+	await _await_tween(pan)
+	if _leaving: return
+	# À l'est, au-dessus de la forêt, une lueur rouge bat entre les arbres.
+	_rain_light.emitting = false
+	Audio.ambience([&"night"], 3.0)
+	Audio.stop_music(4.0)
+	var glow := _red_glow(_lit, Vector2(ALTAR_X + 150.0, 205.0), 3.5)
+	glow.modulate.a = 0.0
+	create_tween().tween_property(glow, "modulate:a", 1.0, 2.0)
+	Audio.play(&"thunder_far", -8.0)
+	await _tell(&"fin1", 2)
+	if _leaving: return
+
+	# 2. Xɛvioso tourne les Envoyés vers la forêt.
+	_emblem_y = 128.0
+	_emblem.position = Vector2(ALTAR_X + 40.0, _emblem_y)
+	create_tween().tween_property(_emblem, "modulate:a", 0.9, 2.0)
+	Audio.play(&"emblem_appear", -6.0)
+	Audio.music(&"intro_appel", 3.0)
+	await _pause(1.5)
+	_skip_at_top(false)
+	await _xevioso(&"fin1_xevioso")
+	_skip_at_top(true)
+	if _leaving: return
+
+	# 3. La carte du voyage, à la manière des tentures d'Abomey.
+	await _fade_out(1.2)
+	_emblem.modulate.a = 0.0
+	Audio.music(&"titre", 2.0)
+	var map := _show_map()
+	await _fade_in(1.2)
+	await _pause(0.8)
+	await _stitch_path(map)
+	await _tell(&"fin1", 3)
+	await _tell(&"fin1", 4)
+	await _fade_out(1.2)
+	if _leaving: return
+	map.queue_free()
+
+	# 4. Au cœur de la forêt : le vieil iroko malade, et ce qui bat dans son tronc.
+	Audio.music(&"intro_drame", 2.0)
+	Audio.ambience([&"night"], 2.0)
+	var forest := _show_forest()
+	var push := create_tween()
+	push.tween_method(func(s: float) -> void:
+		forest.scale = Vector2(s, s)
+		forest.position = Vector2(320.0, 230.0) * (1.0 - s), 1.0, 1.18, 26.0)
+	await _fade_in(1.5)
+	await _pause(1.0)
+	await _tell(&"fin1", 5)
+	await _tell(&"fin1", 6)
+	if _leaving: return
+
+	# 5. Pourtant, sous les grands arbres, un tambour se met à gronder... une silhouette.
+	Audio.stop_music(2.5)
+	create_tween().tween_property(forest, "modulate", Color(0.35, 0.35, 0.45), 2.0)
+	await _pause(1.0)
+	Audio.play(&"drum_roll")
+	await _tell(&"fin1", 7)
+	if _leaving: return
+	var flash: ColorRect = forest.get_node("Flash")
+	var shadow: AnimatedSprite2D = forest.get_node("Silhouette")
+	shadow.visible = true
+	Audio.play(&"thunder_close", -2.0)
+	for k in 2:   # deux éclairs : la silhouette se découpe en noir, un tambour à la main
+		flash.color.a = 0.85
+		create_tween().tween_property(flash, "color:a", 0.0, 0.35)
+		await _pause(0.45)
+	create_tween().tween_property(shadow, "modulate:a", 0.0, 1.2)
+	await _pause(2.0)
+	push.kill()
+
+	# Le carton de la partie 2, puis l'écran de fin.
+	await _fade_out(1.0)
+	forest.queue_free()
+	await _title_card()
+	if not _leaving:
+		_leaving = true
+		_skip.visible = false
+		_show_end_screen()
+
+
+func _screen_layer() -> CanvasLayer:
+	if _screen == null:
+		_screen = CanvasLayer.new()
+		_screen.layer = 3
+		add_child(_screen)
+	return _screen
+
+
+## Une lueur rouge qui bat comme un cœur (deux battements, puis un silence).
+func _red_glow(parent: Node, at: Vector2, size: float) -> Sprite2D:
+	var glow := Sprite2D.new()
+	glow.texture = preload("res://assets/story/thunder_glow.png")
+	var add := CanvasItemMaterial.new()
+	add.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+	glow.material = add
+	glow.self_modulate = Color(1.0, 0.22, 0.12)
+	glow.position = at
+	glow.scale = Vector2.ONE * size
+	parent.add_child(glow)
+	var beat := create_tween().set_loops()
+	beat.bind_node(glow)
+	for k in 2:
+		beat.tween_property(glow, "scale", Vector2.ONE * size * 1.25, 0.12)
+		beat.tween_property(glow, "scale", Vector2.ONE * size, 0.2)
+	beat.tween_interval(0.7)
+	return glow
+
+
+## La carte en tenture : les lieux, leurs noms, et la lueur sur le vieil iroko.
+func _show_map() -> Control:
+	var root := Control.new()
+	root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_screen_layer().add_child(root)
+	var cloth := TextureRect.new()
+	cloth.texture = preload("res://assets/story/carte_tenture.png")
+	cloth.set_anchors_preset(Control.PRESET_FULL_RECT)
+	root.add_child(cloth)
+	for entry in [["Le village", Vector2(40, 226), 150.0], ["La forêt des irokos", Vector2(285, 86), 200.0]]:
+		var label := Label.new()
+		label.text = entry[0]
+		label.position = entry[1]
+		label.size = Vector2(entry[2], 16)
+		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		label.add_theme_font_size_override("font_size", 12)
+		label.add_theme_color_override("font_color", Color(0.96, 0.9, 0.78))
+		label.add_theme_color_override("font_outline_color", Color(0.1, 0.07, 0.06))
+		label.add_theme_constant_override("outline_size", 4)
+		root.add_child(label)
+	var holder := Node2D.new()
+	holder.name = "Marks"
+	root.add_child(holder)
+	_red_glow(holder, Vector2(385, 196), 1.1)
+	return root
+
+
+## Le chemin des Envoyés se coud, point par point, du village jusqu'à la forêt.
+func _stitch_path(map: Control) -> void:
+	var holder: Node2D = map.get_node("Marks")
+	var a := Vector2(150, 300)
+	var c1 := Vector2(230, 334)
+	var c2 := Vector2(250, 250)
+	var b := Vector2(330, 250)
+	var points := 26
+	for i in points:
+		if _leaving:
+			return
+		var t0: float = float(i) / points
+		var t1: float = t0 + 0.5 / points
+		var dash := Line2D.new()
+		dash.width = 2.0
+		dash.default_color = Color(0.96, 0.92, 0.82)
+		dash.add_point(a.bezier_interpolate(c1, c2, b, t0))
+		dash.add_point(a.bezier_interpolate(c1, c2, b, t1))
+		holder.add_child(dash)
+		if i % 4 == 0:
+			Audio.play(&"text_tick", 6.0, 0.2)
+		await get_tree().create_timer(0.07).timeout
+
+
+## La forêt la nuit : le vieil iroko, la fente rouge qui bat, les feuilles grises qui tombent ;
+## une silhouette cachée (révélée par l'éclair) et le voile blanc de l'éclair.
+func _show_forest() -> Node2D:
+	var root := Node2D.new()
+	_screen_layer().add_child(root)
+	var bg := Sprite2D.new()
+	bg.texture = preload("res://assets/story/foret_nuit.png")
+	bg.centered = false
+	root.add_child(bg)
+	var flash := ColorRect.new()
+	flash.name = "Flash"
+	flash.color = Color(0.85, 0.9, 1.0, 0.0)
+	flash.size = Vector2(640, 360)
+	flash.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.add_child(flash)
+	var tree := Sprite2D.new()
+	tree.texture = preload("res://assets/story/iroko_malade.png")
+	tree.position = Vector2(320, 360 - 165)
+	root.add_child(tree)
+	_red_glow(root, tree.position + Vector2(1, -10), 1.3)
+	var leaves := CPUParticles2D.new()
+	leaves.texture = preload("res://assets/story/leaf_grey.png")
+	leaves.amount = 18
+	leaves.lifetime = 6.0
+	leaves.preprocess = 6.0
+	leaves.position = Vector2(320, -10)
+	leaves.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+	leaves.emission_rect_extents = Vector2(160, 4)
+	leaves.direction = Vector2(0.2, 1)
+	leaves.spread = 30.0
+	leaves.gravity = Vector2(0, 14)
+	leaves.initial_velocity_min = 10.0
+	leaves.initial_velocity_max = 20.0
+	leaves.angular_velocity_min = -120.0
+	leaves.angular_velocity_max = 120.0
+	leaves.scale_amount_min = 1.0
+	leaves.scale_amount_max = 1.6
+	root.add_child(leaves)
+	var shadow := AnimatedSprite2D.new()
+	shadow.name = "Silhouette"
+	shadow.sprite_frames = load("res://assets/heroes/kokou/kokou_frames.tres")
+	shadow.play(&"idle")
+	shadow.position = Vector2(500, 278)
+	shadow.scale = Vector2(-2.4, 2.4)
+	shadow.modulate = Color(0, 0, 0, 1)
+	shadow.visible = false
+	root.add_child(shadow)
+	return root
+
+
+## Le carton : « Partie 2 — La forêt des irokos ».
+func _title_card() -> void:
+	var root := Control.new()
+	root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_screen_layer().add_child(root)
+	var bg := ColorRect.new()
+	bg.color = Color(0.03, 0.02, 0.04)
+	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+	root.add_child(bg)
+	var emblem := TextureRect.new()
+	emblem.texture = preload("res://assets/ui/xevioso/emblem.png")
+	emblem.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	emblem.size = Vector2(44, 44)
+	emblem.position = Vector2(320 - 22, 86)
+	emblem.modulate.a = 0.0
+	root.add_child(emblem)
+	var parts := []
+	for entry in [["PARTIE 2", 12, Color(1.0, 0.86, 0.45), 146.0], ["La forêt des irokos", 26, Color(0.96, 0.92, 0.82), 164.0],
+			["Bientôt…", 11, Color(0.7, 0.68, 0.64), 214.0]]:
+		var label := Label.new()
+		label.text = entry[0]
+		label.position = Vector2(0, entry[3])
+		label.size = Vector2(640, 30)
+		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		label.add_theme_font_size_override("font_size", entry[1])
+		label.add_theme_color_override("font_color", entry[2])
+		label.add_theme_color_override("font_outline_color", Color(0, 0, 0))
+		label.add_theme_constant_override("outline_size", 4)
+		label.modulate.a = 0.0
+		root.add_child(label)
+		parts.append(label)
+	Audio.music(&"titre", 2.0)
+	_fade.color.a = 0.0
+	Audio.play(&"thunder_far", -4.0)
+	create_tween().tween_property(emblem, "modulate:a", 1.0, 1.2)
+	await _pause(0.8)
+	for label in parts:
+		create_tween().tween_property(label, "modulate:a", 1.0, 1.0)
+		await _pause(0.9)
+	await _pause(3.5)
+
+
+## L'écran de fin (rejouer le niveau, menu principal), par-dessus le carton.
+func _show_end_screen() -> void:
+	for old in _screen_layer().get_children():   # le carton s'efface sous l'écran de fin
+		old.queue_free()
+	var black := ColorRect.new()
+	black.color = Color(0.03, 0.02, 0.04)
+	black.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_screen_layer().add_child(black)
+	_fade.color.a = 0.0
+	var end: Node = preload("res://scenes/ui/demo_end.tscn").instantiate()
+	end.set("level_id", &"village_1")
+	add_child(end)
+	if Audio._music_name != &"titre":
+		Audio.music(&"titre", 2.0)
 
 
 # ---------------------------------------------------------------------------
@@ -1354,8 +1678,21 @@ func _skip_at_top(top: bool) -> void:
 
 
 ## Fin de la scène (ou « Passer ») : un dernier éclair, fondu au noir, premier niveau.
+## (Fin de la partie 1 : on va droit à l'écran de fin.)
 func _leave() -> void:
 	if _leaving:
+		return
+	if chapter == 1:
+		_leaving = true
+		_skip.visible = false
+		if _box != null:
+			_box.queue_free()
+			_box = null
+		await create_tween().tween_property(_fade, "color:a", 1.0, 0.6).finished
+		_caption.visible = false
+		_hint.visible = false
+		_caption_next.visible = false
+		_show_end_screen()
 		return
 	_leaving = true
 	_skip.disabled = true

@@ -1,0 +1,6 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/story/intro.tscn" id="1_intro"]
+
+[node name="FinPartie1" instance=ExtResource("1_intro")]
+chapter = 1

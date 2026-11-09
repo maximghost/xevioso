@@ -45,6 +45,8 @@ extends Node2D
 ## Musique du niveau, et ses ambiances (boucles) tant qu'il fait sec.
 @export var music_track: StringName = &"village"
 @export var ambiences: Array[StringName] = [&"wind_dry", &"village_day"]
+## Scène jouée après la victoire (fin de partie : la suite de l'histoire). Vide : l'écran de fin.
+@export_file("*.tscn") var outro_scene: String = ""
 
 var _weather: Weather
 var _ambience: Ambience
@@ -282,10 +284,19 @@ func complete(altar: Vector2 = Vector2.INF) -> void:
 		collected, _sokpe_total, Game.lives)
 	await get_tree().create_timer(1.0).timeout
 
-	# 5. L'histoire continue (si le niveau a une suite), puis l'écran de fin.
-	var suite: Array = Voices.lines(StringName(String(level_id).split("_")[0] + "_suite"))
-	if not suite.is_empty():
-		await say(suite)
+	# 5. L'histoire continue (scène de fin de partie, si le niveau en a une), sinon l'écran de fin.
+	if outro_scene != "":
+		Audio.stop_music(1.5)
+		var fade := ColorRect.new()
+		fade.color = Color(0, 0, 0, 0)
+		fade.set_anchors_preset(Control.PRESET_FULL_RECT)
+		var layer := CanvasLayer.new()
+		layer.layer = 30
+		layer.add_child(fade)
+		add_child(layer)
+		await create_tween().tween_property(fade, "color:a", 1.0, 1.5).finished
+		get_tree().change_scene_to_file(outro_scene)
+		return
 	var end: Node = preload("res://scenes/ui/demo_end.tscn").instantiate()
 	end.set("level_id", level_id)
 	add_child(end)
