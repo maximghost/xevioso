@@ -99,6 +99,9 @@ var _caption: PanelContainer
 var _caption_label: Label
 var _caption_next: Label
 var _advance_requested: bool = false
+var _hint: Label                     # « toucher pour avancer », sur les premières phrases
+var _told: int = 0
+var _hurry: bool = false              # le joueur a touché l'écran hors du récit : on presse le pas
 
 
 func _ready() -> void:
@@ -111,6 +114,7 @@ func _ready() -> void:
 	add_child(_ui)
 	for node in [_flash, _fade, _skip]:
 		node.reparent(_ui, false)
+	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_flash.color.a = 0.0
 	_fade.color.a = 1.0
 	_skip.pressed.connect(_leave)
@@ -239,8 +243,7 @@ func _tableau_village() -> void:
 		_porteuse_walk.kill()
 	for role in ["pileuse", "porteuse", "garcon", "fille", "cultivateur", "ancien"]:
 		_v[role].play(StringName(role + ("_dance" if role in ["garcon", "fille"] else "_joy")))
-	if pan.is_running():
-		await pan.finished
+	await _await_tween(pan)
 	await _tell(&"avant", 2)
 	await _pause(2.0)
 
@@ -262,8 +265,7 @@ func _tableau_sanctuaire() -> void:
 	pan.tween_property(_camera, "position:x", ALTAR_X - 60.0, 9.0).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	await _pause(3.0)
 	await _tell(&"sanctuaire", 0)
-	if pan.is_running():
-		await pan.finished
+	await _await_tween(pan)
 	# Le prêtre s'incline devant la pierre ; elle répond par un éclat.
 	Fx.sparks(_lit, _stone.position, Color(0.6, 0.8, 1.0), 10)
 	await _tell(&"sanctuaire", 1)
@@ -321,8 +323,7 @@ func _tableau_vol() -> void:
 	glide.tween_property(adaka, "position:x", ALTAR_X - ADAKA_HAND.x, 7.0).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	create_tween().tween_property(_camera, "position:x", ALTAR_X - 40.0, 7.0).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	await _tell(&"vol", 1)
-	if glide.is_running():
-		await glide.finished
+	await _await_tween(glide)
 	await _tell(&"vol", 2)
 	if _leaving: return
 
@@ -1202,6 +1203,22 @@ func _build_caption() -> void:
 	_caption_next.offset_bottom = -10
 	_caption_next.visible = false
 	_ui.add_child(_caption_next)
+	_hint = Label.new()
+	_hint.text = "Touchez l'écran pour avancer" if DisplayServer.is_touchscreen_available() \
+		else "Une touche ou un clic pour avancer"
+	_hint.add_theme_font_size_override("font_size", 8)
+	_hint.add_theme_color_override("font_color", Color(0.85, 0.66, 0.32, 0.85))
+	_hint.anchor_left = 1.0
+	_hint.anchor_right = 1.0
+	_hint.anchor_top = 1.0
+	_hint.anchor_bottom = 1.0
+	_hint.offset_left = -240
+	_hint.offset_right = -60
+	_hint.offset_top = -21
+	_hint.offset_bottom = -9
+	_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_hint.visible = false
+	_ui.add_child(_hint)
 
 
 ## Le conteur dit une phrase, lentement, puis laisse le temps de la lire.
@@ -1215,6 +1232,8 @@ func _tell(part: StringName, index: int) -> void:
 	_caption_label.text = text
 	_caption_label.visible_ratio = 0.0
 	_caption_next.visible = false
+	_hint.visible = _told < 2       # on rappelle comment avancer sur les deux premières phrases
+	_told += 1
 	_advance_requested = false
 	# Le texte s'écrit (24 caractères par seconde) ; un toucher l'affiche en entier.
 	var shown := 0.0
@@ -1236,6 +1255,7 @@ func _tell(part: StringName, index: int) -> void:
 		_caption_next.modulate.a = 0.5 + 0.5 * sin(_time * 5.0)
 	_advance_requested = false
 	_caption_next.visible = false
+	_hint.visible = false
 	if _leaving:
 		return
 	await create_tween().tween_property(_caption, "modulate:a", 0.0, 0.35).finished
@@ -1243,26 +1263,60 @@ func _tell(part: StringName, index: int) -> void:
 	await _pause(0.5)
 
 
-func _unhandled_input(event: InputEvent) -> void:
-	if _caption == null or not _caption.visible:
+## Le récit avance au premier geste : toucher l'écran, cliquer, ou n'importe quelle touche
+## (un premier appui affiche toute la phrase, le suivant passe à la phrase d'après).
+## On écoute avant l'interface : rien ne doit pouvoir avaler le toucher.
+func _input(event: InputEvent) -> void:
+	if _caption == null or _leaving or (_box != null and _box._panel.visible):
 		return
-	var pressed: bool = (event is InputEventMouseButton and event.pressed) \
-		or (event is InputEventScreenTouch and event.pressed) \
-		or event.is_action_pressed("ui_accept") or event.is_action_pressed("jump")
-	if pressed:
-		_advance_requested = true
-		Audio.play(&"caption_next")
-		get_viewport().set_input_as_handled()
+	var pressed := false
+	var where := Vector2(-1, -1)
+	if event is InputEventScreenTouch and event.pressed:
+		pressed = true
+		where = event.position
+	elif event is InputEventMouseButton and event.pressed:
+		# Sur écran tactile, chaque toucher produit aussi un faux clic : on ne compte que le toucher.
+		pressed = event.device != InputEvent.DEVICE_ID_EMULATION
+		where = event.position
+	elif event is InputEventKey and event.pressed and not event.echo:
+		pressed = event.physical_keycode != KEY_ESCAPE
+	elif event is InputEventJoypadButton and event.pressed:
+		pressed = true
+	if not pressed:
+		return
+	# Un toucher sur « Passer » reste pour « Passer ».
+	if where.x >= 0.0 and _skip.get_global_rect().has_point(where):
+		return
+	if not _caption.visible:
+		_hurry = true          # entre deux phrases : la mise en scène presse le pas
+		return
+	_advance_requested = true
+	Audio.play(&"caption_next")
+	get_viewport().set_input_as_handled()
 
 
 # ---------------------------------------------------------------------------
 # Transitions, lumière, caméra
 # ---------------------------------------------------------------------------
 
+## Une pause dans la mise en scène ; un toucher (ou une touche) l'abrège.
 func _pause(seconds: float) -> void:
 	if _leaving:
 		return
-	await get_tree().create_timer(seconds).timeout
+	_hurry = false
+	var waited := 0.0
+	while waited < seconds and not _hurry and not _leaving:
+		await get_tree().process_frame
+		waited += get_process_delta_time()
+
+
+## Attend la fin d'un mouvement (caméra, glissade) ; un toucher le fait aller quatre fois plus vite.
+func _await_tween(tween: Tween) -> void:
+	_hurry = false
+	while tween != null and tween.is_valid() and tween.is_running() and not _leaving:
+		if _hurry:
+			tween.set_speed_scale(4.0)
+		await get_tree().process_frame
 
 
 func _fade_in(duration: float = 1.0) -> void:
