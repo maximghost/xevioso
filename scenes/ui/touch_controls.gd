@@ -86,7 +86,7 @@ func _layout() -> void:
 	var screen: Vector2 = get_viewport().get_visible_rect().size
 
 	# --- La croix de déplacement, sous le pouce gauche --------------------------
-	# Quatre flèches de 60 px autour d'un centre (environ 65 points sur un iPhone).
+	# Quatre flèches de 54 px autour d'un centre (environ 58 points sur un iPhone).
 	var arrow: float = _left.texture_normal.get_width()
 	var step: float = arrow + dpad_gap
 	var half_cross: float = arrow * 1.5 + dpad_gap
