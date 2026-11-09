@@ -97,6 +97,8 @@ func _on_died() -> void:
 	_hurtbox.set_deferred("monitoring", false)
 	$CollisionShape2D.set_deferred("disabled", true)
 	Fx.dust(get_parent(), global_position, Color(0.66, 0.64, 0.3), 10, 70.0, 180.0)
+	Fx.ring(get_parent(), global_position, Color(1.0, 0.9, 0.55), 16.0, 0.25)
+	Fx.sparks(get_parent(), global_position, Color(1.0, 0.85, 0.35), 8)
 	var tween := create_tween().set_parallel()
 	tween.tween_property(_sprite, "rotation_degrees", 180.0, 0.35)
 	tween.tween_property(_sprite, "position:y", 20.0, 0.35)

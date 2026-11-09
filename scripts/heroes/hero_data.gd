@@ -20,3 +20,7 @@ extends Resource
 
 ## La scène de sa capacité propre (Ruée, Pagne-voile...). Vide = pas encore de capacité.
 @export var ability_scene: PackedScene
+
+## Vitesse de course, par rapport à celle de l'équipe (1 = normale). Kodjo, le Coureur,
+## est plus rapide que les autres.
+@export_range(0.5, 2.0, 0.05) var speed_multiplier: float = 1.0

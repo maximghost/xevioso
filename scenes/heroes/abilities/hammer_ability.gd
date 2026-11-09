@@ -70,6 +70,10 @@ func _update_slam() -> void:
 	# Impact !
 	var feet: Vector2 = player.global_position + Vector2(0.0, 20.0)
 	Fx.dust(player.get_parent(), feet, Color(0.72, 0.44, 0.24), 18, 110.0, 70.0)
+	# L'onde de choc court au ras du sol, la poussière gicle des deux côtés.
+	Fx.ring(player.get_parent(), feet, Color(1.0, 0.82, 0.5), 40.0, 0.35, 3.0, 0.3)
+	Fx.puff(player.get_parent(), feet, Color(0.86, 0.72, 0.56), 4, Vector2(-1, -0.2), 70.0, 0.7)
+	Fx.puff(player.get_parent(), feet, Color(0.86, 0.72, 0.56), 4, Vector2(1, -0.2), 70.0, 0.7)
 	player.shake_camera(3.0, 0.15)
 	var broken: int = _strike(impact_offset, impact_size)
 	if broken > 0:

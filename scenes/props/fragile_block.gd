@@ -25,6 +25,7 @@ func smash() -> void:
 	_broken = true
 	$CollisionShape2D.disabled = true
 	Fx.dust(get_parent(), global_position, debris_color, 16, 120.0, 180.0)
+	Fx.puff(get_parent(), global_position, Color(0.86, 0.72, 0.56), 4, Vector2.ZERO, 30.0, 0.7)
 	_collapse_block_above()
 	queue_free()
 

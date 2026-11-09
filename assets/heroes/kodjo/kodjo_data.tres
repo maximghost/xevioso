@@ -10,3 +10,4 @@ id = &"kodjo"
 display_name = "Kodjo"
 frames = ExtResource("2_frames")
 ability_scene = ExtResource("3_ability")
+speed_multiplier = 1.25

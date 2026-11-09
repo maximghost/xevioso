@@ -47,6 +47,8 @@ func _on_body_entered(body: Node2D) -> void:
 	# Elle monte en grossissant puis disparaît dans un éclat bleuté.
 	set_deferred("monitoring", false)
 	Fx.dust(get_parent(), global_position, Color(0.6, 0.75, 1.0), 12, 70.0, 180.0)
+	Fx.ring(get_parent(), global_position, Color(0.65, 0.82, 1.0), 22.0, 0.35, 2.0)
+	Fx.sparks(get_parent(), global_position, Color(0.7, 0.85, 1.0), 10)
 	var tween := create_tween().set_parallel()
 	tween.tween_property(_sprite, "position:y", _sprite.position.y - 14.0, 0.25)
 	tween.tween_property(_sprite, "scale", Vector2(1.6, 1.6), 0.25)

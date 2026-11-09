@@ -200,19 +200,21 @@ var _was_on_floor: bool = true
 # Temps restant pendant lequel l'animation de réception garde la main.
 var _land_timer: float = 0.0
 
+# Délai entre deux bouffées de poussière quand le héros dérape (demi-tour lancé).
+var _skid_timer: float = 0.0
+
+# Couleur de la poussière soulevée par les pieds (terre de latérite).
+const DUST_COLOR := Color(0.86, 0.72, 0.56)
+
+# Silhouette teintée des images rémanentes (Ruée).
+const SILHOUETTE_SHADER := preload("res://assets/shaders/silhouette.gdshader")
+static var _silhouette_material: ShaderMaterial
+
 # Position du sprite dans le visuel : la cellule fait 40 x 60, le bassin est sur la
 # colonne 16 et la plante des pieds sur la ligne 50 (soit le bas de la capsule, y = 20).
 const SPRITE_OFFSET := Vector2(4.0, -1.0)
 # Distance entre le centre du sprite et le dessous des pieds.
 const SPRITE_FEET := 21.0
-
-# Matériau partagé des images rémanentes : mode de mélange additif (lumineux).
-static var _ADDITIVE: CanvasItemMaterial = _make_additive()
-
-static func _make_additive() -> CanvasItemMaterial:
-	var material := CanvasItemMaterial.new()
-	material.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
-	return material
 
 # Point de départ de la hache, par rapport au centre du héros (vers la droite).
 # Lancée à hauteur de hanche : elle touche aussi les ennemis bas (comme la Motte sèche).
@@ -232,6 +234,8 @@ func _ready() -> void:
 		_apply_hero(maxi(_next_unlocked_index(-1), 0))
 	# Le lancer se termine quand son animation est finie.
 	_sprite.animation_finished.connect(_on_animation_finished)
+	# Les pas : une bouffée de poussière quand un pied frappe le sol.
+	_sprite.frame_changed.connect(_on_frame_changed)
 	_respawn_point = global_position
 	_last_safe_position = global_position
 	health.damaged.connect(_on_damaged)
@@ -355,7 +359,7 @@ func _apply_gravity(delta: float) -> void:
 
 ## Fait tendre la vitesse horizontale vers la vitesse voulue, sans à-coups.
 func _handle_run(direction: float, delta: float) -> void:
-	var target_speed: float = direction * max_speed
+	var target_speed: float = direction * run_speed()
 	var on_floor: bool = is_on_floor()
 
 	# Choisit le rythme : prendre de l'élan, ou freiner.
@@ -368,6 +372,12 @@ func _handle_run(direction: float, delta: float) -> void:
 		var turning: bool = velocity.x != 0.0 and signf(direction) != signf(velocity.x)
 		if turning and on_floor:
 			rate = maxf(rate, friction)
+			# Demi-tour lancé : les pieds dérapent et soulèvent de la poussière.
+			_skid_timer -= delta
+			if absf(velocity.x) > run_speed() * 0.5 and _skid_timer <= 0.0:
+				_skid_timer = 0.07
+				Fx.puff(get_parent(), global_position + Vector2(0, 19), DUST_COLOR, 2,
+					Vector2(signf(velocity.x), -0.4), 30.0, 0.45)
 
 	# move_toward rapproche la vitesse de la cible d'au plus « rate × delta » à chaque image.
 	velocity.x = move_toward(velocity.x, target_speed, rate * delta)
@@ -386,6 +396,10 @@ func _handle_jump() -> void:
 		velocity.y = _jump_velocity
 		_squash = Vector2(0.86, 1.14)  # étirement à l'impulsion
 		_land_timer = 0.0
+		if is_on_floor():   # le pied pousse sur le sol : deux petites bouffées de côté
+			var feet: Vector2 = global_position + Vector2(0, 19)
+			Fx.puff(get_parent(), feet, DUST_COLOR, 2, Vector2(-1, -0.3), 26.0, 0.45)
+			Fx.puff(get_parent(), feet, DUST_COLOR, 2, Vector2(1, -0.3), 26.0, 0.45)
 		# On vide les deux comptes à rebours : un appui ne doit donner qu'un seul saut.
 		_jump_buffer_timer = 0.0
 		_coyote_timer = 0.0
@@ -393,6 +407,12 @@ func _handle_jump() -> void:
 	# Saut à hauteur variable : relâcher pendant la montée coupe l'élan.
 	if Input.is_action_just_released("jump") and velocity.y < 0.0:
 		velocity.y *= jump_cut
+
+
+## Vitesse de course du héros joué : celle de l'équipe × sa fiche (Kodjo est plus rapide).
+func run_speed() -> float:
+	var hero := current_hero()
+	return max_speed * (hero.speed_multiplier if hero != null else 1.0)
 
 
 ## Tourne le visuel du côté où l'on avance.
@@ -439,7 +459,7 @@ func _update_animation() -> void:
 	# La course est jouée plus ou moins vite selon la vitesse réelle :
 	# les pieds ne « patinent » pas quand le héros accélère ou freine.
 	if animation == &"run":
-		_sprite.speed_scale = clampf(absf(velocity.x) / max_speed, 0.5, 1.2)
+		_sprite.speed_scale = clampf(absf(velocity.x) / run_speed(), 0.5, 1.2)
 	else:
 		_sprite.speed_scale = 1.0
 
@@ -453,6 +473,13 @@ func _detect_landing(fall_speed: float) -> void:
 	if on_floor and not _was_on_floor and fall_speed > 120.0:
 		var k: float = clampf(fall_speed / 1400.0, 0.06, 0.22)
 		_squash = Vector2(1.0 + k, 1.0 - k)
+		# La poussière gicle des deux côtés, d'autant plus que la chute était rapide.
+		var feet: Vector2 = global_position + Vector2(0, 19)
+		var n: int = 2 if fall_speed < 300.0 else 4
+		Fx.puff(get_parent(), feet, DUST_COLOR, n, Vector2(-1, -0.2), 20.0 + fall_speed * 0.06, 0.5)
+		Fx.puff(get_parent(), feet, DUST_COLOR, n, Vector2(1, -0.2), 20.0 + fall_speed * 0.06, 0.5)
+		if fall_speed > 430.0:   # réception lourde : une onde au ras du sol
+			Fx.ring(get_parent(), feet, Color(0.95, 0.85, 0.7), 22.0, 0.3, 2.0, 0.25)
 		if _sprite.sprite_frames.has_animation(&"land") and not _throwing:
 			_land_timer = 0.14
 			_sprite.play(&"land")
@@ -489,6 +516,15 @@ func _handle_throw(delta: float) -> void:
 	axe.position = position + Vector2(AXE_OFFSET.x * facing, AXE_OFFSET.y)
 	# La hache est ajoutée au niveau, pas au héros : sinon elle suivrait ses mouvements.
 	get_parent().add_child(axe)
+	# Un éclat de foudre jaillit de la main au lâcher.
+	Fx.sparks(get_parent(), axe.position, Color(1.0, 0.85, 0.35), 5)
+
+
+## Images 0 et 4 de la course : un pied touche le sol (voir le générateur des sprites).
+func _on_frame_changed() -> void:
+	if _sprite.animation == &"run" and (_sprite.frame == 0 or _sprite.frame == 4) and is_on_floor():
+		Fx.puff(get_parent(), global_position + Vector2(-facing * 3.0, 19.0), DUST_COLOR, 1,
+			Vector2(-facing, -0.5), 16.0, 0.4)
 
 
 func _on_animation_finished() -> void:
@@ -519,6 +555,9 @@ func _handle_switch() -> void:
 	# puis revient à la normale en un quart de seconde.
 	_visual.modulate = Color(3.0, 3.0, 1.8)
 	create_tween().tween_property(_visual, "modulate", Color.WHITE, 0.25)
+	# Une onde dorée et une gerbe d'étincelles : l'Envoyé de la foudre change de corps.
+	Fx.ring(get_parent(), global_position, Color(1.0, 0.86, 0.4), 28.0, 0.3, 2.0)
+	Fx.sparks(get_parent(), global_position, Color(1.0, 0.85, 0.35), 10)
 
 
 ## Fait du héros n° « index » le héros joué : ses animations et sa capacité.
@@ -604,16 +643,20 @@ func _ability_in_control() -> bool:
 ## Laisse derrière le héros une silhouette lumineuse qui s'efface (image rémanente).
 ## Copie l'image d'animation en cours, à la même place et dans le même sens.
 ## Le mode additif ajoute sa couleur au décor : la silhouette semble briller.
-func spawn_afterimage(color: Color, lifetime: float = 0.22) -> void:
+func spawn_afterimage(color: Color, lifetime: float = 0.3) -> void:
 	var ghost := Sprite2D.new()
 	ghost.texture = _sprite.sprite_frames.get_frame_texture(_sprite.animation, _sprite.frame)
-	ghost.global_position = _sprite.global_position
-	ghost.scale.x = facing
+	ghost.scale = Vector2(facing * _squash.x, _squash.y)
 	ghost.modulate = color
-	ghost.material = _ADDITIVE
-	# Derrière le héros, sans être affectée par ses mouvements.
-	ghost.z_index = z_index - 1
+	if _silhouette_material == null:
+		_silhouette_material = ShaderMaterial.new()
+		_silhouette_material.shader = SILHOUETTE_SHADER
+	ghost.material = _silhouette_material
+	# Juste derrière le héros dans l'ordre d'affichage (mais devant le décor),
+	# sans être affectée par ses mouvements.
 	get_parent().add_child(ghost)
+	get_parent().move_child(ghost, get_index())
+	ghost.global_position = _sprite.global_position
 	var tween := ghost.create_tween()
 	tween.tween_property(ghost, "modulate:a", 0.0, lifetime)
 	tween.tween_callback(ghost.queue_free)
@@ -644,6 +687,12 @@ func _on_damaged(_amount: int) -> void:
 	_throwing = false
 	_hurt_timer = hurt_stun_time
 	velocity = Vector2(hurt_knockback.x * _last_hit_direction, hurt_knockback.y)
+	# Le coup se sent : flash rouge, micro-arrêt, caméra secouée, éclats.
+	_visual.modulate = Color(2.6, 0.7, 0.6)
+	create_tween().tween_property(_visual, "modulate", Color.WHITE, 0.3)
+	Fx.sparks(get_parent(), global_position, Color(1.0, 0.45, 0.35), 8)
+	Fx.hit_stop(get_tree(), 0.07)
+	shake_camera(3.0, 0.18)
 	# Le héros regarde d'où vient le coup.
 	set_facing(-int(_last_hit_direction))
 

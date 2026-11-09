@@ -62,3 +62,56 @@ static func hit_stop(tree: SceneTree, duration: float = 0.06) -> void:
 	Engine.time_scale = 0.05
 	await tree.create_timer(duration, true, false, true).timeout
 	Engine.time_scale = 1.0
+
+
+## Onde circulaire qui s'élargit et s'efface (changement de héros, pierre ramassée,
+## impact du marteau, réception lourde...). « squash » < 1 l'aplatit (onde au sol).
+static func ring(parent: Node, at: Vector2, color: Color, radius: float = 24.0,
+		duration: float = 0.3, width: float = 2.0, squash: float = 1.0) -> void:
+	var r := FxRing.new()
+	r.color = color
+	r.max_radius = radius
+	r.duration = duration
+	r.width = width
+	r.scale = Vector2(1.0, squash)
+	parent.add_child(r)
+	r.global_position = at
+
+
+## Bouffées de poussière douces (pas, saut, réception, dérapage) : de petits nuages
+## qui gonflent, glissent et se dissipent. « direction » : sens du jet (x seul = au ras du sol).
+static func puff(parent: Node, at: Vector2, color: Color = Color(0.86, 0.72, 0.56),
+		amount: int = 4, direction: Vector2 = Vector2.ZERO, speed: float = 22.0, size: float = 0.5) -> void:
+	var p := CPUParticles2D.new()
+	p.texture = preload("res://assets/fx/smoke.png")
+	p.one_shot = true
+	p.explosiveness = 0.9
+	p.amount = amount
+	p.lifetime = 0.45
+	p.local_coords = false
+	if direction == Vector2.ZERO:
+		p.direction = Vector2.UP
+		p.spread = 80.0
+	else:
+		p.direction = direction.normalized()
+		p.spread = 25.0
+	p.initial_velocity_min = speed * 0.5
+	p.initial_velocity_max = speed
+	p.damping_min = speed * 1.5
+	p.damping_max = speed * 2.5
+	p.gravity = Vector2(0.0, -10.0)
+	p.scale_amount_min = size * 0.7
+	p.scale_amount_max = size
+	var grow := Curve.new()
+	grow.max_value = 2.0
+	grow.add_point(Vector2(0.0, 0.6))
+	grow.add_point(Vector2(1.0, 1.4))
+	p.scale_amount_curve = grow
+	var fade := Gradient.new()
+	fade.set_color(0, Color(color, 0.85))
+	fade.set_color(1, Color(color, 0.0))
+	p.color_ramp = fade
+	p.emitting = true
+	parent.add_child(p)
+	p.global_position = at
+	p.finished.connect(p.queue_free)

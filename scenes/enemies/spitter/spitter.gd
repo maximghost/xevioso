@@ -88,6 +88,8 @@ func _on_died() -> void:
 	$CollisionShape2D.set_deferred("disabled", true)
 	$Hurtbox.set_deferred("monitoring", false)
 	Fx.dust(get_parent(), global_position + Vector2(0, -16), Color(0.72, 0.44, 0.24), 24, 110.0, 160.0)
+	Fx.ring(get_parent(), global_position + Vector2(0, -12), Color(1.0, 0.9, 0.55), 26.0, 0.3, 2.5)
+	Fx.puff(get_parent(), global_position, Color(0.86, 0.72, 0.56), 7, Vector2.ZERO, 40.0, 0.8)
 	var tween := create_tween().set_parallel()
 	tween.tween_property(_sprite, "scale", Vector2(1.3, 0.2), 0.3)
 	tween.tween_property(_sprite, "modulate:a", 0.0, 0.3)

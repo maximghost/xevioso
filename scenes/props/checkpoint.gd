@@ -51,6 +51,9 @@ func light_up(celebrate: bool) -> void:
 		_sprite.modulate = Color(3.0, 3.0, 2.0)
 		create_tween().tween_property(_sprite, "modulate", Color.WHITE, 0.4)
 		Fx.dust(get_parent(), global_position + Vector2(0.0, -16.0), Color(1.0, 0.85, 0.4), 16, 90.0, 180.0)
+		# La stèle s'éveille : deux ondes dorées qui s'élargissent l'une après l'autre.
+		Fx.ring(get_parent(), global_position + Vector2(0.0, -16.0), Color(1.0, 0.86, 0.45), 30.0, 0.45, 2.5)
+		Fx.ring(get_parent(), global_position + Vector2(0.0, -16.0), Color(1.0, 0.95, 0.7), 46.0, 0.6, 1.5)
 
 
 func put_out() -> void:

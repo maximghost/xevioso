@@ -25,6 +25,11 @@ const LIFE_LOST := preload("res://assets/ui/xevioso/vie_perdue.png")
 # L'animation du message en cours (pour l'interrompre si un autre arrive).
 var _toast_tween: Tween
 
+# Dernier cœur : un voile rouge palpite sur les bords de l'écran, comme un cœur qui bat.
+var _vignette: TextureRect
+var _danger: bool = false
+var _beat_time: float = 0.0
+
 
 func _ready() -> void:
 	# Pierres sokpe et messages : ils viennent de Game, même sans héros.
@@ -34,6 +39,16 @@ func _ready() -> void:
 	_on_lives_changed(Game.lives)
 	_on_sokpe_changed(Game.total_sokpe())
 	_toast.modulate.a = 0.0
+	_vignette = TextureRect.new()
+	_vignette.texture = preload("res://assets/ui/hud/vignette.png")
+	_vignette.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_vignette.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_vignette.stretch_mode = TextureRect.STRETCH_SCALE
+	_vignette.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	_vignette.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_vignette.modulate.a = 0.0
+	add_child(_vignette)
+	move_child(_vignette, 0)   # sous les cœurs et les messages
 	if player == null:
 		push_warning("HUD : aucun Player renseigné dans l'inspecteur.")
 		return
@@ -47,6 +62,7 @@ func _ready() -> void:
 
 ## Redessine la rangée de cœurs : pleins d'abord, puis vides.
 func _on_health_changed(current: int, maximum: int) -> void:
+	_danger = current == 1 and maximum > 1
 	# Ajuste le nombre de cœurs au maximum (il pourra augmenter en cours de jeu).
 	while _hearts.get_child_count() < maximum:
 		var heart := TextureRect.new()
@@ -94,6 +110,24 @@ func _on_sokpe_changed(total: int) -> void:
 
 
 ## Affiche un message en haut de l'écran pendant deux secondes, puis l'efface.
+## Battement du dernier cœur : deux pulsations rapprochées par seconde (« boum-boum »).
+func _process(delta: float) -> void:
+	if _vignette == null:
+		return
+	if not _danger:
+		_vignette.modulate.a = move_toward(_vignette.modulate.a, 0.0, delta * 2.0)
+		if _hearts.get_child_count() > 0:
+			(_hearts.get_child(0) as TextureRect).scale = Vector2.ONE
+		return
+	_beat_time = fmod(_beat_time + delta, 1.0)
+	var beat: float = maxf(exp(-pow((_beat_time - 0.1) * 14.0, 2.0)), 0.7 * exp(-pow((_beat_time - 0.32) * 14.0, 2.0)))
+	_vignette.modulate.a = 0.15 + 0.3 * beat
+	if _hearts.get_child_count() > 0:
+		var heart: TextureRect = _hearts.get_child(0)
+		heart.pivot_offset = heart.size / 2.0
+		heart.scale = Vector2.ONE * (1.0 + 0.25 * beat)
+
+
 func show_message(text: String) -> void:
 	_toast.text = text
 	if _toast_tween != null:
