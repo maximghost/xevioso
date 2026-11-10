@@ -1,0 +1,57 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/enemies/crawler/crawler.gd" id="1_81435"]
+[ext_resource type="SpriteFrames" path="res://assets/enemies/ant/ant_frames.tres" id="2_lnh7x"]
+[ext_resource type="Script" path="res://scripts/core/health.gd" id="3_7p7ru"]
+
+[sub_resource type="RectangleShape2D" id="body_shape"]
+size = Vector2(18, 12)
+
+[sub_resource type="RectangleShape2D" id="hurt_shape"]
+size = Vector2(16, 10)
+
+[sub_resource type="RectangleShape2D" id="hit_shape"]
+
+[node name="Ant" type="CharacterBody2D" unique_id=188166807]
+collision_layer = 4
+collision_mask = 17
+floor_snap_length = 4.0
+script = ExtResource("1_81435")
+speed = 50.0
+dust_color = Color(0.55, 0.52, 0.48, 1)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1689290125]
+position = Vector2(0, -6)
+shape = SubResource("body_shape")
+
+[node name="Sprite" type="AnimatedSprite2D" parent="." unique_id=985274272]
+position = Vector2(0, -10)
+sprite_frames = ExtResource("2_lnh7x")
+animation = &"walk"
+
+[node name="LedgeRay" type="RayCast2D" parent="." unique_id=269564211]
+position = Vector2(10, -2)
+target_position = Vector2(0, 8)
+collision_mask = 17
+
+[node name="Hurtbox" type="Area2D" parent="." unique_id=1217442562]
+collision_layer = 0
+collision_mask = 2
+monitorable = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Hurtbox" unique_id=348573013]
+position = Vector2(0, -6)
+shape = SubResource("hurt_shape")
+
+[node name="Hitbox" type="Area2D" parent="." unique_id=495601411]
+collision_layer = 4
+collision_mask = 0
+monitoring = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Hitbox" unique_id=85013259]
+position = Vector2(0, -10)
+shape = SubResource("hit_shape")
+
+[node name="Health" type="Node" parent="." unique_id=818300211]
+script = ExtResource("3_7p7ru")
+max_health = 2

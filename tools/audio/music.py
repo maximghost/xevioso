@@ -367,9 +367,46 @@ def game_over():
     return y
 
 
+def foret():
+    """La forêt des irokos (mi mineur) : mystérieuse et sacrée. Tambour d'eau grave et lent,
+    agidigbo en ostinato qui tourne comme la brume, hochet très doux, cloche lointaine ; un
+    bourdon de chœur fermé ; le tambour parlant lance de rares appels au loin (on ne sait pas
+    encore qui joue). La seconde moitié s'épaissit : sogo étouffé, voix qui répond."""
+    tr = Track(bpm=84, bars=24, seed=12, tail=6.0)
+    OST = ["E3:2 B3:1 D4:2 B3:1 E4:2 D4:1 B3:2 A3:1", "E3:2 B3:1 D4:2 B3:1 G4:2 E4:1 D4:2 B3:1"]
+    BASS = ["E2:12", "E2:12", "C2:12", "D2:12"]
+    MEL = ["B4:6 D5:3 E5:3 | D5:6 B4:6 | A4:3 B4:3 G4:3 E4:3 | E4:12",
+           "E5:6 G5:3 E5:3 | D5:6 B4:3 A4:3 | B4:6 A4:3 G4:3 | E4:12"]
+    for bar in range(24):
+        b0 = tr.at(bar, 0)
+        for s, g in ((0, 0.55), (7, 0.3), (9, 0.35)):
+            tr.add(tr.inst(("wd",), lambda: water_drum(80, 0.8)), tr.at(bar, s), g, 0.0, 0.3)
+        for s in range(0, 12, 2):
+            tr.add(tr.inst(("shk",), lambda: shaker(0.1, 1.0, 0.8)), b0 + s * tr.p, 0.07 if s % 6 else 0.12, -0.5, 0.2)
+        if bar % 2 == 0:
+            tr.add(tr.inst(("bellf",), lambda: bell(990, 1.4, 1.0, 0.5)), tr.at(bar, 0), 0.1, 0.55, 0.5)
+        play_melody(tr, bar, OST[(bar // 2) % 2], "agi", 0, 0.32, 0.2, 0.35)
+        play_melody(tr, bar, BASS[(bar // 2) % 4], "agi", -1, 0.3, -0.1, 0.3)
+        if bar >= 12:
+            for s, k in ((0, "bass"), (5, "mute"), (6, "bass"), (11, "mute")):
+                tr.add(tr.inst(("sogo", k), lambda k=k: drum(140, k, 0.6, 1.0)), tr.at(bar, s), 0.22, -0.2, 0.2)
+    for bar, kind in ((5, 0), (11, 1), (17, 2), (21, 0)):   # le tambour parlant, au loin
+        b0 = tr.at(bar, 0)
+        for s, k, bend in ((0, "open", 4), (1, "open", 0), (3, "open", -3), (6, "slap", 0), (8, "open", 5)):
+            tr.add(drum(118, k, 0.6, 1.0, bend=bend, body=1.3), b0 + s * tr.p, 0.22, -0.55, 0.55)
+    for bar in range(0, 24, 4):
+        pad(tr, bar, 4, ["E3", "B3"] if bar % 8 == 0 else ["C3", "G3"], "u", 0.16)
+    play_melody(tr, 8, MEL[0], "agi", 1, 0.26, 0.3, 0.45)
+    play_melody(tr, 12, MEL[1], "voice", 0, 0.28, -0.15, 0.5, "o")
+    play_melody(tr, 16, MEL[0], "voice", 0, 0.24, -0.15, 0.5, "o")
+    play_melody(tr, 16, MEL[0], "agi", 1, 0.2, 0.3, 0.45)
+    play_melody(tr, 20, MEL[1], "agi", 1, 0.26, 0.3, 0.45)
+    return tr.render(room=2.4, damp=3800, wet=0.45)
+
+
 TRACKS = {"village": village, "fete": fete, "titre": titre, "intro_village": intro_village,
           "intro_drame": intro_drame, "intro_malheurs": intro_malheurs, "intro_appel": intro_appel,
-          "victoire": victoire, "game_over": game_over}
+          "victoire": victoire, "game_over": game_over, "foret": foret}
 
 if __name__ == "__main__":
     only = sys.argv[2:]

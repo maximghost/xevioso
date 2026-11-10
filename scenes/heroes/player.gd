@@ -139,6 +139,7 @@ var _jump_velocity: float = 0.0
 
 # Comptes à rebours, en secondes, pour le coyote time et la mémoire du saut.
 var _coyote_timer: float = 0.0
+var _bounce_lock: float = 0.0   # après un rebond : relâcher le saut ne coupe pas l'élan
 var _jump_buffer_timer: float = 0.0
 
 # Le visuel du héros : c'est lui qu'on retourne, jamais le corps physique.
@@ -327,6 +328,7 @@ func _compute_jump_physics() -> void:
 
 ## Met à jour les deux comptes à rebours.
 func _update_timers(delta: float) -> void:
+	_bounce_lock = maxf(_bounce_lock - delta, 0.0)
 	# Coyote time : plein tant qu'on touche le sol, puis il s'écoule une fois en l'air.
 	if is_on_floor():
 		_coyote_timer = coyote_time
@@ -388,6 +390,17 @@ func _handle_run(direction: float, delta: float) -> void:
 	velocity.x = move_toward(velocity.x, target_speed, rate * delta)
 
 
+## Un champignon (ou autre ressort) projette le héros vers le haut à la vitesse donnée.
+## Pendant la montée, relâcher le saut ne coupe pas l'élan (ce n'est pas un saut).
+func bounce(speed: float) -> void:
+	velocity.y = -speed
+	_bounce_lock = 0.5
+	_coyote_timer = 0.0
+	_jump_buffer_timer = 0.0
+	_squash = Vector2(0.8, 1.22)
+	_land_timer = 0.0
+
+
 ## Lance le saut quand c'est permis, et le raccourcit si on relâche tôt.
 ## Bas + saut sur une plateforme en bois : le héros la traverse et descend.
 func _handle_jump() -> void:
@@ -411,7 +424,7 @@ func _handle_jump() -> void:
 		_coyote_timer = 0.0
 
 	# Saut à hauteur variable : relâcher pendant la montée coupe l'élan.
-	if Input.is_action_just_released("jump") and velocity.y < 0.0:
+	if Input.is_action_just_released("jump") and velocity.y < 0.0 and _bounce_lock <= 0.0:
 		velocity.y *= jump_cut
 
 

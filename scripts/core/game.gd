@@ -29,9 +29,12 @@ const SAVE_VERSION := 1
 ## Les niveaux du jeu : identifiant → scène. Le premier est celui d'une nouvelle partie.
 const LEVELS := {
 	&"village_1": "res://scenes/levels/village/village_1.tscn",
+	&"foret_1": "res://scenes/levels/foret/foret_1.tscn",
 	&"test": "res://scenes/levels/test_level.tscn",
 }
 const FIRST_LEVEL: StringName = &"village_1"
+## L'ordre de l'aventure (les parties, l'une après l'autre).
+const ORDER: Array[StringName] = [&"village_1", &"foret_1"]
 ## Niveaux de développement : jamais sauvegardés, jamais proposés par « Continuer ».
 const DEV_LEVELS: Array[StringName] = [&"test"]
 ## L'écran titre.
@@ -238,7 +241,16 @@ func has_save() -> bool:
 func level_to_continue() -> StringName:
 	if checkpoint_level != &"" and LEVELS.has(checkpoint_level) and not checkpoint_level in DEV_LEVELS:
 		return checkpoint_level
-	return FIRST_LEVEL
+	for id in ORDER:
+		if not id in completed_levels:
+			return id
+	return ORDER[-1]
+
+
+## Le niveau qui suit celui-ci dans l'aventure (vide s'il n'y en a pas encore).
+func next_level(level_id: StringName) -> StringName:
+	var i := ORDER.find(level_id)
+	return ORDER[i + 1] if i >= 0 and i + 1 < ORDER.size() else &""
 
 
 func go_to_level(level_id: StringName) -> void:

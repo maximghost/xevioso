@@ -52,9 +52,15 @@ layout_mode = 2
 text = "La pluie est revenue sur le village.
 Mais Adaka court toujours : la forêt des irokos vous attend.
 
-Merci d'avoir joué ! La suite arrive bientôt."
+La deuxième partie se construit : son orée est déjà ouverte."
 label_settings = SubResource("text_settings")
 horizontal_alignment = 1
+
+[node name="Next" type="Button" parent="Panel/Box"]
+custom_minimum_size = Vector2(140, 28)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "Entrer dans la forêt"
 
 [node name="Replay" type="Button" parent="Panel/Box"]
 custom_minimum_size = Vector2(140, 28)

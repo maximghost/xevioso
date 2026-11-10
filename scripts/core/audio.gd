@@ -40,7 +40,7 @@ const SFX_DB := {
 	&"dialogue_next": -10.0, &"text_tick": -22.0, &"caption_next": -12.0, &"game_start": -3.0,
 	&"stone_shatter": 0.0, &"adaka_appear": -3.0, &"adaka_inhale": -2.0, &"adaka_laugh": -3.0,
 	&"wind_stop": -6.0, &"emblem_appear": -2.0, &"designate": -1.0, &"chicken": -12.0,
-	&"chicken_flap": -10.0, &"drum_roll": -4.0, &"heartbeat": -4.0, &"tree_groan": -5.0, &"fire": -10.0, &"stone_hum": -16.0,
+	&"chicken_flap": -10.0, &"drum_roll": -4.0, &"heartbeat": -4.0, &"bounce": -4.0, &"tree_groan": -5.0, &"fire": -10.0, &"stone_hum": -16.0,
 }
 
 ## Volume de base de chaque ambiance (dB).

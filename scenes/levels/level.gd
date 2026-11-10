@@ -45,6 +45,9 @@ extends Node2D
 ## Musique du niveau, et ses ambiances (boucles) tant qu'il fait sec.
 @export var music_track: StringName = &"village"
 @export var ambiences: Array[StringName] = [&"wind_dry", &"village_day"]
+## Le titre et le sous-titre de la bannière de victoire.
+@export var victory_title: String = "La pluie est revenue !"
+@export var victory_subtitle: String = "Première étape accomplie : le village est sauvé"
 ## Scène jouée après la victoire (fin de partie : la suite de l'histoire). Vide : l'écran de fin.
 @export_file("*.tscn") var outro_scene: String = ""
 
@@ -67,6 +70,8 @@ func _ready() -> void:
 		push_warning("Niveau sans level_id : la sauvegarde ne pourra pas s'y retrouver.")
 	if terrain != null and player != null:
 		_setup_bounds()
+	if not use_weather:
+		modulate = dry_color         # (sans météo : la teinte seule)
 	if use_weather:
 		_setup_mood()
 		_ambience = Ambience.new()
@@ -250,7 +255,8 @@ func complete(altar: Vector2 = Vector2.INF) -> void:
 	_flash(1.0)
 	Audio.play(&"thunder_close")
 	Audio.jingle(&"victoire", &"fete")
-	Audio.ambience([&"rain", &"village_day"], 3.0)
+	if use_weather:
+		Audio.ambience([&"rain", &"village_day"], 3.0)
 	Fx.ring(self, target, Color(1.0, 0.9, 0.55), 90.0, 0.7, 4.0)
 	Fx.ring(self, target, Color(0.7, 0.85, 1.0), 140.0, 1.0, 2.0)
 	Fx.sparks(self, target, Color(1.0, 0.9, 0.5), 30)
@@ -270,8 +276,7 @@ func complete(altar: Vector2 = Vector2.INF) -> void:
 		_ambience.set_raining()
 	if _weather != null:
 		_weather.start_rain()
-	if use_weather:
-		create_tween().tween_property(self, "modulate", rain_color, 3.0)
+	create_tween().tween_property(self, "modulate", rain_color, 3.0)
 	_bloom()
 	await get_tree().create_timer(1.6).timeout
 	_rainbow()
@@ -280,7 +285,7 @@ func complete(altar: Vector2 = Vector2.INF) -> void:
 	var banner := VictoryBanner.new()
 	add_child(banner)
 	var collected: int = Game.sokpe.get(level_id, []).size()
-	await banner.play("La pluie est revenue !", "Première étape accomplie : le village est sauvé",
+	await banner.play(victory_title, victory_subtitle,
 		collected, _sokpe_total, Game.lives)
 	await get_tree().create_timer(1.0).timeout
 

@@ -31,6 +31,9 @@ extends CharacterBody2D
 ## Durée pendant laquelle elle est sonnée après un coup (elle ne marche plus).
 @export var stun_time: float = 0.25
 
+## Couleur de la poussière quand elle disparaît (latérite pour la Motte, cendre pour la fourmi).
+@export var dust_color: Color = Color(0.72, 0.44, 0.24)
+
 # Direction de marche actuelle.
 var _direction: int = -1
 # Temps restant avant de reprendre la marche après un coup.
@@ -126,7 +129,7 @@ func _on_died() -> void:
 
 ## Petit nuage de poussière de latérite à l'endroit où elle disparaît.
 func _spawn_dust() -> void:
-	Fx.dust(get_parent(), global_position + Vector2(0.0, -4.0), Color(0.72, 0.44, 0.24))
+	Fx.dust(get_parent(), global_position + Vector2(0.0, -4.0), dust_color)
 	Fx.ring(get_parent(), global_position + Vector2(0.0, -4.0), Color(1.0, 0.9, 0.55), 18.0, 0.25)
 	Fx.puff(get_parent(), global_position, Color(0.86, 0.72, 0.56), 5, Vector2.ZERO, 30.0, 0.6)
 

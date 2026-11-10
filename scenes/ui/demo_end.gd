@@ -9,6 +9,7 @@ var level_id: StringName = &""
 @onready var _panel: Control = $Panel
 @onready var _menu: Button = $Panel/Box/Menu
 @onready var _replay: Button = $Panel/Box/Replay
+@onready var _next: Button = $Panel/Box/Next
 
 
 func _ready() -> void:
@@ -16,7 +17,13 @@ func _ready() -> void:
 	create_tween().tween_property(_panel, "modulate:a", 1.0, 1.2)
 	_menu.pressed.connect(Game.go_to_title)
 	_replay.pressed.connect(_on_replay)
-	_menu.grab_focus()
+	var following: StringName = Game.next_level(level_id)
+	_next.visible = following != &""
+	_next.pressed.connect(func() -> void: Game.go_to_level(following))
+	if _next.visible:
+		_next.grab_focus()
+	else:
+		_menu.grab_focus()
 	Audio.music(&"fete")
 
 

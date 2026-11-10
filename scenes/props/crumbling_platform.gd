@@ -13,6 +13,8 @@ extends StaticBody2D
 @export var crumble_delay: float = 0.5
 ## Délai avant que la dalle se reforme, en secondes.
 @export var respawn_time: float = 3.0
+## L'image (16 × 10, raccordable) : dalle de latérite au village, branche morte en forêt.
+@export var texture: Texture2D = preload("res://assets/props/crumble_slab.png")
 
 var _crumbling: bool = false
 var _sprite: Sprite2D
@@ -27,7 +29,7 @@ func _ready() -> void:
 	var width: float = width_tiles * 16.0
 	# Le dessin : la dalle de 16 px répétée sur toute la largeur.
 	_sprite = Sprite2D.new()
-	_sprite.texture = preload("res://assets/props/crumble_slab.png")
+	_sprite.texture = texture
 	_sprite.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
 	_sprite.region_enabled = true
 	_sprite.region_rect = Rect2(0, 0, width, 10)

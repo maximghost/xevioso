@@ -123,6 +123,22 @@ const LINES := {
 	&"village_puits": [
 		{"text": "Le bois suspendu danse au-dessus du vide. Danse avec lui, au bon moment."},
 	],
+	# Partie 2 : la forêt des irokos.
+	&"foret_depart": [
+		{"text": "Voici la forêt des irokos. Jadis, chaque arbre ici était un sanctuaire."},
+		{"text": "La poussière d'Adaka l'étouffe. Marchez doucement : la forêt a des yeux."},
+	],
+	&"foret_champi": [
+		{"text": "Ce qui est mou rend ce qu'on lui donne. Tombe sur lui, il te rendra le ciel.",
+			"pc": "Retombez sur le champignon pour bondir très haut",
+			"mobile": "Retombez sur le champignon pour bondir très haut"},
+	],
+	&"foret_ronces": [
+		{"text": "La ronce ne pardonne pas l'hésitation. Prends ton élan, et laisse le champignon te porter."},
+	],
+	&"foret_suite": [
+		{"text": "Plus loin, le sous-bois s'enfonce dans l'ombre. Le chemin s'ouvrira bientôt."},
+	],
 	&"village_fin": [
 		{"text": "Vous avez entendu. Vous avez marché."},
 		{"text": "Maintenant… écoutez la pluie."},

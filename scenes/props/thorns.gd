@@ -5,6 +5,8 @@ extends Area2D
 
 
 @export_range(1, 12) var width_tiles: int = 2
+## L'image (raccordable, 10 px de haut) : épines d'acacia au village, ronces dans la forêt.
+@export var texture: Texture2D = preload("res://assets/props/thorns.png")
 
 
 func _ready() -> void:
@@ -12,7 +14,7 @@ func _ready() -> void:
 	collision_mask = 2
 	var width: float = width_tiles * 16.0
 	var sprite := Sprite2D.new()
-	sprite.texture = preload("res://assets/props/thorns.png")
+	sprite.texture = texture
 	sprite.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
 	sprite.region_enabled = true
 	sprite.region_rect = Rect2(0, 0, width, 10)

@@ -627,6 +627,17 @@ def _roll():
     return reverb(out, 1.0, 3000, 0.2)
 
 
+@sfx("bounce", 0.8)
+def _bounce():
+    """Le champignon qui fait bondir : un « bloup » mou qui monte, sur un petit coup sourd."""
+    n = int(0.42 * SR)
+    t = np.arange(n) / SR
+    f = 140 + 520 * (1 - np.exp(-t * 9)) + 30 * np.sin(2 * np.pi * 18 * t) * np.exp(-t * 6)
+    body = np.sin(2 * np.pi * np.cumsum(f) / SR) * np.exp(-t * 7)
+    thud = lp(noise(n), 300) * np.exp(-t * 40) * 1.4
+    return lp(body * 0.8 + thud, 3000)
+
+
 # ---------------------------------------------------------------------------
 # Ambiances (boucles)
 # ---------------------------------------------------------------------------
@@ -751,6 +762,51 @@ def _night():
             place(out, chirp * 0.05 * (0.5 + 0.5 * r.random()), t0)
             t0 += period * (0.9 + 0.2 * r.random())
     return normalize(loopify(out, L, 0.5), 0.4)
+
+
+@amb("forest")
+def _forest():
+    """Sous la canopée, en plein jour : un fond d'insectes doux, des gouttes qui tombent des
+    feuilles, des oiseaux au loin (un calao qui cacarde, un touraco qui appelle, des trilles),
+    le craquement d'une branche. Stéréo, 20 s en boucle."""
+    L = 20.0
+    n = int((L + 0.8) * SR)
+    r = rng(611)
+    out = np.zeros((n, 2))
+    bed = bp(noise(n), 2500, 6000) * 0.02 * (0.7 + 0.3 * np.sin(2 * np.pi * np.arange(n) / SR / 5.0))
+    out[:, 0] += bed; out[:, 1] += np.roll(bed, 3000)
+    low = lp(noise(n), 220) * 0.08
+    out[:, 0] += low; out[:, 1] += low
+    def put(x, t, pan, g):
+        i = int(t * SR); m = min(len(x), n - i)
+        if m <= 0: return
+        out[i:i + m, 0] += x[:m] * g * np.cos((pan + 1) * np.pi / 4)
+        out[i:i + m, 1] += x[:m] * g * np.sin((pan + 1) * np.pi / 4)
+    for k in range(70):                     # gouttes
+        m = int(0.05 * SR); tt = np.arange(m) / SR
+        f0 = r.uniform(1400, 3200)
+        drop = np.sin(2 * np.pi * (f0 + 2500 * tt) * tt) * np.exp(-tt * 90)
+        put(drop, r.uniform(0, L), r.uniform(-0.9, 0.9), r.uniform(0.03, 0.09))
+    def call(freqs, durs, gap, vib=0.0, harsh=0.0):
+        parts = []
+        for f, d in zip(freqs, durs):
+            m = int(d * SR); tt = np.arange(m) / SR
+            ff = f * (1 + vib * np.sin(2 * np.pi * 9 * tt))
+            ph = 2 * np.pi * np.cumsum(ff) / SR
+            x = np.sin(ph) + 0.4 * np.sin(2 * ph) + harsh * np.sign(np.sin(ph)) * 0.3
+            parts.append(x * env_adsr(m, 0.01, 0.03, 0.8, 0.04))
+            parts.append(np.zeros(int(gap * SR)))
+        return np.concatenate(parts)
+    for t in (1.5, 9.0, 15.5):              # calao : cacardement grave
+        put(lp(call([520, 480, 450, 430], [0.12] * 4, 0.07, harsh=1.0), 1800), t, r.uniform(-0.8, -0.3), 0.06)
+    for t in (4.0, 12.5):                   # touraco : « kow kow kow » qui ralentit
+        put(lp(call([700] * 5, [0.09] * 5, 0.11), 2200), t, r.uniform(0.3, 0.8), 0.07)
+    for t in (2.8, 7.2, 11.0, 17.8):        # trilles fines
+        put(call([4200 + 300 * j for j in range(6)], [0.04] * 6, 0.015, vib=0.04), t, r.uniform(-0.6, 0.6), 0.025)
+    for t in (6.0, 18.5):                   # une branche craque, quelque part
+        put(bp(noise(int(0.25 * SR)), 300, 2000) * np.exp(-np.arange(int(0.25 * SR)) / SR * 18), t, r.uniform(-1, 1), 0.08)
+    y = np.stack([loopify(out[:, 0], L, 0.8), loopify(out[:, 1], L, 0.8)], 1)
+    return y / (np.abs(y).max() + 1e-9) * 0.45
 
 
 @amb("fire")
