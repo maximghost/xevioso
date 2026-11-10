@@ -591,6 +591,34 @@ def _cflap():
     return out
 
 
+@sfx("heartbeat", 0.8)
+def _heartbeat():
+    # deux coups sourds, profonds (lub-dub), comme un cœur énorme dans le bois
+    out = silence(0.9)
+    for at, g, f in ((0.0, 1.0, 52), (0.2, 0.7, 46)):
+        n = int(0.45 * SR)
+        thump = osc(pitch_env(n, f * 1.8, f, 0.03)) * env_exp(n, 0.3)
+        body = lp(noise(n), 160) * env_exp(n, 0.12) * 0.6
+        place(out, (thump + body) * g, at)
+    return lp(out, 400)
+
+
+@sfx("tree_groan", 0.8)
+def _groan():
+    # le gémissement du vieil arbre : craquements de bois lents, grave qui glisse
+    n = int(3.2 * SR)
+    t = np.arange(n) / SR
+    f = 70 + 25 * np.sin(2 * np.pi * t / 3.2) + 8 * np.sin(2 * np.pi * 0.9 * t)
+    # frottement : impulsions irrégulières passées dans des résonances de bois
+    rate = 18 + 30 * np.sin(np.pi * t / 3.2)
+    ph = np.cumsum(rate) / SR
+    imp = (np.diff(np.floor(ph), prepend=0) > 0).astype(float) * (0.5 + RNG.random(n))
+    creak = resonator(imp, 340, 12) + resonator(imp, 610, 14) * 0.6 + resonator(imp, 1150, 18) * 0.3
+    groan = lp(osc(f, "saw"), 300) * 0.5
+    env = env_adsr(n, 0.6, 0.4, 0.8, 1.2)
+    return reverb((creak * 0.8 + groan) * env, 2.4, 2500, 0.45)
+
+
 @sfx("drum_roll", 0.8)
 def _roll():
     out = silence(2.2)

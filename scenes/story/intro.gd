@@ -306,7 +306,7 @@ func _fin_partie1() -> void:
 	var push := create_tween()
 	push.tween_method(func(s: float) -> void:
 		forest.scale = Vector2(s, s)
-		forest.position = Vector2(320.0, 230.0) * (1.0 - s), 1.0, 1.18, 26.0)
+		forest.position = Vector2(320.0, 200.0) * (1.0 - s), 1.0, 1.18, 26.0)
 	await _fade_in(1.5)
 	await _pause(1.0)
 	await _tell(&"fin1", 5)
@@ -320,8 +320,8 @@ func _fin_partie1() -> void:
 	Audio.play(&"drum_roll")
 	await _tell(&"fin1", 7)
 	if _leaving: return
-	var flash: ColorRect = forest.get_node("Flash")
-	var shadow: AnimatedSprite2D = forest.get_node("Silhouette")
+	var flash: ColorRect = forest.get_node("Content/Flash")
+	var shadow: AnimatedSprite2D = forest.get_node("Content/Silhouette")
 	shadow.visible = true
 	Audio.play(&"thunder_close", -2.0)
 	for k in 2:   # deux éclairs : la silhouette se découpe en noir, un tambour à la main
@@ -329,7 +329,25 @@ func _fin_partie1() -> void:
 		create_tween().tween_property(flash, "color:a", 0.0, 0.35)
 		await _pause(0.45)
 	create_tween().tween_property(shadow, "modulate:a", 0.0, 1.2)
-	await _pause(2.0)
+	# Au son du tambour, l'arbre sacré s'en souvient : une lumière dorée monte de son étoffe
+	# et, un instant, la lueur rouge recule.
+	var holy := Sprite2D.new()
+	holy.texture = _soft_glow()
+	var add := CanvasItemMaterial.new()
+	add.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+	holy.material = add
+	holy.modulate = Color(2.6, 2.1, 1.0, 0.0)
+	holy.position = Vector2(320, 262)
+	holy.scale = Vector2(1.2, 0.8)
+	forest.get_node("Content").add_child(holy)
+	var rise := create_tween()
+	rise.tween_property(holy, "modulate:a", 1.0, 1.0)
+	rise.parallel().tween_property(holy, "scale", Vector2(2.2, 1.6), 1.6)
+	rise.parallel().tween_property(forest, "modulate", Color(0.6, 0.58, 0.55), 1.2)
+	rise.parallel().tween_property(forest.get_node("Content/Veines"), "self_modulate:a", 0.3, 1.2)
+	rise.tween_property(holy, "modulate:a", 0.0, 1.8)
+	Audio.play(&"sokpe", -6.0)
+	await _pause(2.6)
 	push.kill()
 
 	# Le carton de la partie 2, puis l'écran de fin.
@@ -422,34 +440,87 @@ func _stitch_path(map: Control) -> void:
 		await get_tree().create_timer(0.07).timeout
 
 
-## La forêt la nuit : le vieil iroko, la fente rouge qui bat, les feuilles grises qui tombent ;
-## une silhouette cachée (révélée par l'éclair) et le voile blanc de l'éclair.
+## La forêt la nuit, sacrée et effrayante : le vieil iroko (étoffe blanche, offrandes), sa fente
+## et ses veines qui battent comme un cœur (le sol tremble à chaque battement), des rais de lune
+## qui tombent de la canopée, la brume au sol, des braises qui montent de la fente, des feuilles
+## grises qui tombent, des yeux qui s'allument dans le noir ; un voile sombre sur les bords.
+## La silhouette cachée et le voile blanc de l'éclair attendent le tambour.
 func _show_forest() -> Node2D:
 	var root := Node2D.new()
 	_screen_layer().add_child(root)
+	var content := Node2D.new()          # ce qui tremble à chaque battement
+	content.name = "Content"
+	root.add_child(content)
 	var bg := Sprite2D.new()
 	bg.texture = preload("res://assets/story/foret_nuit.png")
 	bg.centered = false
-	root.add_child(bg)
+	bg.position = Vector2(-20, -12)
+	bg.scale = Vector2(1.07, 1.07)
+	content.add_child(bg)
 	var flash := ColorRect.new()
 	flash.name = "Flash"
 	flash.color = Color(0.85, 0.9, 1.0, 0.0)
-	flash.size = Vector2(640, 360)
+	flash.position = Vector2(-20, -20)
+	flash.size = Vector2(680, 400)
 	flash.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	root.add_child(flash)
+	content.add_child(flash)
+	# Des yeux s'allument et s'éteignent entre les troncs.
+	var eyes := Node2D.new()
+	content.add_child(eyes)
+	# Brume basse qui dérive.
+	content.add_child(_mist(Vector2(320, 300), 0.22))
 	var tree := Sprite2D.new()
+	tree.name = "Iroko"
 	tree.texture = preload("res://assets/story/iroko_malade.png")
-	tree.position = Vector2(320, 360 - 165)
-	root.add_child(tree)
-	_red_glow(root, tree.position + Vector2(1, -10), 1.3)
+	tree.position = Vector2(320, 180)
+	content.add_child(tree)
+	var add := CanvasItemMaterial.new()
+	add.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+	var veins := Sprite2D.new()
+	veins.name = "Veines"
+	veins.texture = preload("res://assets/story/iroko_veines.png")
+	veins.position = tree.position
+	veins.material = add
+	veins.modulate.a = 0.35
+	content.add_child(veins)
+	var heart := Vector2(320, 195)      # la fente, dans le tronc
+	var glow := Sprite2D.new()
+	glow.texture = preload("res://assets/story/thunder_glow.png")
+	glow.material = add
+	glow.self_modulate = Color(1.0, 0.22, 0.12)
+	glow.position = heart
+	glow.scale = Vector2(1.4, 2.2)
+	content.add_child(glow)
+	# Braises qui montent de la fente.
+	var embers := CPUParticles2D.new()
+	embers.texture = preload("res://assets/fx/ember.png")
+	embers.material = add
+	embers.amount = 14
+	embers.lifetime = 2.4
+	embers.position = heart
+	embers.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+	embers.emission_rect_extents = Vector2(4, 40)
+	embers.direction = Vector2(0, -1)
+	embers.spread = 35.0
+	embers.gravity = Vector2(0, -6)
+	embers.initial_velocity_min = 6.0
+	embers.initial_velocity_max = 18.0
+	embers.scale_amount_min = 0.4
+	embers.scale_amount_max = 0.8
+	embers.color = Color(1.0, 0.35, 0.15)
+	content.add_child(embers)
+	# Rais de lune qui tombent de la canopée : la forêt reste sacrée.
+	for k in 3:
+		content.add_child(_moon_ray(Vector2(180 + k * 120, -10), 26.0 + k * 8.0, k))
+	content.add_child(_mist(Vector2(320, 345), 0.32))
 	var leaves := CPUParticles2D.new()
 	leaves.texture = preload("res://assets/story/leaf_grey.png")
-	leaves.amount = 18
+	leaves.amount = 22
 	leaves.lifetime = 6.0
 	leaves.preprocess = 6.0
 	leaves.position = Vector2(320, -10)
 	leaves.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
-	leaves.emission_rect_extents = Vector2(160, 4)
+	leaves.emission_rect_extents = Vector2(200, 4)
 	leaves.direction = Vector2(0.2, 1)
 	leaves.spread = 30.0
 	leaves.gravity = Vector2(0, 14)
@@ -459,17 +530,149 @@ func _show_forest() -> Node2D:
 	leaves.angular_velocity_max = 120.0
 	leaves.scale_amount_min = 1.0
 	leaves.scale_amount_max = 1.6
-	root.add_child(leaves)
+	content.add_child(leaves)
 	var shadow := AnimatedSprite2D.new()
 	shadow.name = "Silhouette"
 	shadow.sprite_frames = load("res://assets/heroes/kokou/kokou_frames.tres")
 	shadow.play(&"idle")
-	shadow.position = Vector2(500, 278)
+	shadow.position = Vector2(520, 278)
 	shadow.scale = Vector2(-2.4, 2.4)
 	shadow.modulate = Color(0, 0, 0, 1)
 	shadow.visible = false
-	root.add_child(shadow)
+	content.add_child(shadow)
+	# Un voile sombre sur les bords : on regarde au cœur.
+	var vignette := TextureRect.new()
+	var grad := Gradient.new()
+	grad.set_color(0, Color(0, 0, 0, 0))
+	grad.set_color(1, Color(0, 0, 0, 0.85))
+	grad.add_point(0.55, Color(0, 0, 0, 0.1))
+	var tex := GradientTexture2D.new()
+	tex.gradient = grad
+	tex.fill = GradientTexture2D.FILL_RADIAL
+	tex.fill_from = Vector2(0.5, 0.5)
+	tex.fill_to = Vector2(1.05, 1.05)
+	tex.width = 160
+	tex.height = 90
+	vignette.texture = tex
+	vignette.size = Vector2(640, 360)
+	vignette.stretch_mode = TextureRect.STRETCH_SCALE
+	vignette.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.add_child(vignette)
+	_heartbeat(content, glow, veins)
+	_watching_eyes(eyes)
+	_groans(root)
 	return root
+
+
+## Le cœur bat dans l'arbre : deux coups, la lueur et les veines s'embrasent, le sol tremble.
+func _heartbeat(content: Node2D, glow: Sprite2D, veins: Sprite2D) -> void:
+	var beat := create_tween().set_loops()
+	beat.bind_node(content)
+	for k in 2:
+		beat.tween_callback(func() -> void:
+			if k == 0:
+				Audio.play(&"heartbeat", 0.0, 0.03)
+			content.position = Vector2(randf_range(-1.5, 1.5), 1.5 - k))
+		beat.tween_property(glow, "scale", Vector2(1.9, 2.9), 0.1)
+		beat.parallel().tween_property(veins, "modulate:a", 1.0, 0.1)
+		beat.tween_callback(func() -> void: content.position = Vector2.ZERO)
+		beat.tween_property(glow, "scale", Vector2(1.4, 2.2), 0.22)
+		beat.parallel().tween_property(veins, "modulate:a", 0.35, 0.3)
+	beat.tween_interval(0.75)
+
+
+## Des paires d'yeux s'allument dans l'ombre des troncs, clignent, et s'éteignent.
+func _watching_eyes(holder: Node2D) -> void:
+	while is_instance_valid(holder) and not _leaving:
+		await get_tree().create_timer(randf_range(1.5, 3.5)).timeout
+		if not is_instance_valid(holder):
+			return
+		var pair := Node2D.new()
+		var left := randf() < 0.5
+		pair.position = Vector2(randf_range(30.0, 170.0) if left else randf_range(470.0, 610.0), randf_range(150.0, 280.0))
+		pair.modulate = Color(1, 1, 1, 0)
+		for dx in [-3.0, 3.0]:
+			var eye := ColorRect.new()
+			eye.color = Color(1.0, 0.75, 0.2) if randf() < 0.6 else Color(1.0, 0.3, 0.15)
+			eye.size = Vector2(2, 2)
+			eye.position = Vector2(dx * 1.3 - 1.0, 0)
+			pair.add_child(eye)
+		holder.add_child(pair)
+		var life := create_tween()
+		life.tween_property(pair, "modulate:a", 1.0, 0.4)
+		life.tween_interval(randf_range(0.8, 1.6))
+		life.tween_property(pair, "scale:y", 0.0, 0.06)        # un clignement
+		life.tween_property(pair, "scale:y", 1.0, 0.06)
+		life.tween_interval(randf_range(0.5, 1.2))
+		life.tween_property(pair, "modulate:a", 0.0, 0.3)
+		life.tween_callback(pair.queue_free)
+
+
+## De temps en temps, le vieil arbre gémit.
+func _groans(root: Node2D) -> void:
+	await get_tree().create_timer(2.5).timeout
+	while is_instance_valid(root) and not _leaving:
+		Audio.play(&"tree_groan", 0.0, 0.08)
+		await get_tree().create_timer(randf_range(7.0, 11.0)).timeout
+
+
+## Un rai de lune : un trapèze de lumière pâle, plus fort en haut, qui respire doucement.
+func _moon_ray(top: Vector2, width: float, k: int) -> Polygon2D:
+	var ray := Polygon2D.new()
+	var slant := 70.0
+	ray.polygon = PackedVector2Array([top + Vector2(-width * 0.5, 0), top + Vector2(width * 0.5, 0),
+		top + Vector2(width * 1.4 + slant, 360), top + Vector2(-width * 0.6 + slant, 360)])
+	var c0 := Color(0.75, 0.85, 1.0, 0.16)
+	var c1 := Color(0.75, 0.85, 1.0, 0.0)
+	ray.vertex_colors = PackedColorArray([c0, c0, c1, c1])
+	var add := CanvasItemMaterial.new()
+	add.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+	ray.material = add
+	var breathe := create_tween().set_loops()
+	breathe.bind_node(ray)
+	breathe.tween_property(ray, "modulate:a", 0.45, 2.5 + k).set_trans(Tween.TRANS_SINE)
+	breathe.tween_property(ray, "modulate:a", 1.0, 2.5 + k).set_trans(Tween.TRANS_SINE)
+	return ray
+
+
+## Une tache de lumière douce (dégradé radial), pour les halos et la brume.
+func _soft_glow() -> GradientTexture2D:
+	var soft := Gradient.new()
+	soft.set_color(0, Color(1, 1, 1, 1))
+	soft.set_color(1, Color(1, 1, 1, 0))
+	var tex := GradientTexture2D.new()
+	tex.gradient = soft
+	tex.fill = GradientTexture2D.FILL_RADIAL
+	tex.fill_from = Vector2(0.5, 0.5)
+	tex.fill_to = Vector2(1.0, 0.5)
+	tex.width = 96
+	tex.height = 40
+	return tex
+
+
+## Une nappe de brume qui dérive lentement.
+func _mist(at: Vector2, alpha: float) -> CPUParticles2D:
+	var mist := CPUParticles2D.new()
+	mist.texture = _soft_glow()
+	mist.amount = 16
+	mist.lifetime = 9.0
+	mist.preprocess = 9.0
+	mist.position = at
+	mist.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+	mist.emission_rect_extents = Vector2(360, 10)
+	mist.direction = Vector2(1, 0)
+	mist.spread = 5.0
+	mist.gravity = Vector2.ZERO
+	mist.initial_velocity_min = 4.0
+	mist.initial_velocity_max = 9.0
+	mist.scale_amount_min = 1.2
+	mist.scale_amount_max = 2.0
+	var ramp := Gradient.new()
+	ramp.set_color(0, Color(0.6, 0.72, 0.8, 0.0))
+	ramp.set_color(1, Color(0.6, 0.72, 0.8, 0.0))
+	ramp.add_point(0.5, Color(0.6, 0.72, 0.8, alpha))
+	mist.color_ramp = ramp
+	return mist
 
 
 ## Le carton : « Partie 2 — La forêt des irokos ».
