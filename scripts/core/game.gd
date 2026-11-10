@@ -258,6 +258,54 @@ func go_to_level(level_id: StringName) -> void:
 	get_tree().change_scene_to_file(LEVELS.get(level_id, LEVELS[FIRST_LEVEL]))
 
 
+## Raccourcis de test : ouvrir le jeu directement à un moment précis, sans toucher à la
+## partie enregistrée (rien n'est sauvegardé ; le retour au menu recharge la vraie partie).
+## Sur le web : ajouter ?test=<moment> à l'adresse ; sur PC : lancer avec -- --test=<moment>.
+const TEST_STARTS := {
+	"intro": "l'introduction",
+	"fin": "le village, à la dernière stèle (juste avant l'autel)",
+	"scene": "la scène de fin de la partie 1",
+	"foret": "la forêt des irokos",
+}
+var _test_checked := false
+## Vrai pendant un raccourci de test : rien n'est enregistré jusqu'au retour au menu.
+var test_mode := false
+
+
+## Le moment de test demandé au lancement (une seule fois par session), ou "".
+func requested_test_start() -> String:
+	if _test_checked:
+		return ""
+	_test_checked = true
+	var wanted := ""
+	if OS.has_feature("web"):
+		var js: Variant = JavaScriptBridge.eval("new URLSearchParams(window.location.search).get('test') || ''", true)
+		wanted = str(js) if js != null else ""
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--test="):
+			wanted = arg.trim_prefix("--test=")
+	return wanted if TEST_STARTS.has(wanted) else ""
+
+
+func start_test(moment: String) -> void:
+	test_mode = true
+	saving_enabled = false
+	match moment:
+		"intro":
+			go_to_intro()
+		"fin":
+			checkpoint_level = &"village_1"
+			checkpoint_name = &"SteleIroko"
+			go_to_level(&"village_1")
+		"scene":
+			get_tree().paused = false
+			get_tree().change_scene_to_file("res://scenes/story/fin_partie1.tscn")
+		"foret":
+			checkpoint_level = &""
+			checkpoint_name = &""
+			go_to_level(&"foret_1")
+
+
 func go_to_intro() -> void:
 	get_tree().paused = false
 	get_tree().change_scene_to_file(INTRO)
@@ -265,6 +313,7 @@ func go_to_intro() -> void:
 
 func go_to_title() -> void:
 	get_tree().paused = false
+	test_mode = false
 	if not saving_enabled:
 		# On sort d'un niveau de développement : on recharge la vraie partie depuis le disque.
 		saving_enabled = true

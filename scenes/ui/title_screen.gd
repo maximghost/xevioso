@@ -16,6 +16,10 @@ var _confirming: bool = false
 
 
 func _ready() -> void:
+	var test := Game.requested_test_start()
+	if test != "":
+		Game.start_test.call_deferred(test)
+		return
 	_continue.disabled = not Game.has_save()
 	_new_game.pressed.connect(_on_new_game)
 	_continue.pressed.connect(func() -> void: Game.go_to_level(Game.level_to_continue()))

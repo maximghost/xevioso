@@ -61,7 +61,7 @@ var _dialogue: DialogueBox
 
 func _ready() -> void:
 	# Un niveau de développement (terrain d'essai) ne touche jamais à la vraie sauvegarde.
-	Game.saving_enabled = not level_id in Game.DEV_LEVELS
+	Game.saving_enabled = not level_id in Game.DEV_LEVELS and not Game.test_mode
 	Game.reset_lives()
 	# On entre par le début du niveau (pas de point de contrôle) : nouvelle tentative.
 	if Game.checkpoint_for(level_id) == &"":
