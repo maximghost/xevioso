@@ -41,6 +41,12 @@ def mushroom(col, row):
     ents.append(dict(kind="mushroom", x=x, y=y))
     rects.append((x - 11, y - 14, x + 11, y - 8))
     bounces.append((x - 11, y - 14, x + 11, BOUNCE_V))
+def vine(col, ground_row, length=120, amplitude=55, period=2.4, phase=0.0):
+    """Liane-balancier : au plus bas, la boule (rayon 8) frôle 30 px au-dessus du sol de la
+    case — on passe accroupi (26 px), pas debout (40 px)."""
+    gy = ground_row * 16
+    ents.append(dict(kind="vine", x=col * 16 + 8, y=gy - 38 - length, length=length,
+                     amplitude=amplitude, period=period, phase=phase))
 def surface(col):
     for y in range(ROWS):
         if solid[y][col]: return y
@@ -53,7 +59,8 @@ ground(0, 34, 18)
 ent("player", 6, 17)
 ground(16, 18, 17)                 # racine (1 case)
 ground(19, 20, 16)                 # racine plus haute (2 cases)
-ent("ant", 28, 17, dir=-1)
+vine(25, 18, length=150, period=2.6)
+ent("ant", 33, 17, dir=1)
 # b. Un grand tronc couché à franchir, une branche au-dessus avec une pierre.
 ground(35, 44, 15)                 # le dos du tronc (3 cases au-dessus du sol)
 planks(38, 41, 12)
@@ -74,7 +81,8 @@ crumble(76, 15, 2)
 crumble(80, 13, 2)
 ent("sokpe", 81, 10, name="SokpeRavine", dx=0)
 ground(86, 112, 16)
-ent("ant", 95, 15, dir=-1)
+vine(92, 16, length=140, period=2.2, phase=0.0)
+vine(97, 16, length=140, period=2.2, phase=0.5)    # deux lianes en contretemps
 ent("checkpoint", 104, 15, name="SteleOree")
 # e. Le champ de ronces : 8 cases d'épines, trop large même en courant.
 #    Un champignon au bord : il faut y arriver lancé et garder la direction.
@@ -90,7 +98,7 @@ for y in range(0, 16):
     solid[y][150] = True
 
 # ===== La voix de Xɛvioso ==========================================================
-for col, vid in [(9, "foret_depart"), (53, "foret_champi"), (107, "foret_ronces"), (146, "foret_suite")]:
+for col, vid in [(9, "foret_depart"), (20, "foret_liane"), (53, "foret_champi"), (107, "foret_ronces"), (146, "foret_suite")]:
     ents.append(dict(kind="voice", x=col * 16 + 8, y=surface(col) * 16, id=vid))
 
 # ===== Décor =======================================================================

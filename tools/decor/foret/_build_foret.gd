@@ -165,6 +165,12 @@ func _build_level(data: Dictionary, tileset: TileSet) -> Node2D:
 				node = _scripted(Area2D.new(), "res://scenes/props/thorns.gd")
 				node.set("width_tiles", int(e.w))
 				node.set("texture", load("res://assets/props/ronces.png"))
+			"vine":
+				node = _scripted(Node2D.new(), "res://scenes/props/swinging_vine.gd")
+				node.set("length", float(e.length))
+				node.set("amplitude", float(e.amplitude))
+				node.set("period", float(e.period))
+				node.set("phase", float(e.phase))
 			"voice":
 				node = _scripted(Area2D.new(), "res://scenes/props/voice_trigger.gd")
 				node.set("voice_id", StringName(e.id))

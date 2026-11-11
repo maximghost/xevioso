@@ -139,7 +139,15 @@ var _jump_velocity: float = 0.0
 
 # Comptes à rebours, en secondes, pour le coyote time et la mémoire du saut.
 var _coyote_timer: float = 0.0
-var _bounce_lock: float = 0.0   # après un rebond : relâcher le saut ne coupe pas l'élan
+var _bounce_lock: float = 0.0
+## Accroupi (bas tenu au sol) : le corps ne fait plus que 26 px de haut, on avance au pas.
+var crouching: bool = false
+const STAND_HEIGHT := 40.0
+const CROUCH_HEIGHT := 26.0
+## Vitesse en marche accroupie, en fraction de la vitesse de course.
+const CROUCH_SPEED := 0.4
+var _shape: CapsuleShape2D
+var _shape_node: CollisionShape2D   # après un rebond : relâcher le saut ne coupe pas l'élan
 var _jump_buffer_timer: float = 0.0
 
 # Le visuel du héros : c'est lui qu'on retourne, jamais le corps physique.
@@ -281,9 +289,11 @@ func _physics_process(delta: float) -> void:
 		_throw_timer = maxf(_throw_timer - delta, 0.0)
 	else:
 		_apply_gravity(delta)
-		_handle_run(direction, delta)
+		_update_crouch()
+		_handle_run(direction * (CROUCH_SPEED if crouching else 1.0), delta)
 		_handle_jump()
-		_handle_throw(delta)
+		if not crouching:
+			_handle_throw(delta)
 		_handle_lightning()
 		# Capacité active qui laisse le héros bouger (Pagne-voile, Onde) : elle se met à jour
 		# en plus du mouvement normal.
@@ -410,6 +420,12 @@ func _handle_jump() -> void:
 
 	# On saute si un saut a été demandé récemment (mémoire du saut)
 	# et qu'on touche le sol, ou qu'on vient tout juste de le quitter (coyote time).
+	if _jump_buffer_timer > 0.0 and crouching:
+		if not _can_stand():
+			_jump_buffer_timer = 0.0   # pas la place de se relever : pas de saut
+			return
+		crouching = false
+		_set_body_height(STAND_HEIGHT)
 	if _jump_buffer_timer > 0.0 and _coyote_timer > 0.0:
 		velocity.y = _jump_velocity
 		_squash = Vector2(0.86, 1.14)  # étirement à l'impulsion
@@ -448,6 +464,42 @@ func set_facing(new_facing: int) -> void:
 	_visual.scale.x = facing
 
 
+## S'accroupir : bas tenu, au sol. On ne se relève pas sous un plafond trop bas (on reste
+## accroupi tant que la tête cognerait). Le corps rétrécit par le haut : les pieds ne bougent pas.
+func _update_crouch() -> void:
+	var want: bool = is_on_floor() and Input.is_action_pressed("move_down")
+	if not want and crouching and not _can_stand():
+		want = true
+	if want == crouching:
+		return
+	crouching = want
+	_set_body_height(CROUCH_HEIGHT if crouching else STAND_HEIGHT)
+	if crouching:
+		_squash = Vector2(1.12, 0.88)
+
+
+## Y a-t-il la place de se tenir debout ici ?
+func _can_stand() -> bool:
+	var probe := PhysicsShapeQueryParameters2D.new()
+	var tall := CapsuleShape2D.new()
+	tall.radius = _shape.radius
+	tall.height = STAND_HEIGHT - 1.0
+	probe.shape = tall
+	probe.transform = Transform2D(0.0, global_position + Vector2(0.0, -0.5))
+	probe.collision_mask = 1
+	probe.exclude = [get_rid()]
+	return get_world_2d().direct_space_state.intersect_shape(probe, 1).is_empty()
+
+
+func _set_body_height(height: float) -> void:
+	if _shape == null:
+		_shape_node = get_node("CollisionShape2D")
+		_shape = (_shape_node.shape as CapsuleShape2D).duplicate()
+		_shape_node.shape = _shape
+	_shape.height = height
+	_shape_node.position.y = (STAND_HEIGHT - height) / 2.0
+
+
 ## Choisit l'animation qui correspond à ce que fait le héros.
 func _update_animation() -> void:
 	if _hurt_timer > 0.0:
@@ -470,6 +522,10 @@ func _update_animation() -> void:
 	if not is_on_floor():
 		# En l'air : « jump » tant qu'il monte, « fall » dès qu'il redescend.
 		animation = &"jump" if velocity.y < 0.0 else &"fall"
+	elif crouching and _sprite.sprite_frames.has_animation(&"crouch"):
+		_sprite.speed_scale = 1.0
+		_sprite.play(&"crawl" if absf(velocity.x) > 10.0 else &"crouch")
+		return
 	elif absf(velocity.x) > 10.0:
 		animation = &"run"
 	else:
@@ -839,6 +895,9 @@ func _respawn() -> void:
 	health.make_invincible(respawn_invincibility)
 	_visual.visible = true
 	_respawning = false
+	if crouching:
+		crouching = false
+		_set_body_height(STAND_HEIGHT)
 	Audio.play(&"respawn")
 	# La caméra rejoint le héros d'un coup, sans glisser à travers tout le niveau.
 	$Camera2D.reset_smoothing()

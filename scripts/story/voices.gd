@@ -128,6 +128,11 @@ const LINES := {
 		{"text": "Voici la forêt des irokos. Jadis, chaque arbre ici était un sanctuaire."},
 		{"text": "La poussière d'Adaka l'étouffe. Marchez doucement : la forêt a des yeux."},
 	],
+	&"foret_liane": [
+		{"text": "La liane frappe qui se tient droit. Baisse la tête, et laisse passer sa colère.",
+			"pc": "S ou ↓ maintenu : s'accroupir",
+			"mobile": "Flèche bas maintenue : s'accroupir"},
+	],
 	&"foret_champi": [
 		{"text": "Ce qui est mou rend ce qu'on lui donne. Tombe sur lui, il te rendra le ciel.",
 			"pc": "Retombez sur le champignon pour bondir très haut",

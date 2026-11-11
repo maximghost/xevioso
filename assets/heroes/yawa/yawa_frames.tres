@@ -126,6 +126,30 @@ region = Rect2(40, 360, 40, 60)
 atlas = ExtResource("1_sheet")
 region = Rect2(80, 360, 40, 60)
 
+[sub_resource type="AtlasTexture" id="AtlasTexture_crouch_0"]
+atlas = ExtResource("1_sheet")
+region = Rect2(0, 420, 40, 60)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_crouch_1"]
+atlas = ExtResource("1_sheet")
+region = Rect2(40, 420, 40, 60)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_crawl_0"]
+atlas = ExtResource("1_sheet")
+region = Rect2(0, 480, 40, 60)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_crawl_1"]
+atlas = ExtResource("1_sheet")
+region = Rect2(40, 480, 40, 60)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_crawl_2"]
+atlas = ExtResource("1_sheet")
+region = Rect2(80, 480, 40, 60)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_crawl_3"]
+atlas = ExtResource("1_sheet")
+region = Rect2(120, 480, 40, 60)
+
 [resource]
 animations = [{
 "frames": [{
@@ -255,4 +279,32 @@ animations = [{
 "loop": false,
 "name": &"land",
 "speed": 20.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_crouch_0")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_crouch_1")
+}],
+"loop": true,
+"name": &"crouch",
+"speed": 3.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_crawl_0")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_crawl_1")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_crawl_2")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_crawl_3")
+}],
+"loop": true,
+"name": &"crawl",
+"speed": 9.0
 }]
