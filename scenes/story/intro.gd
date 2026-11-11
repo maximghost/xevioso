@@ -273,8 +273,9 @@ func _fin_partie1() -> void:
 	await _tell(&"fin1", 2)
 	if _leaving: return
 
-	# 2. Xɛvioso tourne les Envoyés vers la forêt.
-	_emblem_y = 128.0
+	# 2. Xɛvioso tourne les Envoyés vers la forêt. (L'emblème plane entre le bandeau de
+	# dialogue et les têtes des Envoyés : la caméra rapprochée ne voit pas plus haut que y 121.)
+	_emblem_y = 202.0
 	_emblem.position = Vector2(ALTAR_X + 40.0, _emblem_y)
 	create_tween().tween_property(_emblem, "modulate:a", 0.9, 2.0)
 	Audio.play(&"emblem_appear", -6.0)
