@@ -627,6 +627,19 @@ def _roll():
     return reverb(out, 1.0, 3000, 0.2)
 
 
+@sfx("vine_swish", 0.7)
+def _vine_swish():
+    """La boule de ronces passe au plus bas : un souffle qui enfle et retombe, un froissement de
+    feuilles, le grincement de la liane."""
+    n = int(0.45 * SR)
+    t = np.arange(n) / SR
+    env = np.sin(np.pi * t / t[-1]) ** 2
+    whoosh = bp(noise(n), 400, 1800) * env
+    leaves = bp(noise(n), 2500, 7000) * env ** 2 * (0.5 + 0.5 * np.sin(2 * np.pi * 40 * t))
+    creak = np.sin(2 * np.pi * (180 + 60 * t) * t) * (np.sin(2 * np.pi * 25 * t) > 0.5) * env * 0.15
+    return whoosh * 0.9 + leaves * 0.35 + creak
+
+
 @sfx("bounce", 0.8)
 def _bounce():
     """Le champignon qui fait bondir : un « bloup » mou qui monte, sur un petit coup sourd."""
@@ -766,45 +779,76 @@ def _night():
 
 @amb("forest")
 def _forest():
-    """Sous la canopée, en plein jour : un fond d'insectes doux, des gouttes qui tombent des
-    feuilles, des oiseaux au loin (un calao qui cacarde, un touraco qui appelle, des trilles),
-    le craquement d'une branche. Stéréo, 20 s en boucle."""
-    L = 20.0
+    """Le sous-bois malade : un bourdonnement d'insectes qui pulse (cigales, criquets), des
+    chauves-souris qui froufroutent et piaillent, des rats qui détalent dans les feuilles
+    en couinant, des gouttes, une branche qui craque. Stéréo, 24 s en boucle : ça ne se tait
+    jamais tout à fait, on se sent épié."""
+    L = 24.0
     n = int((L + 0.8) * SR)
-    r = rng(611)
+    r = rng(613)
     out = np.zeros((n, 2))
-    bed = bp(noise(n), 2500, 6000) * 0.02 * (0.7 + 0.3 * np.sin(2 * np.pi * np.arange(n) / SR / 5.0))
-    out[:, 0] += bed; out[:, 1] += np.roll(bed, 3000)
-    low = lp(noise(n), 220) * 0.08
-    out[:, 0] += low; out[:, 1] += low
+    tt = np.arange(n) / SR
     def put(x, t, pan, g):
         i = int(t * SR); m = min(len(x), n - i)
         if m <= 0: return
         out[i:i + m, 0] += x[:m] * g * np.cos((pan + 1) * np.pi / 4)
         out[i:i + m, 1] += x[:m] * g * np.sin((pan + 1) * np.pi / 4)
-    for k in range(70):                     # gouttes
-        m = int(0.05 * SR); tt = np.arange(m) / SR
-        f0 = r.uniform(1400, 3200)
-        drop = np.sin(2 * np.pi * (f0 + 2500 * tt) * tt) * np.exp(-tt * 90)
-        put(drop, r.uniform(0, L), r.uniform(-0.9, 0.9), r.uniform(0.03, 0.09))
-    def call(freqs, durs, gap, vib=0.0, harsh=0.0):
+    # insectes : deux nappes de cigales qui pulsent à des rythmes différents (gauche, droite)
+    for pan, f0, rate, ph in ((-0.7, 4300, 13.0, 0.0), (0.7, 5200, 17.0, 1.3)):
+        bed = bp(noise(n), f0 - 600, f0 + 600)
+        am = (0.5 + 0.5 * np.sin(2 * np.pi * rate * tt + ph)) ** 3
+        swell = 0.6 + 0.4 * np.sin(2 * np.pi * tt / (L / 3) + ph)     # 3 houles par boucle
+        put(bed * am * swell, 0.0, pan, 0.05)
+    for k in range(30):                     # criquets : courtes stridulations
+        m = int(0.28 * SR); t_ = np.arange(m) / SR
+        chirp = np.sin(2 * np.pi * r.uniform(3600, 4400) * t_) * (np.sin(2 * np.pi * 30 * t_) > 0.2) * np.hanning(m)
+        put(chirp, r.uniform(0, L), r.uniform(-0.9, 0.9), r.uniform(0.012, 0.025))
+    low = lp(noise(n), 160) * 0.07
+    out[:, 0] += low; out[:, 1] += low
+    for k in range(40):                     # gouttes
+        m = int(0.05 * SR); t_ = np.arange(m) / SR
+        f0 = r.uniform(1400, 3000)
+        put(np.sin(2 * np.pi * (f0 + 2500 * t_) * t_) * np.exp(-t_ * 90), r.uniform(0, L), r.uniform(-0.9, 0.9), r.uniform(0.02, 0.06))
+    def bat_flutter(dur):
+        m = int(dur * SR); t_ = np.arange(m) / SR
+        flaps = (0.5 + 0.5 * np.sin(2 * np.pi * r.uniform(11, 15) * t_)) ** 4
+        return bp(noise(m), 300, 1800) * flaps * np.hanning(m)
+    def bat_squeak():
         parts = []
-        for f, d in zip(freqs, durs):
-            m = int(d * SR); tt = np.arange(m) / SR
-            ff = f * (1 + vib * np.sin(2 * np.pi * 9 * tt))
-            ph = 2 * np.pi * np.cumsum(ff) / SR
-            x = np.sin(ph) + 0.4 * np.sin(2 * ph) + harsh * np.sign(np.sin(ph)) * 0.3
-            parts.append(x * env_adsr(m, 0.01, 0.03, 0.8, 0.04))
-            parts.append(np.zeros(int(gap * SR)))
+        for j in range(r.integers(2, 5)):
+            m = int(r.uniform(0.012, 0.025) * SR); t_ = np.arange(m) / SR
+            f0 = r.uniform(7000, 9500)
+            parts.append(np.sin(2 * np.pi * (f0 - 3000 * t_ / t_[-1] * 0.5) * t_) * np.hanning(m))
+            parts.append(np.zeros(int(r.uniform(0.03, 0.06) * SR)))
         return np.concatenate(parts)
-    for t in (1.5, 9.0, 15.5):              # calao : cacardement grave
-        put(lp(call([520, 480, 450, 430], [0.12] * 4, 0.07, harsh=1.0), 1800), t, r.uniform(-0.8, -0.3), 0.06)
-    for t in (4.0, 12.5):                   # touraco : « kow kow kow » qui ralentit
-        put(lp(call([700] * 5, [0.09] * 5, 0.11), 2200), t, r.uniform(0.3, 0.8), 0.07)
-    for t in (2.8, 7.2, 11.0, 17.8):        # trilles fines
-        put(call([4200 + 300 * j for j in range(6)], [0.04] * 6, 0.015, vib=0.04), t, r.uniform(-0.6, 0.6), 0.025)
-    for t in (6.0, 18.5):                   # une branche craque, quelque part
-        put(bp(noise(int(0.25 * SR)), 300, 2000) * np.exp(-np.arange(int(0.25 * SR)) / SR * 18), t, r.uniform(-1, 1), 0.08)
+    for t in (2.0, 7.5, 11.0, 16.5, 21.0):  # chauves-souris : elles passent d'un côté à l'autre
+        dur = r.uniform(0.9, 1.4)
+        fl = bat_flutter(dur)
+        m = len(fl)
+        start = int(t * SR)
+        if start + m >= n: continue
+        p0, p1 = (-0.9, 0.9) if r.random() < 0.5 else (0.9, -0.9)
+        pan = np.linspace(p0, p1, m)
+        out[start:start + m, 0] += fl * 0.09 * np.cos((pan + 1) * np.pi / 4)
+        out[start:start + m, 1] += fl * 0.09 * np.sin((pan + 1) * np.pi / 4)
+        for j in range(2):
+            put(bat_squeak(), t + r.uniform(0.1, dur - 0.2), p0 + (p1 - p0) * r.uniform(0.2, 0.8), 0.03)
+    def rat():
+        m = int(r.uniform(0.35, 0.6) * SR); t_ = np.arange(m) / SR
+        steps = (np.sin(2 * np.pi * r.uniform(16, 22) * t_) > 0.6).astype(float)
+        scurry = bp(noise(m), 1500, 6000) * steps * np.hanning(m)
+        sq = int(0.07 * SR); ts = np.arange(sq) / SR
+        f = r.uniform(2600, 3400)
+        squeak = np.sin(2 * np.pi * (f + 900 * np.sin(np.pi * ts / ts[-1])) * ts) * np.hanning(sq)
+        x = scurry * 0.6
+        k0 = int(len(x) * r.uniform(0.3, 0.7))
+        x[k0:k0 + sq] += squeak[:max(0, min(sq, len(x) - k0))] * 0.5
+        return x
+    for t in (4.5, 9.0, 14.0, 19.0, 22.5):  # rats qui détalent dans les feuilles
+        put(rat(), t, r.uniform(-0.8, 0.8), 0.09)
+    for t in (6.0, 18.0):                   # une branche craque
+        m = int(0.25 * SR)
+        put(bp(noise(m), 300, 2000) * np.exp(-np.arange(m) / SR * 18), t, r.uniform(-1, 1), 0.08)
     y = np.stack([loopify(out[:, 0], L, 0.8), loopify(out[:, 1], L, 0.8)], 1)
     return y / (np.abs(y).max() + 1e-9) * 0.45
 
