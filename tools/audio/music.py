@@ -404,9 +404,38 @@ def foret():
     return tr.render(room=2.0, damp=4200, wet=0.38)
 
 
+
+def adan():
+    """Adan, la Colère (combat) : 12/8 pressé (138), tambours de guerre. Gankogui grave et
+    sec, kidi et sogo serrés, sato qui martèle chaque temps, atsimevu qui défie ; un ostinato
+    d'agidigbo grave en mi phrygien qui monte d'un ton à chaque reprise ; un chœur d'hommes
+    qui gronde des clusters. Courte cassure au milieu (la Fureur), puis tout redouble."""
+    tr = Track(bpm=138, bars=32, seed=31, tail=3.0)
+    OST = ["E2:1 E2:1 F2:1 E2:1 G2:2 F2:1 E2:1 B1:1 E2:1 F2:2", "E2:1 E2:1 F2:1 E2:1 A2:2 G2:1 F2:1 E2:1 F2:1 G2:2"]
+    for bar in range(32):
+        brk = 16 <= bar < 18
+        lift = 0 if bar < 18 else 2                      # tout monte d'un ton après la cassure
+        b0 = tr.at(bar, 0)
+        for st in (0, 3, 6, 9):                           # le sato martèle chaque temps
+            tr.add(tr.inst(("sato",), lambda: drum(62, "bass", 0.7, 1.0)), tr.at(bar, st), 0.55 if st == 0 else 0.4, 0.0, 0.1)
+        if brk:
+            for st in range(12):
+                tr.add(tr.inst(("shk",), lambda: shaker(0.08, 1.0, 1.0)), b0 + st * tr.p, 0.18, 0.3, 0.1)
+            continue
+        groove_agbadja(tr, bar, 3, f_bell=820.0)
+        play_melody(tr, bar, OST[(bar // 2) % 2], "agi", -1 + 0 * lift, 0.55, -0.2, 0.15)
+        if bar >= 8:
+            play_melody(tr, bar, OST[(bar // 2) % 2], "agi", 0, 0.28, 0.3, 0.15)
+    for bar in range(2, 32, 2):
+        lead_call(tr, bar, bar % 3, f=118.0)
+    for bar in (4, 12, 20, 28):
+        pad(tr, bar, 4, ["E3", "F3", "B3"], "o", 0.2)
+    return tr.render(room=1.6, damp=4500, wet=0.3)
+
+
 TRACKS = {"village": village, "fete": fete, "titre": titre, "intro_village": intro_village,
           "intro_drame": intro_drame, "intro_malheurs": intro_malheurs, "intro_appel": intro_appel,
-          "victoire": victoire, "game_over": game_over, "foret": foret}
+          "victoire": victoire, "game_over": game_over, "foret": foret, "adan": adan}
 
 if __name__ == "__main__":
     only = sys.argv[2:]

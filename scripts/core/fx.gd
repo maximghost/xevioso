@@ -115,3 +115,50 @@ static func puff(parent: Node, at: Vector2, color: Color = Color(0.86, 0.72, 0.5
 	parent.add_child(p)
 	p.global_position = at
 	p.finished.connect(p.queue_free)
+
+
+## Des « z » qui montent doucement au-dessus d'une créature endormie (boucle : on la coupe
+## avec emitting = false). Renvoie l'émetteur, ajouté comme enfant de « parent ».
+static func zzz(parent: Node, offset: Vector2) -> CPUParticles2D:
+	var p := CPUParticles2D.new()
+	p.texture = preload("res://assets/fx/zzz.png")
+	p.amount = 3
+	p.lifetime = 1.6
+	p.position = offset
+	p.direction = Vector2(0.4, -1.0)
+	p.spread = 15.0
+	p.gravity = Vector2.ZERO
+	p.initial_velocity_min = 10.0
+	p.initial_velocity_max = 14.0
+	p.scale_amount_min = 0.8
+	p.scale_amount_max = 1.2
+	var fade := Gradient.new()
+	fade.set_color(0, Color(0.8, 0.9, 1.0, 0.0))
+	fade.add_point(0.2, Color(0.8, 0.9, 1.0, 1.0))
+	fade.set_color(fade.get_point_count() - 1, Color(0.8, 0.9, 1.0, 0.0))
+	p.color_ramp = fade
+	var unshaded := CanvasItemMaterial.new()
+	unshaded.light_mode = CanvasItemMaterial.LIGHT_MODE_UNSHADED
+	p.material = unshaded
+	parent.add_child(p)
+	return p
+
+
+static var _light_texture: GradientTexture2D
+
+## Texture de lumière douce (disque blanc qui s'efface vers le bord), partagée par toutes les
+## lumières du sous-bois (héros, lucioles, champignons).
+static func light_texture() -> GradientTexture2D:
+	if _light_texture == null:
+		var g := Gradient.new()
+		g.set_color(0, Color(1, 1, 1, 1))
+		g.add_point(0.45, Color(1, 1, 1, 0.55))
+		g.set_color(g.get_point_count() - 1, Color(1, 1, 1, 0))
+		_light_texture = GradientTexture2D.new()
+		_light_texture.gradient = g
+		_light_texture.fill = GradientTexture2D.FILL_RADIAL
+		_light_texture.fill_from = Vector2(0.5, 0.5)
+		_light_texture.fill_to = Vector2(1.0, 0.5)
+		_light_texture.width = 128
+		_light_texture.height = 128
+	return _light_texture

@@ -40,7 +40,17 @@ const SFX_DB := {
 	&"dialogue_next": -10.0, &"text_tick": -22.0, &"caption_next": -12.0, &"game_start": -3.0,
 	&"stone_shatter": 0.0, &"adaka_appear": -3.0, &"adaka_inhale": -2.0, &"adaka_laugh": -3.0,
 	&"wind_stop": -6.0, &"emblem_appear": -2.0, &"designate": -1.0, &"chicken": -12.0,
-	&"chicken_flap": -10.0, &"drum_roll": -4.0, &"heartbeat": -4.0, &"bounce": -4.0, &"vine_swish": -3.0, &"tree_groan": -5.0, &"fire": -10.0, &"stone_hum": -16.0,
+	&"chicken_flap": -10.0, &"drum_roll": -4.0, &"heartbeat": -4.0, &"bounce": -4.0, &"vine_swish": -3.0,
+	&"armor_clank": -4.0, &"fall_asleep": -8.0, &"fireflies": -8.0, &"rat_squeak": -10.0,
+	&"drum_voice_0": -2.0, &"drum_voice_1": -2.0, &"drum_voice_2": -2.0,
+	&"bird_note_0": -7.0, &"bird_note_1": -7.0, &"bird_note_2": -7.0, &"bird_call": -8.0, &"bird_happy": -6.0,
+	&"puzzle_good": -6.0, &"puzzle_bad": -5.0, &"puzzle_timeout": -7.0, &"puzzle_solved": -2.0,
+	&"roots_open": -3.0, &"roots_close": -3.0, &"root_grow": -6.0, &"root_shrink": -8.0,
+	&"talking_drum_hi": -4.0, &"talking_drum_lo": -4.0, &"wind_gust": -6.0,
+	&"adan_roar": -1.0, &"adan_growl": -4.0, &"adan_charge": -3.0, &"adan_crash": -2.0, &"adan_slam": -1.0,
+	&"adan_hit": -5.0, &"adan_tired": -5.0, &"adan_call": -4.0, &"adan_death": 0.0,
+	&"spear_throw": -6.0, &"spear_burst": -6.0, &"fury_burst": -1.0, &"fire_whoosh": -4.0,
+	&"forest_revival": -2.0, &"bat_flutter": -16.0, &"tree_groan": -5.0, &"fire": -10.0, &"stone_hum": -16.0,
 }
 
 ## Volume de base de chaque ambiance (dB).

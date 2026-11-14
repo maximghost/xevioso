@@ -34,6 +34,14 @@ extends CharacterBody2D
 ## Couleur de la poussière quand elle disparaît (latérite pour la Motte, cendre pour la fourmi).
 @export var dust_color: Color = Color(0.72, 0.44, 0.24)
 
+## Carapacé (le Poussiéreux) : la hache rebondit dessus sans le blesser. Seul le Tambour
+## parlant de Kokou en vient à bout… en l'endormant (on passe alors à côté sans danger).
+@export var armored: bool = false
+
+# Temps de sommeil restant (Tambour parlant) : il ne bouge plus et ne blesse plus.
+var _sleep_timer: float = 0.0
+var _zzz: CPUParticles2D
+
 # Direction de marche actuelle.
 var _direction: int = -1
 # Temps restant avant de reprendre la marche après un coup.
@@ -52,6 +60,7 @@ var _ledge_ray_offset: float = 0.0
 
 func _ready() -> void:
 	add_to_group(&"enemies")   # cibles possibles de la foudre de Xɛvioso
+	add_to_group(&"drum_listener")
 	_ledge_ray_offset = absf(_ledge_ray.position.x)
 	_set_direction(start_direction)
 	_health.died.connect(_on_died)
@@ -65,6 +74,14 @@ func _physics_process(delta: float) -> void:
 	if not is_on_floor():
 		velocity.y += gravity * delta
 
+	if _sleep_timer > 0.0:
+		# Endormi par le tambour : immobile, inoffensif.
+		_sleep_timer -= delta
+		velocity.x = move_toward(velocity.x, 0.0, 600.0 * delta)
+		if _sleep_timer <= 0.0:
+			_wake()
+		move_and_slide()
+		return
 	if _stun_timer > 0.0:
 		# Sonnée : elle glisse sur son recul et ralentit.
 		_stun_timer -= delta
@@ -93,6 +110,13 @@ func _hurt_touching_heroes() -> void:
 ## Reçoit un coup (hache, onde...). « from_direction » : sens du coup (-1 ou 1).
 ## « stun » : durée d'étourdissement imposée par l'attaque (-1 = la durée habituelle).
 func take_hit(damage: int, from_direction: float, stun: float = -1.0) -> void:
+	if armored and not _dead:
+		# La hache rebondit : un éclat de poussière, un bruit sourd, il ne sent rien.
+		Audio.play_at(&"armor_clank", global_position)
+		Fx.puff(get_parent(), global_position + Vector2(0, -16), Color(0.7, 0.66, 0.6), 6, Vector2(-from_direction, -0.5), 40.0, 0.5)
+		_sprite.modulate = Color(1.6, 1.6, 1.6)
+		create_tween().tween_property(_sprite, "modulate", Color.WHITE, 0.12)
+		return
 	if _dead or not _health.damage(damage):
 		return
 	_stun_timer = stun if stun >= 0.0 else stun_time
@@ -101,6 +125,43 @@ func take_hit(damage: int, from_direction: float, stun: float = -1.0) -> void:
 	# Éclair blanc : le coup se voit.
 	_sprite.modulate = Color(4.0, 4.0, 4.0)
 	create_tween().tween_property(_sprite, "modulate", Color.WHITE, 0.15)
+
+
+## Le Tambour parlant de Kokou résonne : à portée, la créature s'endort (4 secondes de plus
+## à chaque battement entendu, jusqu'à 5 secondes). Endormie, elle ne blesse plus.
+func hear_drum(from: Vector2) -> void:
+	if _dead or global_position.distance_to(from) > 176.0:
+		return
+	if _sleep_timer <= 0.0:
+		_hurtbox.set_deferred("monitoring", false)
+		if _sprite.sprite_frames.has_animation(&"sleep"):
+			_sprite.play(&"sleep")
+		else:
+			_sprite.pause()
+		_sprite.modulate = Color(0.75, 0.8, 0.95)
+		if _zzz == null:
+			_zzz = Fx.zzz(self, Vector2(0, -_sprite_height() - 4))
+		_zzz.emitting = true
+		Audio.play_at(&"fall_asleep", global_position, -4.0)
+	_sleep_timer = 5.0
+
+
+func _wake() -> void:
+	_hurtbox.set_deferred("monitoring", true)
+	_sprite.play(&"walk")
+	_sprite.modulate = Color.WHITE
+	if _zzz != null:
+		_zzz.emitting = false
+
+
+func _sprite_height() -> float:
+	var tex: Texture2D = _sprite.sprite_frames.get_frame_texture(_sprite.animation, 0)
+	return tex.get_height() if tex != null else 20.0
+
+
+## Endormie ?
+func is_asleep() -> bool:
+	return _sleep_timer > 0.0
 
 
 ## Change de sens : retourne le sprite et place le rayon devant les pattes.

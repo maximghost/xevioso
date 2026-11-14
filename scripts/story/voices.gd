@@ -144,6 +144,47 @@ const LINES := {
 	&"foret_suite": [
 		{"text": "Plus loin, le sous-bois s'enfonce dans l'ombre. Le chemin s'ouvrira bientôt."},
 	],
+	&"foret_sombre": [
+		{"text": "Ici la canopée boit toute la lumière. Ce qui luit dans le noir te guidera… ou te guette."},
+		{"text": "Les lucioles suivent qui les traverse. Emporte-les, mais elles ne restent pas longtemps."},
+	],
+	&"foret_tunnel": [
+		{"text": "Les racines se referment. Courbe le dos, et ne te presse pas : on voit mal ce qui vient en face."},
+	],
+	&"foret_puits": [
+		{"text": "Le chemin monte, et le noir avec. Le champignon te porte, la mousse ne pardonne pas."},
+	],
+	&"foret_sanctuaire": [
+		{"text": "Le sanctuaire. Trois tambours-arbres y parlaient avant qu'Adaka ne les fasse taire."},
+		{"text": "L'oiseau messager connaît l'ordre de leurs voix. Regarde où il se pose, écoute ce qu'il chante."},
+		{"text": "Puis fais parler les tambours dans le même ordre, sans traîner entre deux coups.",
+			"pc": "J : la hache fait parler un tambour",
+			"mobile": "Bouton rouge : la hache fait parler un tambour"},
+	],
+	&"foret_kokou": [
+		{"text": "Kokou, Tambourinaire. Les racines de cette forêt t'attendaient. Je te donne la parole du tambour."},
+		{"text": "Garde ton tambour battant : les racines sacrées s'éveillent, et la poussière d'Adaka s'endort.",
+			"pc": "Tab : choisir Kokou · K maintenu : le Tambour parlant",
+			"mobile": "Bouton vert : choisir Kokou · Bouton bleu maintenu : le Tambour parlant"},
+	],
+	&"foret_poussiereux": [
+		{"text": "Un Poussiéreux. La hache glisse sur lui comme la pluie sur la pierre. Mais il n'aime pas qu'on lui parle doucement…"},
+	],
+	&"foret_canopee": [
+		{"text": "La canopée. Le vent y souffle par rafales : quand les feuilles filent, accroche-toi."},
+		{"text": "Afi, l'air chaud qui monte entre les troncs portera ton pagne plus haut que les branches."},
+	],
+	&"foret_coeur": [
+		{"text": "Le cœur de l'iroko. C'est ici qu'Adaka a planté sa colère. Elle porte un nom : Adan."},
+		{"text": "Sa fureur brûle tout ce qui touche le sol. Seules les racines sacrées ne brûlent pas."},
+	],
+	&"foret_adan_vaincu": [
+		{"text": "La colère retombe en cendre. Allez, touchez le cœur de l'arbre : rendez-lui sa voix."},
+	],
+	&"foret_fin": [
+		{"text": "Envoyés. L'iroko respire, et avec lui toute la forêt. Ses arbres sont de nouveau des sanctuaires."},
+		{"text": "Mais Adaka n'a perdu qu'un serviteur. Le chemin continue."},
+	],
 	&"village_fin": [
 		{"text": "Vous avez entendu. Vous avez marché."},
 		{"text": "Maintenant… écoutez la pluie."},

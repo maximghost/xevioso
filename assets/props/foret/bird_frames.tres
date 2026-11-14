@@ -1,0 +1,37 @@
+[gd_resource type="SpriteFrames" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/props/foret/bird.png" id="1_toli7"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_2fb0c"]
+atlas = ExtResource("1_toli7")
+region = Rect2(0, 0, 14, 12)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_mj3lp"]
+atlas = ExtResource("1_toli7")
+region = Rect2(14, 0, 14, 12)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_toli7"]
+atlas = ExtResource("1_toli7")
+region = Rect2(28, 0, 14, 12)
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_2fb0c")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_mj3lp")
+}],
+"loop": 1,
+"name": &"fly",
+"speed": 10.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_toli7")
+}],
+"loop": 1,
+"name": &"perch",
+"speed": 1.0
+}]

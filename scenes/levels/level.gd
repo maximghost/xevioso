@@ -45,6 +45,10 @@ extends Node2D
 ## Musique du niveau, et ses ambiances (boucles) tant qu'il fait sec.
 @export var music_track: StringName = &"village"
 @export var ambiences: Array[StringName] = [&"wind_dry", &"village_day"]
+## Le niveau ne peut se terminer qu'une fois son gardien vaincu (Adan, dans la forêt).
+@export var requires_boss: bool = false
+var boss_defeated: bool = false
+
 ## Le titre et le sous-titre de la bannière de victoire.
 @export var victory_title: String = "La pluie est revenue !"
 @export var victory_subtitle: String = "Première étape accomplie : le village est sauvé"
@@ -87,16 +91,18 @@ func _ready() -> void:
 
 
 ## Fait parler Xɛvioso (le jeu est figé pendant ce temps). À attendre avec « await ».
-func say(lines: Array) -> void:
+## Xɛvioso parle. Par défaut il murmure : le jeu continue (une indication ne doit jamais
+## couper un élan). « blocking » fige le jeu (moments de récit : la fin du niveau).
+func say(lines: Array, blocking: bool = false) -> void:
 	if lines.is_empty():
 		return
 	if _dialogue == null:
 		_dialogue = preload("res://scenes/ui/dialogue_box.tscn").instantiate()
 		add_child(_dialogue)
-	# Un petit éclair et un grondement lointain annoncent la voix.
-	_flash(0.25)
-	Audio.play(&"thunder_far", -10.0, 0.1)
-	await _dialogue.play(lines, true)
+	# Un petit éclair et un grondement lointain annoncent la voix (discret pour un murmure).
+	_flash(0.25 if blocking else 0.1)
+	Audio.play(&"thunder_far", -10.0 if blocking else -16.0, 0.1)
+	await _dialogue.play(lines, blocking)
 
 
 ## Le héros a perdu tous ses cœurs : une vie de moins. S'il n'en reste plus, game over.
@@ -224,6 +230,8 @@ func _setup_mood() -> void:
 
 ## Vrai si le niveau peut encore être gagné (pas de fin de partie en cours, héros vivant).
 func can_complete() -> bool:
+	if requires_boss and not boss_defeated:
+		return false
 	return not _completed and not _game_over and (player == null or not player.health.is_dead())
 
 
@@ -242,7 +250,7 @@ func complete(altar: Vector2 = Vector2.INF) -> void:
 	_freeze_enemies()
 	Game.complete_level(level_id)
 	# Xɛvioso parle d'abord.
-	await say(Voices.lines(StringName(String(level_id).split("_")[0] + "_fin")))
+	await say(Voices.lines(StringName(String(level_id).split("_")[0] + "_fin")), true)
 
 	# 1. La foudre répond : le ciel s'assombrit d'un coup, un grand éclair frappe l'autel.
 	if player != null:
@@ -278,8 +286,11 @@ func complete(altar: Vector2 = Vector2.INF) -> void:
 		_weather.start_rain()
 	create_tween().tween_property(self, "modulate", rain_color, 3.0)
 	_bloom()
+	if not use_weather:
+		_forest_revival()
 	await get_tree().create_timer(1.6).timeout
-	_rainbow()
+	if use_weather:
+		_rainbow()
 
 	# 4. La bannière de victoire, avec le bilan.
 	var banner := VictoryBanner.new()
@@ -373,6 +384,61 @@ class Rainbow:
 
 ## Herbe verte (on change l'image des tuiles : toutes les cases suivent), arbres et buissons
 ## remplacés par leur version « après la pluie » quand elle existe (image_green.png).
+## La forêt retrouve sa sacralité (niveaux sans pluie) : l'ombre du sous-bois se lève, des
+## rais de lumière dorée descendent de la canopée et balaient l'écran, du pollen d'or flotte,
+## une volée d'oiseaux traverse le ciel en chantant.
+func _forest_revival() -> void:
+	for d in find_children("*", "ForestDarkness", true, false):
+		d.ranges = PackedVector2Array()
+	Audio.play(&"forest_revival")
+	var layer := CanvasLayer.new()
+	layer.layer = 4
+	add_child(layer)
+	var add := CanvasItemMaterial.new()
+	add.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+	for k in 5:
+		var ray := Polygon2D.new()
+		var x: float = 60.0 + k * 130.0
+		var w: float = 30.0 + 14.0 * (k % 3)
+		ray.polygon = PackedVector2Array([Vector2(x, -10), Vector2(x + w, -10), Vector2(x + w + 120, 370), Vector2(x + 50, 370)])
+		var c0 := Color(1.0, 0.9, 0.55, 0.0)
+		ray.vertex_colors = PackedColorArray([c0, c0, c0, c0])
+		ray.material = add
+		layer.add_child(ray)
+		var t := create_tween().set_loops(4)
+		t.tween_method(func(a: float) -> void:
+			var top := Color(1.0, 0.9, 0.55, a)
+			var bottom := Color(1.0, 0.9, 0.55, 0.0)
+			ray.vertex_colors = PackedColorArray([top, top, bottom, bottom]), 0.0, 0.22, 1.6 + k * 0.3).set_trans(Tween.TRANS_SINE)
+		t.tween_method(func(a: float) -> void:
+			var top := Color(1.0, 0.9, 0.55, a)
+			var bottom := Color(1.0, 0.9, 0.55, 0.0)
+			ray.vertex_colors = PackedColorArray([top, top, bottom, bottom]), 0.22, 0.08, 1.6 + k * 0.3).set_trans(Tween.TRANS_SINE)
+	var pollen := CPUParticles2D.new()
+	pollen.amount = 60
+	pollen.lifetime = 6.0
+	pollen.position = Vector2(320, -10)
+	pollen.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+	pollen.emission_rect_extents = Vector2(330, 4)
+	pollen.direction = Vector2(0.2, 1)
+	pollen.gravity = Vector2(4, 14)
+	pollen.initial_velocity_min = 8.0
+	pollen.initial_velocity_max = 20.0
+	pollen.scale_amount_min = 1.0
+	pollen.scale_amount_max = 2.0
+	pollen.color = Color(1.0, 0.92, 0.55, 0.9)
+	layer.add_child(pollen)
+	for i in 9:
+		var bird := AnimatedSprite2D.new()
+		bird.sprite_frames = preload("res://assets/props/foret/bird_frames.tres")
+		bird.play(&"fly")
+		bird.position = Vector2(-20 - i * 18, 70 + (i % 3) * 14 + randf_range(-6, 6))
+		layer.add_child(bird)
+		var t := create_tween()
+		t.tween_property(bird, "position", bird.position + Vector2(760, -50 + randf_range(-20, 20)), 5.0 + i * 0.2)
+		t.tween_callback(bird.queue_free)
+
+
 func _turn_green() -> void:
 	if terrain != null and green_tiles != null:
 		# Une copie du jeu de tuiles : l'original (partagé, gardé en mémoire par Godot)

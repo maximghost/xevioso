@@ -1,0 +1,58 @@
+[gd_resource type="SpriteFrames" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/enemies/golem/golem.png" id="1_lxcb5"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_acoif"]
+atlas = ExtResource("1_lxcb5")
+region = Rect2(0, 38, 34, 38)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_eybpp"]
+atlas = ExtResource("1_lxcb5")
+region = Rect2(34, 38, 34, 38)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_iu5uo"]
+atlas = ExtResource("1_lxcb5")
+region = Rect2(0, 0, 34, 38)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_207fx"]
+atlas = ExtResource("1_lxcb5")
+region = Rect2(34, 0, 34, 38)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_eq853"]
+atlas = ExtResource("1_lxcb5")
+region = Rect2(68, 0, 34, 38)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ocrfd"]
+atlas = ExtResource("1_lxcb5")
+region = Rect2(102, 0, 34, 38)
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_acoif")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_eybpp")
+}],
+"loop": 1,
+"name": &"sleep",
+"speed": 1.5
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_iu5uo")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_207fx")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_eq853")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ocrfd")
+}],
+"loop": 1,
+"name": &"walk",
+"speed": 5.0
+}]

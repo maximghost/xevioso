@@ -1,6 +1,12 @@
 extends CanvasLayer
-## Écran de fin de la première partie : il apparaît en fondu par-dessus le village sous
-## la pluie. On peut rejouer le niveau (depuis le début) ou revenir au menu.
+## Écran de fin d'une partie : il apparaît en fondu par-dessus le niveau gagné. On peut passer
+## à la partie suivante (s'il y en a une), rejouer le niveau (depuis le début) ou revenir au menu.
+
+## Titre et texte selon la partie finie.
+const ENDINGS := {
+	&"village_1": ["Fin de la première partie", "La pluie est revenue sur le village.\nMais Adaka court toujours : la forêt des irokos vous attend."],
+	&"foret_1": ["Fin de la deuxième partie", "Adan est vaincu, les irokos sont redevenus sacrés.\nMais Adaka court toujours : la suite de l'aventure arrive bientôt."],
+}
 
 ## Le niveau qu'on vient de finir (renseigné par le niveau).
 var level_id: StringName = &""
@@ -13,6 +19,9 @@ var level_id: StringName = &""
 
 
 func _ready() -> void:
+	if ENDINGS.has(level_id):
+		$Panel/Box/Title.text = ENDINGS[level_id][0]
+		$Panel/Box/Text.text = ENDINGS[level_id][1]
 	_panel.modulate.a = 0.0
 	create_tween().tween_property(_panel, "modulate:a", 1.0, 1.2)
 	_menu.pressed.connect(Game.go_to_title)

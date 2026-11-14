@@ -1,0 +1,39 @@
+[gd_resource type="SpriteFrames" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/enemies/bat/bat_eyes.png" id="1_m3lxo"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_02u8f"]
+atlas = ExtResource("1_m3lxo")
+region = Rect2(0, 0, 24, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ythwr"]
+atlas = ExtResource("1_m3lxo")
+region = Rect2(24, 0, 24, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ghf1e"]
+atlas = ExtResource("1_m3lxo")
+region = Rect2(48, 0, 24, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_w0xgp"]
+atlas = ExtResource("1_m3lxo")
+region = Rect2(72, 0, 24, 16)
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_02u8f")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ythwr")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ghf1e")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_w0xgp")
+}],
+"loop": 1,
+"name": &"fly",
+"speed": 12.0
+}]

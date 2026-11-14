@@ -142,6 +142,8 @@ var _coyote_timer: float = 0.0
 var _bounce_lock: float = 0.0
 ## Accroupi (bas tenu au sol) : le corps ne fait plus que 26 px de haut, on avance au pas.
 var crouching: bool = false
+## Poussée du vent ce tour-ci (pixels par seconde, réglée par les rafales ; remise à zéro).
+var wind: float = 0.0
 const STAND_HEIGHT := 40.0
 const CROUCH_HEIGHT := 26.0
 ## Vitesse en marche accroupie, en fraction de la vitesse de course.
@@ -301,8 +303,12 @@ func _physics_process(delta: float) -> void:
 			_ability.physics_update(delta)
 
 	# Déplace le corps selon sa vitesse et le fait glisser le long des obstacles.
+	# Le vent (rafales de la canopée) s'ajoute le temps du déplacement, comme un tapis roulant.
 	var fall_speed: float = velocity.y
+	velocity.x += wind
 	move_and_slide()
+	velocity.x -= wind
+	wind = 0.0
 	_detect_landing(fall_speed)
 
 	_update_facing(direction)
@@ -398,6 +404,16 @@ func _handle_run(direction: float, delta: float) -> void:
 
 	# move_toward rapproche la vitesse de la cible d'au plus « rate × delta » à chaque image.
 	velocity.x = move_toward(velocity.x, target_speed, rate * delta)
+
+
+## Afi plane-t-elle sous son Pagne-voile en ce moment ?
+func is_gliding() -> bool:
+	return _ability is GlideAbility and _ability.active
+
+
+## Kokou joue-t-il du Tambour parlant en ce moment ?
+func is_drumming() -> bool:
+	return _ability is WaveAbility and _ability.drumming
 
 
 ## Un champignon (ou autre ressort) projette le héros vers le haut à la vitesse donnée.

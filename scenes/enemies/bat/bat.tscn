@@ -1,0 +1,41 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/enemies/locust/locust.gd" id="1_ym81o"]
+[ext_resource type="SpriteFrames" path="res://assets/enemies/bat/bat_eyes_frames.tres" id="2_stf8a"]
+[ext_resource type="SpriteFrames" path="res://assets/enemies/bat/bat_frames.tres" id="3_r0j5n"]
+[ext_resource type="Script" path="res://scripts/core/health.gd" id="4_3tkmu"]
+
+[sub_resource type="CircleShape2D" id="body"]
+radius = 6.0
+
+[sub_resource type="CircleShape2D" id="hurt"]
+radius = 5.0
+
+[node name="Bat" type="CharacterBody2D" unique_id=2062395678]
+collision_layer = 4
+motion_mode = 1
+script = ExtResource("1_ym81o")
+patrol_range = 40.0
+detect_range = 135.0
+eyes_frames = ExtResource("2_stf8a")
+wing_sound = &"bat_flutter"
+dust_color = Color(0.45, 0.43, 0.4, 1)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1552092133]
+shape = SubResource("body")
+
+[node name="Sprite" type="AnimatedSprite2D" parent="." unique_id=819106201]
+sprite_frames = ExtResource("3_r0j5n")
+animation = &"fly"
+
+[node name="Hurtbox" type="Area2D" parent="." unique_id=1136108256]
+collision_layer = 0
+collision_mask = 2
+monitorable = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Hurtbox" unique_id=856372907]
+shape = SubResource("hurt")
+
+[node name="Health" type="Node" parent="." unique_id=526819865]
+script = ExtResource("4_3tkmu")
+max_health = 1

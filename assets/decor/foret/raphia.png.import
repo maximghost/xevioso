@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cbvyc1x52p0bs"
-path="res://.godot/imported/iroko_tronc.png-350ff317f9c9ca8f7deadf1ac34a4c4e.ctex"
+uid="uid://bpjpvrfwgec2j"
+path="res://.godot/imported/raphia.png-df1b324bca19135c13fd9d4b00821193.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/decor/foret/iroko_tronc.png"
-dest_files=["res://.godot/imported/iroko_tronc.png-350ff317f9c9ca8f7deadf1ac34a4c4e.ctex"]
+source_file="res://assets/decor/foret/raphia.png"
+dest_files=["res://.godot/imported/raphia.png-df1b324bca19135c13fd9d4b00821193.ctex"]
 
 [params]
 

@@ -166,6 +166,11 @@ func checkpoint_for(level_id: StringName) -> StringName:
 # Niveaux
 # ---------------------------------------------------------------------------
 
+## Le Tambour parlant de Kokou est donné au sanctuaire de la forêt (en même temps que Kokou).
+func talking_drum_unlocked() -> bool:
+	return is_hero_unlocked(&"kokou")
+
+
 func has_heard(voice_id: StringName) -> bool:
 	return voice_id in heard_voices
 

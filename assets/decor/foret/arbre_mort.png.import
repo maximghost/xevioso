@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://d1jgt7tahmnpp"
-path="res://.godot/imported/iroko_tronc_green.png-0d080176d22399500d8f9ba3e5288b4b.ctex"
+uid="uid://cv3q87n6xe0fe"
+path="res://.godot/imported/arbre_mort.png-843a0396ba6a3a85315ccceacc6a8232.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/decor/foret/iroko_tronc_green.png"
-dest_files=["res://.godot/imported/iroko_tronc_green.png-0d080176d22399500d8f9ba3e5288b4b.ctex"]
+source_file="res://assets/decor/foret/arbre_mort.png"
+dest_files=["res://.godot/imported/arbre_mort.png-843a0396ba6a3a85315ccceacc6a8232.ctex"]
 
 [params]
 

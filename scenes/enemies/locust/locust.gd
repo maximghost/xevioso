@@ -18,6 +18,14 @@ extends CharacterBody2D
 ## Dégâts au contact.
 @export var contact_damage: int = 1
 
+## Les yeux (facultatif) : dessinés à part et affichés sans éclairage, ils luisent dans le
+## noir du sous-bois (la chauve-souris de poussière se trahit par son regard).
+@export var eyes_frames: SpriteFrames
+## Le son de vol en boucle.
+@export var wing_sound: StringName = &"locust_buzz"
+## Couleur de la poussière quand il disparaît.
+@export var dust_color: Color = Color(0.66, 0.64, 0.3)
+
 enum State { PATROL, DIVE, RETURN }
 var _state: State = State.PATROL
 var _home: Vector2
@@ -34,17 +42,46 @@ var _dead: bool = false
 
 var _buzz: AudioStreamPlayer2D
 
+var _eyes: AnimatedSprite2D
+var _sleep_timer: float = 0.0
+var _zzz: CPUParticles2D
+
 func _ready() -> void:
 	add_to_group(&"enemies")   # cibles possibles de la foudre de Xɛvioso
+	add_to_group(&"drum_listener")
 	_home = global_position
 	_time = randf() * TAU
 	_sprite.play(&"fly")
 	$Health.died.connect(_on_died)
-	_buzz = Audio.loop_on(self, &"locust_buzz", 0.0, 360.0)   # le bourdonnement des ailes
+	_buzz = Audio.loop_on(self, wing_sound, 0.0, 360.0)   # le bruit des ailes
+	if eyes_frames != null:
+		_eyes = AnimatedSprite2D.new()
+		_eyes.sprite_frames = eyes_frames
+		var unshaded := CanvasItemMaterial.new()
+		unshaded.light_mode = CanvasItemMaterial.LIGHT_MODE_UNSHADED
+		_eyes.material = unshaded
+		_sprite.add_child(_eyes)
+		_eyes.play(&"fly")
 
 
 func _physics_process(delta: float) -> void:
 	if _dead:
+		return
+	if _eyes != null:
+		_eyes.frame = _sprite.frame
+		_eyes.flip_h = _sprite.flip_h
+	if _sleep_timer > 0.0:
+		# Endormi par le tambour : il se pose doucement et ne blesse plus.
+		_sleep_timer -= delta
+		velocity = velocity.move_toward(Vector2(0, 30), 300.0 * delta)
+		move_and_slide()
+		if _sleep_timer <= 0.0:
+			_hurtbox.set_deferred("monitoring", true)
+			_sprite.play(&"fly")
+			_sprite.modulate = Color.WHITE
+			if _zzz != null:
+				_zzz.emitting = false
+			_state = State.RETURN
 		return
 	_time += delta
 	_cooldown = maxf(_cooldown - delta, 0.0)
@@ -91,6 +128,20 @@ func _find_target() -> Node2D:
 	return null
 
 
+## Le Tambour parlant : à portée, il s'endort et se laisse tomber doucement.
+func hear_drum(from: Vector2) -> void:
+	if _dead or global_position.distance_to(from) > 176.0:
+		return
+	if _sleep_timer <= 0.0:
+		_hurtbox.set_deferred("monitoring", false)
+		_sprite.pause()
+		_sprite.modulate = Color(0.75, 0.8, 0.95)
+		if _zzz == null:
+			_zzz = Fx.zzz(self, Vector2(0, -14))
+		_zzz.emitting = true
+	_sleep_timer = 5.0
+
+
 func take_hit(damage: int, _from_direction: float, _stun: float = -1.0) -> void:
 	if not _dead:
 		Audio.play_at(&"enemy_hit", global_position, -2.0)
@@ -104,7 +155,7 @@ func _on_died() -> void:
 	if _buzz != null:
 		_buzz.queue_free()
 	Audio.play_at(&"locust_die", global_position)
-	Fx.dust(get_parent(), global_position, Color(0.66, 0.64, 0.3), 10, 70.0, 180.0)
+	Fx.dust(get_parent(), global_position, dust_color, 10, 70.0, 180.0)
 	Fx.ring(get_parent(), global_position, Color(1.0, 0.9, 0.55), 16.0, 0.25)
 	Fx.sparks(get_parent(), global_position, Color(1.0, 0.85, 0.35), 8)
 	var tween := create_tween().set_parallel()

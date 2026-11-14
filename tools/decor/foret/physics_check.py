@@ -16,11 +16,13 @@ MAX_FALL = 380.0
 HW, HH = 7.0, 20.0        # demi-largeur, demi-hauteur du héros
 
 class World:
-    def __init__(self, solid, rects, cols, rows):
+    def __init__(self, solid, rects, cols, rows, updrafts=()):
         self.solid, self.rects, self.cols, self.rows = solid, rects, cols, rows
-    def hit(self, x, y):
-        """La boîte centrée en (x, y) chevauche-t-elle un obstacle ?"""
-        x0, x1, y0, y1 = x - HW, x + HW, y - HH, y + HH
+        self.updrafts = list(updrafts)          # (x0, y0, x1, y1) : portent Afi sous son voile
+    def hit(self, x, y, hh=None):
+        """La boîte centrée en (x, y) chevauche-t-elle un obstacle ? (hh : demi-hauteur)"""
+        hh = HH if hh is None else hh
+        x0, x1, y0, y1 = x - HW, x + HW, y - hh, y + hh
         for cy in range(max(0, int(y0 // 16)), min(self.rows, int((y1 - 0.01) // 16) + 1)):
             for cx in range(int(x0 // 16), int((x1 - 0.01) // 16) + 1):
                 if cx < 0 or cx >= self.cols: return True
@@ -29,7 +31,7 @@ class World:
             if x0 < rx1 and x1 > rx0 and y0 < ry1 and y1 > ry0: return True
         return False
 
-def simulate(w, x, y, vx, dir_, hold, jump_frames, ability=None, ability_at=0, max_t=2.5, v0=None):
+def simulate(w, x, y, vx, dir_, hold, jump_frames, ability=None, ability_at=0, max_t=3.5, v0=None):
     """Saut depuis (x, y) (centre du corps, pieds posés). Renvoie (atterrissage, trajectoire)."""
     vy = (V0 if v0 is None else v0) if jump_frames > 0 else 0.0
     path = []
@@ -49,7 +51,10 @@ def simulate(w, x, y, vx, dir_, hold, jump_frames, ability=None, ability_at=0, m
             else: vx = vx - math.copysign(min(abs(vx), AIR_FRICTION * DT), vx)
             if jump_frames and 0 < f == jump_frames and vy < 0: vy *= 0.5    # relâcher tôt
             vy = min(vy + G * DT, MAX_FALL)
-            if ability == "glide" and vy > 0 and f >= ability_at: vy = min(vy, 45.0)
+            if ability == "glide" and f >= ability_at:
+                if any(ux0 <= x <= ux1 and uy0 <= y <= uy1 for (ux0, uy0, ux1, uy1) in w.updrafts):
+                    vy = max(vy - 2200 * DT, -150.0)       # le courant ascendant la porte
+                elif vy > 0: vy = min(vy, 45.0)
         # déplacement : horizontal puis vertical (comme move_and_slide)
         nx = x + vx * DT
         if w.hit(nx, y):
@@ -86,7 +91,8 @@ def surfaces(w):
     # et on coupe le segment là où il ne peut pas se tenir (un portail, un mur, un plafond bas)
     out = []
     for (x0, x1, y) in tops:
-        xs = [x for x in range(int(x0) + 2, int(x1) - 1, 4) if not w.hit(x, y - HH - 0.5)]
+        # debout (40 px) ou, sous un plafond bas, accroupi (26 px) : on y avance au pas
+        xs = [x for x in range(int(x0) + 2, int(x1) - 1, 4) if not w.hit(x, y - HH - 0.5) or not w.hit(x, y - 13.5, 13.0)]
         run = []
         for x in xs:
             if run and x - run[-1] > 4:

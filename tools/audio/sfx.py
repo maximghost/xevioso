@@ -652,6 +652,290 @@ def _bounce():
 
 
 # ---------------------------------------------------------------------------
+# Forêt des irokos (partie 2) : sanctuaire, Tambour parlant, canopée, Adan
+# ---------------------------------------------------------------------------
+@sfx("armor_clank", 0.75)
+def _armor_clank():
+    """La hache rebondit sur le Poussiéreux : un choc sourd de terre tassée et un tintement."""
+    n = int(0.3 * SR)
+    thud = lp(noise(n), 350) * env_exp(n, 0.06) * 1.6
+    ting = osc(pitch_env(n, 1400, 1100, 0.05)) * env_exp(n, 0.12) * 0.25
+    grit = bp(noise(n), 1500, 5000) * env_exp(n, 0.05) * 0.4
+    return thud + ting + grit
+
+
+@sfx("fall_asleep", 0.5)
+def _fall_asleep():
+    """Une créature s'endort : un souffle qui descend, deux notes douces."""
+    return mix(whoosh(0.6, 1600, 400, seed=91, amp=0.5), chime([79, 74], step=0.18, dur=0.7, bright=0.5) * 0.4)
+
+
+@sfx("fireflies", 0.45)
+def _fireflies():
+    """On emporte les lucioles : un scintillement de petites clochettes qui montent."""
+    return chime([84, 88, 91, 96, 100], step=0.05, dur=0.6, bright=1.3) * 0.6
+
+
+@sfx("rat_squeak", 0.5)
+def _rat_squeak():
+    n = int(0.12 * SR)
+    t = np.arange(n) / SR
+    f = 2900 + 1100 * np.sin(np.pi * t / t[-1])
+    sq = np.sin(2 * np.pi * np.cumsum(f) / SR) * np.hanning(n)
+    m = int(0.35 * SR)
+    steps = bp(noise(m), 1500, 6000) * (np.sin(2 * np.pi * 19 * np.arange(m) / SR) > 0.6) * np.hanning(m) * 0.6
+    out = silence(0.45)
+    place(out, sq, 0.0); place(out, steps, 0.08)
+    return out
+
+
+for v, (f, bend) in enumerate(((120.0, -1.0), (170.0, 0.0), (240.0, 1.0))):
+    def _drum_voice(f=f, bend=bend):
+        """Tambour-arbre à fente : bois creux frappé, résonance de la cavité (grave, médium, aigu)."""
+        n = int(1.2 * SR)
+        body = drum(f, "open", 1.2, 1.0, bend=bend, body=1.4)
+        wood = resonator(noise(n) * env_exp(n, 0.01), f * 2.7, 14) * 0.5
+        knock = bp(noise(n), 800, 3500) * env_exp(n, 0.012) * 0.6
+        return reverb(body + wood + knock, room=1.6, damp=5000, wet=0.25)
+    sfx(f"drum_voice_{v}", 0.85)(_drum_voice)
+
+for v, f in enumerate((1300.0, 1700.0, 2250.0)):
+    def _bird_note(f=f):
+        """L'oiseau siffle la voix du tambour : une note pure, un petit glissé vers le haut."""
+        n = int(0.32 * SR)
+        t = np.arange(n) / SR
+        fr = f * (1 + 0.06 * np.clip(t / 0.08, 0, 1)) * (1 + 0.012 * np.sin(2 * np.pi * 22 * t))
+        x = np.sin(2 * np.pi * np.cumsum(fr) / SR) * env_adsr(n, 0.01, 0.05, 0.8, 0.12)
+        return reverb(x + 0.25 * np.sin(2 * np.pi * np.cumsum(fr * 2) / SR) * env_adsr(n, 0.01, 0.05, 0.6, 0.1), room=1.0, wet=0.2)
+    sfx(f"bird_note_{v}", 0.6)(_bird_note)
+
+
+@sfx("bird_call", 0.55)
+def _bird_call():
+    """Le touraco annonce son chant : « kow kow kow ». """
+    out = silence(0.8)
+    for k in range(3):
+        n = int(0.09 * SR)
+        t = np.arange(n) / SR
+        x = np.sin(2 * np.pi * (700 - 120 * t / t[-1]) * t)
+        x = lp(x + 0.4 * np.sign(x) * 0.3, 2200) * env_adsr(n, 0.005, 0.02, 0.8, 0.03)
+        place(out, x, k * 0.2)
+    return out
+
+
+@sfx("bird_happy", 0.6)
+def _bird_happy():
+    out = silence(1.2)
+    for k, f in enumerate((1700, 2250, 1900, 2600, 2250, 3000)):
+        n = int(0.1 * SR)
+        t = np.arange(n) / SR
+        place(out, np.sin(2 * np.pi * f * (1 + 0.1 * t / t[-1]) * t) * np.hanning(n), k * 0.12)
+    return reverb(out, room=1.0, wet=0.2)
+
+
+@sfx("puzzle_good", 0.55)
+def _pgood():
+    return chime([76, 83], step=0.08, dur=0.7, bright=0.9)
+
+
+@sfx("puzzle_bad", 0.7)
+def _pbad():
+    n = int(0.6 * SR)
+    return lp(osc(pitch_env(n, 160, 70, 0.2), "saw"), 900) * env_exp(n, 0.35) * 0.7 + lp(noise(n), 300) * env_exp(n, 0.1) * 0.5
+
+
+@sfx("puzzle_timeout", 0.5)
+def _ptime():
+    return chime([79, 74, 70], step=0.12, dur=0.6, bright=0.4) * 0.6
+
+
+@sfx("puzzle_solved", 0.85)
+def _psolved():
+    out = chime([64, 71, 76, 79, 83, 88], step=0.09, dur=1.6, bright=1.1)
+    return reverb(mix(out, choir([midi(64), midi(71), midi(76)], 2.0, "a", 0.5) * 0.5), room=2.0, wet=0.35)
+
+
+@sfx("roots_open", 0.85)
+def _roots_open():
+    """La porte de racines s'enfonce : craquements de bois, frottement de terre, grondement."""
+    n = int(1.4 * SR)
+    rumble = lp(noise(n), 120) * env_adsr(n, 0.1, 0.3, 0.7, 0.4) * 1.2
+    creak = np.zeros(n)
+    r = rng(71)
+    for k in range(9):
+        m = int(r.uniform(0.05, 0.14) * SR); i = int(r.uniform(0, 1.2) * SR)
+        tt = np.arange(m) / SR
+        c = np.sin(2 * np.pi * r.uniform(150, 400) * tt) * (np.sin(2 * np.pi * r.uniform(30, 60) * tt) > 0.3) * np.hanning(m)
+        creak[i:i + m] += c[:max(0, min(m, n - i))] * 0.5
+    soil = bp(noise(n), 400, 2500) * env_adsr(n, 0.05, 0.4, 0.5, 0.5) * 0.4
+    return rumble + creak + soil
+
+
+@sfx("roots_close", 0.85)
+def _roots_close():
+    n = int(0.6 * SR)
+    burst = lp(noise(n), 200) * env_exp(n, 0.2, 0.005) * 1.4
+    snap = bp(noise(n), 900, 4000) * env_exp(n, 0.05) * 0.8
+    return burst + snap
+
+
+@sfx("root_grow", 0.7)
+def _root_grow():
+    """Une racine sacrée pousse : bois qui s'étire en craquant vers le haut, une note claire."""
+    n = int(0.7 * SR)
+    t = np.arange(n) / SR
+    groan = lp(osc(80 + 140 * t / t[-1], "saw"), 700) * env_adsr(n, 0.05, 0.2, 0.6, 0.2) * 0.4
+    crk = bp(noise(n) * (rng(5).random(n) < 0.02), 1200, 5000) * 2.0
+    return groan + crk + fit(chime([86], dur=0.6, bright=0.7), n) * 0.25
+
+
+@sfx("root_shrink", 0.5)
+def _root_shrink():
+    return mix(whoosh(0.5, 900, 250, seed=33, amp=0.6), lp(noise(int(0.5 * SR)), 200) * env_exp(int(0.5 * SR), 0.2) * 0.4)
+
+
+for name, f, bend in (("talking_drum_hi", 230.0, 3.0), ("talking_drum_lo", 170.0, -3.0)):
+    def _talk(f=f, bend=bend):
+        """Le Tambour parlant : la peau tendue par les cordes, la note glisse comme une parole."""
+        return reverb(mix(drum(f, "open", 0.5, 1.0, bend=bend, body=1.2), drum(f * 0.5, "bass", 0.4, 0.4)), room=1.2, wet=0.2)
+    sfx(name, 0.85)(_talk)
+
+
+@sfx("wind_gust", 0.6)
+def _wind_gust():
+    return mix(whoosh(1.8, 300, 1400, 500, q=0.8, seed=44, amp=1.0), whoosh(1.8, 2000, 5000, 2500, q=1.2, seed=45, amp=0.25))
+
+
+@sfx("adan_roar", 0.95)
+def _adan_roar():
+    """Le rugissement d'Adan : une gorge de bois et de braise ; grave, rauque, qui s'étire."""
+    n = int(2.0 * SR)
+    t = np.arange(n) / SR
+    f = 75 + 25 * np.sin(np.pi * t / t[-1]) + 4 * np.sin(2 * np.pi * 7 * t)
+    src = osc(f, "saw") + 0.6 * noise(n)
+    y = formant(src, "a") * 1.4 + formant(src * 0.7, "o")
+    y = soft_clip(y * env_adsr(n, 0.15, 0.4, 0.8, 0.6) * 1.5, 2.0)
+    crackle_ = crackle(2.0, 120, seed=6, lo=1500, hi=7000) * env_adsr(n, 0.2, 0.3, 0.6, 0.6) * 0.3
+    return reverb(y + crackle_ + lp(noise(n), 90) * env_adsr(n, 0.2, 0.5, 0.7, 0.5) * 0.8, room=2.5, damp=2500, wet=0.35)
+
+
+@sfx("adan_growl", 0.8)
+def _adan_growl():
+    n = int(0.8 * SR)
+    t = np.arange(n) / SR
+    src = osc(60 + 10 * np.sin(2 * np.pi * 9 * t), "saw") + 0.5 * noise(n)
+    return soft_clip(formant(src, "o") * env_adsr(n, 0.05, 0.2, 0.7, 0.3) * 2.0, 2.0)
+
+
+@sfx("adan_charge", 0.85)
+def _adan_charge():
+    return mix(whoosh(0.9, 200, 900, q=0.7, seed=61, amp=1.0), _adan_growl() * 0.5)
+
+
+@sfx("adan_crash", 0.95)
+def _adan_crash():
+    n = int(1.0 * SR)
+    boom = osc(pitch_env(n, 90, 40, 0.1)) * env_exp(n, 0.4) * 1.3
+    wood = bp(noise(n), 300, 3000) * env_exp(n, 0.25, 0.002) * 0.9
+    debris = crackle(1.0, 200, seed=8, lo=800, hi=5000) * env_exp(n, 0.5) * 0.6
+    return reverb(mix(boom, wood, debris), room=1.8, wet=0.25)
+
+
+@sfx("adan_slam", 0.95)
+def _adan_slam():
+    n = int(1.2 * SR)
+    boom = osc(pitch_env(n, 70, 30, 0.12)) * env_exp(n, 0.6) * 1.5
+    soil = lp(noise(n), 500) * env_exp(n, 0.4) * 0.9
+    fire = bp(noise(n), 1500, 6000) * env_exp(n, 0.3, 0.02) * 0.4
+    return reverb(boom + soil + fire, room=2.0, wet=0.3)
+
+
+@sfx("adan_hit", 0.75)
+def _adan_hit():
+    n = int(0.35 * SR)
+    knock = bp(noise(n), 400, 2500) * env_exp(n, 0.06) * 1.2
+    sizzle = bp(noise(n), 3000, 9000) * env_exp(n, 0.2, 0.01) * 0.4
+    grunt = formant(osc(const(90, 0.35), "saw"), "o") * env_exp(n, 0.15) * 0.6
+    return knock + sizzle + grunt
+
+
+@sfx("adan_tired", 0.7)
+def _adan_tired():
+    n = int(1.2 * SR)
+    t = np.arange(n) / SR
+    pant = formant(noise(n), "a") * (0.5 + 0.5 * np.sin(2 * np.pi * 2.2 * t)) * env_adsr(n, 0.1, 0.3, 0.7, 0.3)
+    hiss = bp(noise(n), 2500, 7000) * env_exp(n, 0.8) * 0.3
+    return pant + hiss
+
+
+@sfx("adan_call", 0.7)
+def _adan_call():
+    return mix(_adan_growl() * 0.6, whoosh(0.8, 600, 2400, seed=62, amp=0.6))
+
+
+@sfx("adan_death", 0.95)
+def _adan_death():
+    """Adan s'effondre : un dernier râle qui se brise, le bois qui éclate, la braise qui s'éteint
+    dans un long souffle de cendre."""
+    n = int(3.5 * SR)
+    t = np.arange(n) / SR
+    f = 90 - 50 * (t / t[-1])
+    rale = formant(osc(f, "saw") + 0.5 * noise(n), "a") * env_adsr(n, 0.1, 0.8, 0.3, 1.5) * 1.3
+    cracks = crackle(3.5, 60, seed=9, lo=500, hi=4000) * env_exp(n, 2.0) * 0.9
+    ash = bp(noise(n), 2000, 8000) * env_adsr(n, 0.8, 1.0, 0.4, 1.5) * 0.3
+    boom = osc(pitch_env(n, 60, 30, 0.3)) * env_exp(n, 1.2) * 1.0
+    return reverb(rale + cracks + ash + boom, room=3.0, damp=3000, wet=0.4)
+
+
+@sfx("spear_throw", 0.7)
+def _spear_throw():
+    return mix(whoosh(0.4, 600, 2500, seed=63, amp=0.8), crackle(0.4, 200, seed=10) * env_exp(int(0.4 * SR), 0.3) * 0.4)
+
+
+@sfx("spear_burst", 0.7)
+def _spear_burst():
+    n = int(0.4 * SR)
+    return crackle(0.4, 500, seed=11, lo=1000, hi=7000) * env_exp(n, 0.15) + lp(noise(n), 400) * env_exp(n, 0.06) * 0.6
+
+
+@sfx("fury_burst", 0.95)
+def _fury_burst():
+    n = int(1.6 * SR)
+    whoom = whoosh(1.6, 150, 1200, 400, q=0.8, seed=64, amp=1.4)
+    fire = bp(noise(n), 500, 4000) * env_adsr(n, 0.1, 0.4, 0.6, 0.8) * 0.9
+    return reverb(mix(whoom, fire, _adan_roar()[:n] * 0.5), room=2.0, wet=0.3)
+
+
+@sfx("fire_whoosh", 0.8)
+def _fire_whoosh():
+    n = int(1.0 * SR)
+    return mix(whoosh(1.0, 200, 1500, 700, q=0.7, seed=65, amp=1.0), crackle(1.0, 400, seed=12, lo=1500, hi=8000) * env_exp(n, 0.6) * 0.5)
+
+
+@sfx("forest_revival", 0.85)
+def _revival():
+    """La forêt redevient sacrée : un chœur qui s'ouvre, des clochettes, des oiseaux."""
+    out = silence(4.0)
+    place(out, choir([midi(52), midi(59), midi(64), midi(68)], 3.5, "a", 0.8), 0.0)
+    place(out, chime([76, 80, 83, 88, 92, 95], step=0.18, dur=2.0, bright=1.1), 0.6)
+    for k, f in enumerate((1900, 2400, 2100, 2800)):
+        m = int(0.12 * SR); tt = np.arange(m) / SR
+        place(out, np.sin(2 * np.pi * f * (1 + 0.15 * tt / tt[-1]) * tt) * np.hanning(m) * 0.3, 1.5 + k * 0.35)
+    return reverb(out, room=3.0, wet=0.4)
+
+
+@sfx("bat_flutter", 0.35)
+def _bat_flutter():
+    """Le vol d'une chauve-souris (boucle) : battements secs et rapides de membrane."""
+    L = 1.0
+    n = int((L + 0.4) * SR)
+    t = np.arange(n) / SR
+    flaps = (0.5 + 0.5 * np.sin(2 * np.pi * 12 * t)) ** 5
+    x = bp(noise(n), 300, 2200) * flaps
+    return loopify(x, L, 0.4)
+
+
+# ---------------------------------------------------------------------------
 # Ambiances (boucles)
 # ---------------------------------------------------------------------------
 def amb(name):
