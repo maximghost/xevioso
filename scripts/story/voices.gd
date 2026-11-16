@@ -149,7 +149,8 @@ const LINES := {
 		{"text": "Les lucioles suivent qui les traverse. Emporte-les, mais elles ne restent pas longtemps."},
 	],
 	&"foret_tunnel": [
-		{"text": "Les racines se referment. Courbe le dos, et ne te presse pas : on voit mal ce qui vient en face."},
+		{"text": "Un mur de racines ferme le chemin. Le passage est dessous : les galeries traversent la colline."},
+		{"text": "Là-dessous, les racines malades ont pris goût au noir. Elles fuient la lumière… et les lucioles ne durent pas."},
 	],
 	&"foret_puits": [
 		{"text": "Le chemin monte, et le noir avec. Le champignon te porte, la mousse ne pardonne pas."},

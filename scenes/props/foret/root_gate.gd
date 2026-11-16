@@ -4,7 +4,7 @@ extends AnimatableBody2D
 ## jusqu'à « height_tiles » cases. Elle s'ouvre en se rétractant dans le sol (pour de bon),
 ## ou se referme en jaillissant (l'arène d'Adan se scelle derrière les Envoyés).
 
-@export_range(2, 5) var height_tiles: int = 5
+@export_range(2, 8) var height_tiles: int = 5
 @export var start_open: bool = false
 
 var _sprite: Sprite2D
@@ -40,7 +40,7 @@ func open() -> void:
 	if is_open:
 		return
 	is_open = true
-	Audio.play_at(&"roots_open", global_position)
+	Audio.play_at(&"roots_open", global_position, -6.0 if self is LightRootGate else 0.0)
 	Fx.dust(get_parent(), global_position + Vector2(0, -6), Color(0.45, 0.36, 0.28), 20, 90.0, 120.0)
 	var t := create_tween()
 	t.tween_method(_set_amount, 0.0, 1.0, 1.2).set_trans(Tween.TRANS_SINE)

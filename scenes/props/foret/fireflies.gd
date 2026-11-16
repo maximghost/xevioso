@@ -18,6 +18,7 @@ var _swarm: CPUParticles2D
 
 
 func _ready() -> void:
+	add_to_group(&"fireflies")
 	collision_layer = 0
 	collision_mask = 2
 	var shape := CollisionShape2D.new()

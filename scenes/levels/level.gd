@@ -30,6 +30,8 @@ extends Node2D
 
 ## Ajoute la poussière d'harmattan et permet le retour de la pluie.
 @export var use_weather: bool = false
+## Fin de la partie 2 : Xɛvioso reprend les arbres un à un (SacredReclaim) avant la bannière.
+@export var sacred_finale: bool = false
 
 ## Délai entre le retour de la pluie et l'écran de fin, en secondes.
 @export var end_screen_delay: float = 7.0
@@ -279,6 +281,10 @@ func complete(altar: Vector2 = Vector2.INF) -> void:
 
 	# 3. La pluie revient : l'herbe reverdit, les couleurs fraîchissent, les fleurs éclosent.
 	_flash(0.6)
+	if sacred_finale:
+		# Xɛvioso reprend les arbres un à un (la forêt sort d'abord de l'ombre)
+		_forest_revival()
+		await SacredReclaim.play(self)
 	_turn_green()
 	if _ambience != null:
 		_ambience.set_raining()
@@ -286,7 +292,7 @@ func complete(altar: Vector2 = Vector2.INF) -> void:
 		_weather.start_rain()
 	create_tween().tween_property(self, "modulate", rain_color, 3.0)
 	_bloom()
-	if not use_weather:
+	if not use_weather and not sacred_finale:
 		_forest_revival()
 	await get_tree().create_timer(1.6).timeout
 	if use_weather:
@@ -449,7 +455,7 @@ func _turn_green() -> void:
 		var back := get_node_or_null("TerrainBack") as TileMapLayer
 		if back != null:
 			back.tile_set = tiles
-	for group_name in ["DecorBack", "DecorFront"]:
+	for group_name in ["DecorBack", "DecorFront", "Habillages"]:
 		var group := get_node_or_null(group_name)
 		if group == null:
 			continue

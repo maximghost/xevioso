@@ -330,3 +330,108 @@ if __name__ == "__main__":
     for n in names:
         im = Image.open(f"{OUT}/{n}.png"); prev.alpha_composite(im, (x, 4)); x += im.width + 6
     prev.resize((1400, 520), Image.NEAREST).save(f"{OUT}/details_prev.png")
+
+
+# ------------------------------------------------------------------ souterrain (deuxième passe)
+def root_spike():
+    """Racine-pilon : une racine épaisse qui s'effile en pointe, mottes de terre accrochées."""
+    w, h = 14, 96
+    img = canvas(w, h)
+    yy, xx = np.mgrid[0:h, 0:w]
+    half = 6.0 * (1 - (yy / h) ** 2.2) + 0.5
+    cx = 7 + 1.2 * np.sin(yy * 0.09)
+    m = np.abs(xx - cx) < half
+    u = np.clip((xx - cx) / np.maximum(half, 1), -1, 1)
+    ridge = np.sin(yy * 0.7 + xx * 0.3)
+    put(img, m, np.clip(0.5 - 0.35 * u + 0.08 * ridge, 0, 1), ROOT)
+    r = random.Random(2)
+    for k in range(8):
+        y = r.randrange(0, 50); x = int(cx[y, 0] + r.uniform(-4, 4))
+        if 0 <= x < w: img[y, x] = (*EARTH[3], 255)
+    img[h - 3:, :] = np.where(img[h - 3:, :, 3:4] > 0, np.array([*C("a08060"), 255]), img[h - 3:, :])   # la pointe, claire
+    a = img[..., 3] > 0
+    o = np.zeros_like(a); o[1:] |= a[:-1]; o[:-1] |= a[1:]; o[:, 1:] |= a[:, :-1]; o[:, :-1] |= a[:, 1:]
+    o &= ~a; o[:2] = False
+    img[o] = (*OUTL, 255)
+    save(img, "root_spike")
+
+
+def thicket():
+    """Mur de racines et de ronces (32 × 32, raccordable) : un enchevêtrement infranchissable."""
+    w = h = 32
+    img = canvas(w, h)
+    put(img, np.ones((h, w), bool), np.clip(0.2 + 0.2 * wrap_noise(h, w, 1, 21), 0, 1), EARTH)
+    yy, xx = np.mgrid[0:h, 0:w]
+    r = random.Random(17)
+    for k in range(10):
+        ang = r.uniform(-1.2, 1.2); off = r.uniform(0, 32); th = r.choice((1.2, 1.8, 2.4))
+        # droites raccordables : direction à pente rationnelle simple
+        dx, dy = r.choice(((1, 1), (1, -1), (2, 1), (1, 2), (2, -1), (1, 0), (0, 1)))
+        d = ((xx * dy - yy * dx) + off) % (32 / max(1, math.gcd(dx, dy)))
+        d = np.minimum(d, 32 - d) if (dx, dy) in ((1, 0), (0, 1)) else d
+        m = np.abs(((xx * dy - yy * dx) + off) % 16 - 8) < th
+        put(img, m, np.full((h, w), r.uniform(0.35, 0.7)), ROOT)
+    for k in range(24):                                  # épines claires
+        x, y = r.randrange(w), r.randrange(h)
+        img[y, x, :3] = C("b0a890"); img[(y + 1) % h, x, :3] = C("6a6458")
+    for k in range(10):                                  # feuilles grises (malade) ou vertes
+        x, y = r.randrange(w), r.randrange(h)
+        img[y, x, :3] = MOSS[r.randrange(1, 4)]; img[y, (x + 1) % w, :3] = MOSS[1]
+    save(img, "thicket")
+
+
+def hanging_roots():
+    """Radicelles qui pendent de la voûte d'une salle souterraine (décor, 28 × 44)."""
+    w, h = 28, 44
+    img = canvas(w, h)
+    r = random.Random(23)
+    for k in range(9):
+        x = r.uniform(2, w - 3); L = r.randint(12, h - 2); th = r.choice((1, 1, 2))
+        for j in range(L):
+            xi = int(x + 1.5 * math.sin(j * 0.15 + k))
+            for t in range(th):
+                if 0 <= xi + t < w:
+                    img[j, xi + t] = (*ROOT[3 if j < L * 0.7 else 2], 255)
+        if r.random() < 0.5:
+            img[L, int(x)] = (*C("6a7a6a"), 255)
+    for k in range(10):
+        x = r.randrange(w); y = r.randrange(0, 8)
+        img[y, x] = (*MOSS[r.randrange(1, 4)], 255)
+    save(img, "hanging_roots")
+
+
+def puddle():
+    """Flaque d'eau dans le souterrain (48 × 6) : reflet sombre, un liseré clair qui luit."""
+    w, h = 48, 6
+    img = canvas(w, h)
+    yy, xx = np.mgrid[0:h, 0:w]
+    m = ((xx - 24) / 24.0) ** 2 + ((yy - 2) / 3.2) ** 2 < 1
+    put(img, m, np.clip(0.4 + 0.3 * np.sin(xx * 0.4) * (yy < 2), 0, 1), [C("0e1418"), C("16222a"), C("22323c"), C("3a5260")])
+    img[1, 14:22] = (*C("6a8a96"), 255)
+    img[2, 30:34] = (*C("5a7a86"), 255)
+    save(img, "puddle")
+
+
+if __name__ == "__main__":
+    root_spike(); thicket(); hanging_roots(); puddle()
+
+
+def thicket_from_ceiling():
+    """Le mur de racines infranchissable (64 × 64) : la voûte de racines croisée avec elle-même
+    tournée d'un quart de tour, et des épines claires."""
+    rc = np.array(Image.open(f"{OUT}/root_ceiling.png"))
+    A = np.tile(rc, (2, 1, 1))
+    T = np.tile(np.transpose(rc, (1, 0, 2)), (1, 2, 1))
+    out = A.copy()
+    sel = T[..., :3].astype(int).sum(-1) > 200
+    out[sel] = T[sel]
+    r = random.Random(4)
+    for k in range(60):
+        x, y = r.randrange(64), r.randrange(64)
+        out[y, x, :3] = (176, 168, 144); out[(y + 1) % 64, x, :3] = (100, 94, 82)
+    out[..., 3] = 255
+    save(out, "thicket")
+
+
+if __name__ == "__main__":
+    thicket_from_ceiling()

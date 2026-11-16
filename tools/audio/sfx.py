@@ -924,6 +924,16 @@ def _revival():
     return reverb(out, room=3.0, wet=0.4)
 
 
+@sfx("root_slam", 0.8)
+def _root_slam():
+    """Une racine-pilon frappe le sol du souterrain : un coup sourd de bois et de terre."""
+    n = int(0.5 * SR)
+    thud = osc(pitch_env(n, 110, 50, 0.06)) * env_exp(n, 0.18) * 1.2
+    soil = lp(noise(n), 700) * env_exp(n, 0.12) * 0.8
+    pebbles = crackle(0.5, 120, seed=14, lo=1200, hi=5000) * env_exp(n, 0.25) * 0.4
+    return reverb(mix(thud, soil, pebbles), room=1.4, damp=3000, wet=0.35)
+
+
 @sfx("bat_flutter", 0.35)
 def _bat_flutter():
     """Le vol d'une chauve-souris (boucle) : battements secs et rapides de membrane."""

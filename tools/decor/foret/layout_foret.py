@@ -19,7 +19,7 @@ import json, os, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from physics_check import World, reachable, touched, surfaces
 
-COLS, ROWS = 602, 48
+COLS, ROWS = 602, 56
 G = 42                    # ligne du sol « de base » (l'orée de la version 1 était à 18 : +24)
 BOUNCE_V = 546.0
 solid = [[False] * COLS for _ in range(ROWS)]
@@ -142,34 +142,56 @@ dark_ranges.append((161, 322))
 ent("fireflies", 164, G - 4, name="Lucioles1")
 ground(161, 175, G - 2)
 # a. une fosse dans le noir, bordée de champignons bleus (on la devine à leur lueur)
-ground(181, 200, G - 2)
+ground(181, 185, G - 2)
 deco(175, "champignons_bleus", light=(0.35, 0.75, 1.0))
 deco(181, "champignons_bleus", light=(0.35, 0.75, 1.0), flip=True)
-ent("bat", 191, G - 9)
-ent("rat", 187, G - 3)
-# b. le tunnel de racines : 32 px de haut, on le franchit accroupi ; une niche au milieu
-ground(200, 222, G - 2)
-ground(201, 221, 28, G - 5)                 # le plafond de racines (bas : 2 cases au-dessus du sol)
-hole(210, 211, 36, G - 5)                   # la niche : on peut s'y redresser
-cover(201, 221, G - 4, G - 3, "tunnel_back")      # la paroi du fond : on est sous terre
-cover(210, 211, 36, G - 5, "tunnel_back")
-cover(201, 209, 28, G - 5, "root_ceiling")
-cover(212, 221, 28, G - 5, "root_ceiling")
-cover(210, 211, 28, 35, "root_ceiling")
-ents.append(dict(kind="cover", x=201 * 16, y=(G - 4) * 16, w=9 * 16, h=14, texture="root_fringe"))
-ents.append(dict(kind="cover", x=212 * 16, y=(G - 4) * 16, w=10 * 16, h=14, texture="root_fringe"))
-ents.append(dict(kind="cover", x=210 * 16, y=36 * 16, w=32, h=14, texture="root_fringe"))
-sprite(200 * 16 + 4, (G - 2) * 16 - 48, "root_arch")                  # l'embouchure, à l'entrée
-sprite(222 * 16 + 12, (G - 2) * 16 - 48, "root_arch", flip=True)      # et à la sortie
+ent("bat", 183, G - 9)
 mist(163, 320, G - 2, alpha=0.14, fireflies=True)
-ent("sokpe", 210, 36, name="SokpeTunnel", dx=8)
-ent("ant", 219, G - 3, dir=-1)
-ent("rat", 205, G - 3)
-ent("rat", 215, G - 3)
-ent("checkpoint", 228, G - 3, name="SteleTunnel")
+# b. le souterrain. Un mur de racines barre le chemin : on descend sous la colline par un
+#    trou, et l'on suit les galeries (salles où l'on tient debout, boyaux où l'on rampe,
+#    racines-pilons qui s'abattent de la voûte, chauves-souris, fourmis). Deux rideaux de
+#    racines ne s'écartent qu'à la lumière des lucioles : il faut les emporter avec soi et
+#    faire vite, elles ne restent pas longtemps. On ressort par un champignon.
+CF = 50                                         # le sol du souterrain
+ground(186, 189, CF)                            # le trou : on tombe dans la première salle
+ground(190, 236, G - 2)                         # la colline (son dessus reste praticable)
+ground(190, 191, 30, G - 3)                     # le mur de racines, infranchissable
+cover(190, 191, 30, G - 3, "thicket")
+for (c0, c1, r0) in ((190, 197, 44), (198, 203, 48), (204, 213, 42), (214, 214, 44), (215, 220, 48), (221, 233, 44)):
+    hole(c0, c1, r0, CF - 1)
+hole(228, 233, G - 2, 43)                       # la sortie : un trou vers la surface
+# l'habillage : toute la galerie est peinte d'un seul tenant (cave_paint.py) — parois
+# irrégulières, voûte bosselée, radicelles, strates, cailloux, racines qui traversent.
+CAVE_REGION = (186, 236, G - 2, ROWS - 1)
+CAVE = [(186, 189, G - 1, CF - 1), (190, 197, 44, CF - 1), (198, 203, 48, CF - 1), (204, 213, 42, CF - 1),
+        (214, 214, 44, CF - 1), (215, 220, 48, CF - 1), (221, 233, 44, CF - 1), (228, 233, G - 2, 43)]
+sprite((CAVE_REGION[0] + CAVE_REGION[1] + 1) * 8, (CAVE_REGION[2] + CAVE_REGION[3] + 1) * 8, "souterrain")
+for x, y in ((206, 42), (223, 44)):
+    sprite(x * 16 + 8, y * 16 + 22, "hanging_roots")
+sprite(201 * 16, 48 * 16 - 8, "root_arch")
+sprite(218 * 16, 48 * 16 - 8, "root_arch", flip=True)
+sprite(209 * 16, CF * 16 - 3, "puddle")
+sprite(227 * 16, CF * 16 - 3, "puddle")
+deco(196, "champignons_bleus", row=CF, light=(0.35, 0.75, 1.0))
+deco(213, "champignons_bleus", row=CF, light=(0.35, 0.75, 1.0), flip=True)
+deco(231, "champignons_bleus", row=CF, light=(0.35, 0.75, 1.0))
+ent("fireflies", 192, CF - 3, name="LuciolesSouterrain")
+ent("rat", 195, CF - 1)
+ent("crusher", 207, 41, drop=(CF - 42) * 16, period=2.8, phase=0.0, name="Pilon1")
+ent("crusher", 211, 41, drop=(CF - 42) * 16, period=2.8, phase=0.5, name="Pilon2")
+ent("bat", 209, 44)
+ent("lightgate", 214, CF - 1, name="RideauLumiere1", h=6)
+ent("rat", 217, CF - 1)
+ent("lightgate", 222, CF - 1, name="RideauLumiere2", h=6)
+ent("ant", 226, CF - 1, dir=-1)
+branch(229, 232, 47)                            # sous la sortie : une branche, un champignon
+mushroom(231, 46)
+ent("sokpe", 211, CF - 2, name="SokpeTunnel", dx=0)     # juste sous la seconde racine-pilon
+ent("sokpe", 196, G - 3, name="SokpeColline", dx=0)     # au-dessus, derrière le mur de racines
+ent("checkpoint", 236, G - 3, name="SteleTunnel")
 # c. le puits : deux champignons pour monter dans le noir ; une pierre dans un renfoncement
-ground(222, 252, G - 2)
-ent("fireflies", 226, G - 4, name="Lucioles2")
+ground(237, 252, G - 2)
+ent("fireflies", 238, G - 4, name="Lucioles2")
 ground(252, 256, 26)                        # la paroi : on ne passe que par le haut
 cover(252, 256, 27, G - 1, "trunk_wide")    # c'est le pied d'un arbre géant
 mushroom(237, G - 3)
@@ -307,13 +329,13 @@ for col, row, L, sl in ((28, 20, 330, 50), (84, 18, 340, 70), (138, 20, 320, 40)
 mist(0, 160, G, alpha=0.1)
 mist(322, 420, G - 2, alpha=0.16)
 mist(504, 600, G - 2, alpha=0.14)
-deco(204, "grande_fougere", row=28)              # au-dessus du tunnel, la forêt continue
-deco(216, "fougere", row=28)
+deco(204, "grande_fougere")                       # sur la colline, la forêt continue
+deco(216, "fougere")
 deco(352, "fromager")                             # la haute branche part de cet arbre
 
 # ===== Voix ==========================================================================
 for col, vid in [(9, "foret_depart"), (20, "foret_liane"), (53, "foret_champi"), (107, "foret_ronces"),
-                 (158, "foret_sombre"), (198, "foret_tunnel"), (232, "foret_puits")]:
+                 (158, "foret_sombre"), (184, "foret_tunnel"), (236, "foret_puits")]:
     voice(col, vid)
 
 # ===== Décor =========================================================================
@@ -324,8 +346,8 @@ for col, name, front in [
     (131, "tronc_couche", False), (140, "raphia", False), (146, "buisson_foret", False),
     (8, "fougere", True), (48, "grande_fougere", True), (93, "fougere", True), (133, "fougere", True),
     # sous-bois sombre
-    (165, "arbre_mort", False), (171, "toile", False), (186, "figuier", False), (196, "termitiere", False),
-    (228, "arbre_mort", False), (231, "toile", False), (301, "figuier", False), (311, "termitiere", False),
+    (165, "arbre_mort", False), (171, "toile", False), (182, "figuier", False), (196, "termitiere", False),
+    (228, "arbre_mort", False), (234, "toile", False), (301, "figuier", False), (311, "termitiere", False),
     (170, "grande_fougere", True), (226, "fougere", True), (316, "fougere", True),
     # sanctuaire
     (334, "raphia", False), (344, "colocase", False), (366, "iroko", False), (374, "grande_fougere", False),
@@ -351,6 +373,7 @@ def check():
     start = next((e["x"], e["y"]) for e in ents if e["kind"] == "player")
     cps = {e["name"]: (e["x"], e["y"]) for e in ents if e["kind"] == "checkpoint"}
     runs = [("départ (Kodjo, Afi)", start, ("dash", "glide"), False, 0, 6200),
+            ("stèle du tunnel", cps["SteleTunnel"], ("dash", "glide"), False, 0, 6500),
             ("stèle du sous-bois", cps["SteleSousBois"], ("dash", "glide"), False, 0, 6500),
             ("stèle du sanctuaire, avec Kokou", cps["SteleSanctuaire"], ("dash", "glide"), True, 0, 9700),
             ("stèle de la cime, avec Kokou", cps["SteleCime"], ("dash", "glide"), True, 0, 9700),

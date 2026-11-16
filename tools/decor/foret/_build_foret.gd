@@ -152,6 +152,7 @@ func _build_level(data: Dictionary, tileset: TileSet) -> Node2D:
 	root.set("level_id", &"foret_1")
 	root.set("use_weather", false)
 	root.set("requires_boss", true)
+	root.set("sacred_finale", true)
 	root.set("green_tiles", load("res://assets/tiles/forest_tiles_green.png"))
 	root.set("dry_color", Color(0.86, 0.88, 0.86))
 	root.set("rain_color", Color(1.02, 1.06, 0.98))
@@ -222,6 +223,13 @@ func _build_level(data: Dictionary, tileset: TileSet) -> Node2D:
 			for c in s.get_children(): _own(c, root)
 
 	var tm := TileMapLayer.new(); tm.name = "Terrain"; tm.tile_set = tileset
+	# la terre prend de la profondeur (soil_depth.gdshader, cartes faites par soil_detail.py)
+	var soil := ShaderMaterial.new()
+	soil.shader = load("res://assets/shaders/soil_depth.gdshader")
+	soil.set_shader_parameter("depth_map", load("res://assets/tiles/foret_depth.png"))
+	soil.set_shader_parameter("detail", load("res://assets/tiles/soil_detail.png"))
+	soil.set_shader_parameter("map_tiles", Vector2(data.cols, data.rows))
+	tm.material = soil
 	root.add_child(tm); _own(tm, root)
 	for c in data.cells:
 		tm.set_cell(Vector2i(c[0], c[1]), 0, Vector2i(c[2], c[3]))
@@ -334,6 +342,14 @@ func _build_level(data: Dictionary, tileset: TileSet) -> Node2D:
 				node.set("sequence", PackedInt32Array(e.sequence))
 				node.set("start_x", float(e.start_x))
 				late.append([node, e])
+			"crusher":
+				node = _scripted(Node2D.new(), "res://scenes/props/foret/root_crusher.gd")
+				node.set("drop", float(e.drop))
+				node.set("period", float(e.period))
+				node.set("phase", float(e.phase))
+			"lightgate":
+				node = _scripted(AnimatableBody2D.new(), "res://scenes/props/foret/light_root_gate.gd")
+				node.set("height_tiles", int(e.h))
 			"rootgate":
 				node = _scripted(AnimatableBody2D.new(), "res://scenes/props/foret/root_gate.gd")
 				node.set("height_tiles", int(e.h))

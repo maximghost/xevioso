@@ -50,7 +50,7 @@ const SFX_DB := {
 	&"adan_roar": -1.0, &"adan_growl": -4.0, &"adan_charge": -3.0, &"adan_crash": -2.0, &"adan_slam": -1.0,
 	&"adan_hit": -5.0, &"adan_tired": -5.0, &"adan_call": -4.0, &"adan_death": 0.0,
 	&"spear_throw": -6.0, &"spear_burst": -6.0, &"fury_burst": -1.0, &"fire_whoosh": -4.0,
-	&"forest_revival": -2.0, &"bat_flutter": -16.0, &"tree_groan": -5.0, &"fire": -10.0, &"stone_hum": -16.0,
+	&"forest_revival": -2.0, &"bat_flutter": -16.0, &"root_slam": -5.0, &"tree_groan": -5.0, &"fire": -10.0, &"stone_hum": -16.0,
 }
 
 ## Volume de base de chaque ambiance (dB).
