@@ -270,6 +270,10 @@ func _build_level(data: Dictionary, tileset: TileSet) -> Node2D:
 	root.add_child(lights); _own(lights, root)
 	for c in lights.get_children(): _own(c, root)
 
+	var leaves := _scripted(CPUParticles2D.new(), "res://scenes/props/foret/falling_leaves.gd")
+	leaves.name = "FeuillesQuiTombent"
+	root.add_child(leaves); _own(leaves, root)
+
 	var dark := _scripted(Node2D.new(), "res://scenes/props/foret/darkness.gd")
 	dark.name = "Ombre"
 	var ranges := PackedVector2Array()

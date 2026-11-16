@@ -471,7 +471,8 @@ def champignons_bleus(healthy):
     return s
 
 
-ALL = {"iroko": iroko, "fromager": fromager, "raphia": raphia, "arbre_mort": arbre_mort, "figuier": figuier,
+# iroko, fromager et raphia sont désormais dessinés par trees3.py (ne pas les régénérer ici)
+ALL = {"arbre_mort": arbre_mort, "figuier": figuier,
        "termitiere": termitiere, "colocase": colocase, "grande_fougere": grande_fougere, "toile": toile,
        "champignons_bleus": champignons_bleus}
 

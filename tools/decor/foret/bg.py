@@ -61,6 +61,23 @@ def trunk_mask(x, w_top, w_base, y_top, y_base, flare=1.6, h=HL, sway=0.0):
     return wrap_draw(fn, h)
 
 
+def buttress_mask(x, w, y_top, y_base, fins, h=HL, lean=0.0):
+    """Un tronc à contreforts : fût presque droit (il penche un peu), et des planches dont
+    le bord descend en courbe concave et court loin au sol. fins : (côté, portée, hauteur)."""
+    def fn(d, off):
+        cx = lambda y: x + off + lean * (y_base - y) / max(1, y_base - y_top)
+        d.polygon([(cx(y_top) - w, y_top), (cx(y_top) + w, y_top), (cx(y_base) + w, y_base + 4), (cx(y_base) - w, y_base + 4)], fill=255)
+        for side, spread, fh in fins:
+            pts = [(cx(y_base - fh) + side * (w - 2), y_base - fh)]
+            for j in range(1, 17):
+                t = j / 16
+                y = y_base - fh * (1 - t) ** 2.0
+                pts.append((cx(y) + side * (w - 2 + spread * t ** 1.05 + 1.5 * math.sin(t * 7) * t), y))
+            pts += [(cx(y_base) + side * (w + spread), y_base + 4), (cx(y_base), y_base + 4)]
+            d.polygon(pts, fill=255)
+    return wrap_draw(fn, h)
+
+
 def across(mask):
     """Pour chaque pixel d'un masque, sa position 0..1 de gauche à droite dans sa rangée."""
     u = np.zeros(mask.shape)
@@ -118,7 +135,9 @@ for i in range(12):                       # les plus lointains : fins, presque f
 for i in range(9):                        # puis des troncs plus proches, plus sombres
     x = i * 71 + 30 + R.uniform(-18, 18)
     w = R.uniform(6, 12)
-    m = trunk_mask(x, w, w * 2.6, -10, fog_base + R.uniform(-10, 10), flare=1.0)
+    m = buttress_mask(x, w, -10, fog_base + R.uniform(-10, 10),
+                      ((-1, w * R.uniform(1.5, 3.5), w * R.uniform(3, 6)), (1, w * R.uniform(1.2, 3.0), w * R.uniform(2.5, 5))),
+                      lean=R.uniform(-3, 3))
     u = across(m)
     val = 0.15 + 0.45 * (1 - u) + (yy / HL) * 0.25
     paint(far, m, val, FAR)
@@ -139,8 +158,9 @@ Image.fromarray(far, "RGBA").save(f"{OUT}/bg_far.png")
 mid = np.zeros((HL, W, 4), np.uint8)
 BARK = [hexc(c) for c in ("101a16", "17241e", "1f3027", "2a3d31", "374c3d", "4a5f4c")]
 base_y = 330
-for x, w in ((60, 17), (250, 11), (400, 20), (560, 13)):
-    m = trunk_mask(x, w, w * 3.2, -20, base_y, flare=1.0)
+for x, w, fins, lean in ((60, 15, ((-1, 46, 70), (1, 30, 52), (1, 58, 34)), 4), (250, 10, ((-1, 22, 40), (1, 34, 46)), -3),
+                         (400, 17, ((-1, 60, 64), (-1, 28, 40), (1, 40, 74)), 2), (560, 12, ((1, 30, 48), (-1, 20, 30)), -2)):
+    m = buttress_mask(x, w, -20, base_y, fins, lean=lean)
     u = across(m)
     ridges = np.sin((xx - x) * 0.55 + np.sin(yy * 0.04) * 1.5)
     val = 0.1 + 0.5 * (1 - u) ** 1.4 + 0.1 * ridges - 0.1 * (yy < 40)

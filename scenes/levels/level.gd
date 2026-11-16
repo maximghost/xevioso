@@ -394,6 +394,7 @@ class Rainbow:
 ## rais de lumière dorée descendent de la canopée et balaient l'écran, du pollen d'or flotte,
 ## une volée d'oiseaux traverse le ciel en chantant.
 func _forest_revival() -> void:
+	get_tree().call_group(&"falling_leaves", &"heal")
 	for d in find_children("*", "ForestDarkness", true, false):
 		d.ranges = PackedVector2Array()
 	Audio.play(&"forest_revival")

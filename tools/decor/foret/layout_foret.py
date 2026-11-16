@@ -421,6 +421,21 @@ for y in range(ROWS):
             col = 2 if not l and r else 4 if l and not r else 3
             cells.append([x, y, col, 3, 1])
 
+# petits détails semés sur le sol (ground_bits.py) : cailloux, touffes, feuilles mortes,
+# racines qui affleurent, pousses, brindilles — irréguliers, jamais deux fois de suite pareils
+import random as _random
+_r = _random.Random(2026)
+_bits = ["sol_cailloux", "sol_touffe", "sol_feuilles", "sol_racine", "sol_pousse", "sol_brindilles", "sol_touffe", "sol_feuilles"]
+_last = None
+for _c in range(4, COLS - 4):
+    if _r.random() > 0.34: continue
+    _row = surface(_c, 0)
+    if _row >= ROWS or solid[_row - 1][_c] or plank[_row - 1][_c]: continue
+    if not (solid[_row][_c - 1] and solid[_row][_c + 1]): continue           # pas au bord d'un trou
+    if CAVE_REGION[0] - 1 <= _c <= CAVE_REGION[1] + 1 and _row > G: continue
+    _n = _r.choice([b for b in _bits if b != _last]); _last = _n
+    deco(_c, _n, row=_row, flip=_r.random() < 0.5)
+
 # position des décors (posés sur la surface sous leur colonne)
 for d in decor:
     d["x"] = d["col"] * 16 + 8
