@@ -1,0 +1,77 @@
+[gd_resource type="SpriteFrames" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/enemies/snake/snake.png" id="1_7vqya"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_apljs"]
+atlas = ExtResource("1_7vqya")
+region = Rect2(0, 20, 48, 20)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_clgme"]
+atlas = ExtResource("1_7vqya")
+region = Rect2(48, 20, 48, 20)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_v2i5f"]
+atlas = ExtResource("1_7vqya")
+region = Rect2(0, 40, 48, 20)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_5im7s"]
+atlas = ExtResource("1_7vqya")
+region = Rect2(48, 40, 48, 20)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_iu6il"]
+atlas = ExtResource("1_7vqya")
+region = Rect2(0, 0, 48, 20)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_bbcwi"]
+atlas = ExtResource("1_7vqya")
+region = Rect2(48, 0, 48, 20)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_m05ki"]
+atlas = ExtResource("1_7vqya")
+region = Rect2(96, 0, 48, 20)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_gmwx6"]
+atlas = ExtResource("1_7vqya")
+region = Rect2(144, 0, 48, 20)
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_apljs")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_clgme")
+}],
+"loop": 1,
+"name": &"coil",
+"speed": 6.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_v2i5f")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_5im7s")
+}],
+"loop": 0,
+"name": &"strike",
+"speed": 12.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_iu6il")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_bbcwi")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_m05ki")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_gmwx6")
+}],
+"loop": 1,
+"name": &"walk",
+"speed": 7.0
+}]

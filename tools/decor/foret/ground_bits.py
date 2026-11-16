@@ -113,3 +113,32 @@ if __name__ == "__main__":
         fn(True).save(os.path.join(DEC, n + "_green.png"))
     feuille().save(os.path.join(PROPS, "feuille.png"))
     print("détails du sol :", ", ".join(BITS), "+ feuille")
+
+
+def flaque(h):
+    """flaque.png (64 × 8) : l'eau d'une flaque posée dans un creux du sol, qui reflète le jour."""
+    W, H = 64, 8
+    im = Image.new("RGBA", (W, H)); px = im.load()
+    for x in range(W):
+        u = (x - W / 2) / (W / 2 - 1)
+        depth = int(round(6.5 * max(0.0, 1 - u * u) ** 0.5))
+        for y in range(1, 1 + max(depth, 1)):
+            t = (y - 1) / 6
+            if h:
+                c = (int(120 + 70 * (1 - t) - 20 * abs(u)), int(160 + 60 * (1 - t) - 20 * abs(u)), int(170 + 50 * (1 - t)))
+            else:
+                c = (int(96 + 40 * (1 - t) - 14 * abs(u)), int(104 + 40 * (1 - t) - 14 * abs(u)), int(104 + 36 * (1 - t)))
+            px[x, y] = c + (235,)
+        if depth >= 1:
+            px[x, min(depth + 1, H - 1)] = (44, 34, 26, 255) if h else (52, 50, 46, 255)    # la boue du bord
+        px[x, 0] = (180, 210, 214, 200) if (h and abs(u) < 0.85) else (150, 156, 152, 160) if abs(u) < 0.85 else (0, 0, 0, 0)
+    for gx in (14, 15, 38, 46):                                    # reflets
+        px[gx, 2] = (240, 250, 255, 255)
+    px[27, 3] = (120, 80, 34, 255) if h else (100, 94, 82, 255)   # une feuille qui flotte
+    px[28, 3] = (150, 104, 48, 255) if h else (118, 110, 96, 255)
+    return im
+
+
+if __name__ == "__main__":
+    flaque(False).save(os.path.join(DEC, "flaque.png"))
+    flaque(True).save(os.path.join(DEC, "flaque_green.png"))

@@ -191,7 +191,35 @@ const LINES := {
 			"mobile": "Kokou : bouton bleu maintenu près d'une souche verte"},
 	],
 	&"foret_adan_vaincu": [
-		{"text": "La colère retombe en cendre. Allez, touchez le cœur de l'arbre : rendez-lui sa voix."},
+		{"text": "La colère retombe en cendre. Mais mon éclat est encore planté dans le cœur du vieil iroko. Entrez dans l'arbre."},
+	],
+	# Le cœur du vieil iroko : l'énigme des trois roues (HeartLock). Xɛvioso parle par images.
+	&"foret_coeur_roues": [
+		{"text": "Trois sœurs gardent le cœur. Elles se tiennent par les dents : quand l'une fait un pas, celles qu'elle touche reculent d'autant.",
+			"pc": "Frappez une roue pour la faire tourner", "mobile": "Frappez une roue pour la faire tourner"},
+		{"text": "Ma foudre entre par la tête de l'aînée et ne ressort que par la tête de la cadette. Entre les deux, la sève ne doit pas se perdre."},
+	],
+	&"foret_coeur_pouls": [
+		{"text": "Entendez-vous ? Le cœur de colère bat encore, et chaque battement bouscule la sœur du milieu. Ce qui bat s'apaise quand le tambour parle bas.",
+			"pc": "Kokou : K maintenu (tambour parlant)", "mobile": "Kokou : bouton bleu maintenu"},
+	],
+	&"foret_coeur_calme": [
+		{"text": "Le cœur dort, pour un temps. Ne le laissez pas se réveiller avant d'avoir fini."},
+	],
+	&"foret_coeur_seve": [
+		{"text": "La sève ne fait plus qu'un seul chemin. Maintenant, faites parler le tambour : appelez-moi."},
+	],
+	&"foret_coeur_astuce": [
+		{"text": "La sœur du milieu parle à ses deux voisines ; celles des bords n'en touchent qu'une. Qui veut accorder trois bavardes écoute d'abord les plus discrètes."},
+	],
+	&"foret_coeur_eclat": [
+		{"text": "Le voici. Ce qui fut volé au ciel revient dans la main des Envoyés. Prenez-le."},
+	],
+	&"foret_coeur_porte": [
+		{"text": "L'arbre vous laisse passer. Portez l'éclat jusqu'à mon tabernacle."},
+	],
+	&"foret_tabernacle_vide": [
+		{"text": "Mon autel est vide. Ce que l'arbre retient doit d'abord venir jusqu'ici."},
 	],
 	&"foret_fin": [
 		{"text": "Envoyés. L'iroko respire, et avec lui toute la forêt. Ses arbres sont de nouveau des sanctuaires."},

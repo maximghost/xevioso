@@ -30,6 +30,11 @@ extends Node2D
 
 ## Ajoute la poussière d'harmattan et permet le retour de la pluie.
 @export var use_weather: bool = false
+## Il faut d'abord rapporter l'éclat de la Pierre de foudre (le cœur de l'iroko, HeartLock).
+@export var requires_shard: bool = false
+var shard_taken: bool = false
+## Un point de contrôle placé après le boss : si l'on repart de là, le boss est déjà vaincu.
+@export var post_boss_checkpoint: StringName = &""
 ## Fin de la partie 2 : Xɛvioso reprend les arbres un à un (SacredReclaim) avant la bannière.
 @export var sacred_finale: bool = false
 
@@ -85,11 +90,27 @@ func _ready() -> void:
 		add_child(_ambience)
 		_ambience.setup(self)
 	_place_player_at_checkpoint()
+	if post_boss_checkpoint != &"" and Game.checkpoint_for(level_id) == post_boss_checkpoint:
+		_boss_already_beaten()
 	_sokpe_total = find_children("*", "SokpeStone", true, false).size()
 	if player != null:
 		player.died.connect(_on_player_died)
 	Audio.music(music_track)
 	Audio.ambience(ambiences)
+
+
+## On repart d'un point de contrôle placé après le boss : il est déjà vaincu, ses portes
+## sont ouvertes (sinon le niveau ne pourrait plus être fini).
+func _boss_already_beaten() -> void:
+	boss_defeated = true
+	for e in find_children("*", "", true, false):
+		if e.get_script() != null and String(e.get_script().resource_path).ends_with("adan.gd"):
+			e.queue_free()
+		elif e.get_script() != null and String(e.get_script().resource_path).ends_with("boss_arena.gd"):
+			e.queue_free()
+	for g in find_children("*", "RootGate", true, false):
+		if g is RootGate and not g is LightRootGate and String(g.name).begins_with("Porte") and g.name != &"PorteEclat":
+			g.open()
 
 
 ## Fait parler Xɛvioso (le jeu est figé pendant ce temps). À attendre avec « await ».
@@ -232,6 +253,8 @@ func _setup_mood() -> void:
 
 ## Vrai si le niveau peut encore être gagné (pas de fin de partie en cours, héros vivant).
 func can_complete() -> bool:
+	if requires_shard and not shard_taken:
+		return false
 	if requires_boss and not boss_defeated:
 		return false
 	return not _completed and not _game_over and (player == null or not player.health.is_dead())
@@ -447,6 +470,12 @@ func _forest_revival() -> void:
 
 
 func _turn_green() -> void:
+	for shrine in find_children("*", "EndShrine", true, false):
+		var spr := shrine.get_node_or_null("Sprite") as Sprite2D
+		if spr != null and spr.texture != null:
+			var gp: String = spr.texture.resource_path.replace(".png", "_green.png")
+			if ResourceLoader.exists(gp):
+				spr.texture = load(gp)
 	if terrain != null and green_tiles != null:
 		# Une copie du jeu de tuiles : l'original (partagé, gardé en mémoire par Godot)
 		# reste sec pour la prochaine partie.

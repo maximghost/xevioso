@@ -3,3 +3,4 @@
 /android/
 *.bak
 /build/
+__pycache__/

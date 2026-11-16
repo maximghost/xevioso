@@ -11,7 +11,8 @@ simulation des sauts.
                                 Kokou et le Tambour parlant ; les premières racines sacrées.
   4. La canopée (420-515)      le Poussiéreux à endormir, l'ascension (racines, branches, courant
                                 ascendant pour Afi), la traversée des cimes (rafales, lianes).
-  5. Le cœur de l'iroko (515-600)  l'arène d'Adan, puis le cœur de l'arbre (l'autel).
+  5. Le cœur de l'iroko (515-590)  l'arène d'Adan
+  6. Le vieil iroko (591-651)  l'énigme des trois roues, l'éclat, le tabernacle de Xɛvioso
 
 Usage : python3 layout_foret.py <sortie.json> [--check]
 """
@@ -19,7 +20,7 @@ import json, os, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from physics_check import World, reachable, touched, surfaces
 
-COLS, ROWS = 602, 56
+COLS, ROWS = 652, 56
 G = 42                    # ligne du sol « de base » (l'orée de la version 1 était à 18 : +24)
 BOUNCE_V = 546.0
 solid = [[False] * COLS for _ in range(ROWS)]
@@ -97,6 +98,10 @@ def surface(col, below=0):
     for y in range(below, ROWS):
         if solid[y][col]: return y
     return ROWS
+def puddle(col, row, w=56):
+    """Une flaque d'eau (on y fait gicler l'eau en courant) : l'image + la zone qui éclabousse."""
+    sprite(col * 16 + 8, row * 16 + 3, "flaque")
+    ents.append(dict(kind="puddle", x=col * 16 + 8, y=row * 16, w=w))
 def voice(col, vid, row=None):
     r = row if row is not None else surface(col)
     ents.append(dict(kind="voice", x=col * 16 + 8, y=r * 16, id=vid))
@@ -170,8 +175,8 @@ for x, y in ((206, 42), (223, 44)):
     sprite(x * 16 + 8, y * 16 + 22, "hanging_roots")
 sprite(201 * 16, 48 * 16 - 8, "root_arch")
 sprite(218 * 16, 48 * 16 - 8, "root_arch", flip=True)
-sprite(209 * 16, CF * 16 - 3, "puddle")
-sprite(227 * 16, CF * 16 - 3, "puddle")
+puddle(209, CF)
+puddle(227, CF)
 deco(196, "champignons_bleus", row=CF, light=(0.35, 0.75, 1.0))
 deco(213, "champignons_bleus", row=CF, light=(0.35, 0.75, 1.0), flip=True)
 deco(231, "champignons_bleus", row=CF, light=(0.35, 0.75, 1.0))
@@ -317,10 +322,28 @@ ent("firefloor", 542, G - 3, w=(587 - 542 + 1) * 16, name="SolBrulant")
 ent("adan", 575, G - 3, name="Adan", left=542 * 16, right=588 * 16)
 ent("arena", 545, G - 3, name="Arene")
 ent("rootgate", 588, G - 3, name="PorteCoeur", h=5)
-ground(588, 601, G - 2)
-ent("end", 596, G - 3, name="CoeurIroko")
+# ===== 6. Le vieil iroko (591-651) ====================================================
+# Adan vaincu, il reste à retirer l'éclat de la Pierre de foudre planté dans le cœur de
+# l'arbre. On entre dans son creux : trois roues engrenées (HeartLock), le cœur de colère qui
+# bat, le tambour qui l'endort ou appelle la foudre. L'éclat pris, la porte de racines de
+# droite s'ouvre et l'on rejoint le tabernacle de Xɛvioso.
+ground(588, COLS - 1, G - 2)
+ent("checkpoint", 592, G - 3, name="SteleIroko")
+IROKO_C0 = 598                                   # l'image du grand iroko commence ici
+for c in (598, 599, 600, 626, 627, 628):         # les parois du tronc (on passe par le bas)
+    wall(c, 0, G - 7)
+for c in range(601, 626):                        # le dessus du creux
+    wall(c, 0, 25)
+sprite(IROKO_C0 * 16 + 248, 336, "grand_iroko")
+voice(602, "foret_coeur_roues")
+ents.append(dict(kind="heartlock", x=601 * 16, y=(G - 2) * 16, name="CoeurIroko"))
+ent("rootgate", 627, G - 3, name="PorteEclat", h=4)
+deco(633, "buisson_fleuri")
+deco(646, "citronnier")
+deco(637, "herbe_haute")
+ent("end", 641, G - 3, name="Tabernacle", texture="tabernacle")
 for y in range(0, ROWS):
-    solid[y][601] = True
+    solid[y][COLS - 1] = True
 
 # ===== Lumière et brume =============================================================
 for col, row, L, sl in ((28, 20, 330, 50), (84, 18, 340, 70), (138, 20, 320, 40), (342, 18, 330, 60), (371, 16, 360, 50),
@@ -339,6 +362,11 @@ for col, vid in [(9, "foret_depart"), (20, "foret_liane"), (53, "foret_champi"),
     voice(col, vid)
 
 # ===== Décor =========================================================================
+# la forêt est dense : derrière les grands arbres du parcours, des caïlcédrats et des
+# acacias ; puis bananiers, citronniers, buissons et hautes herbes (trees4.py)
+for col, name in [(36, "cailcedrat"), (118, "cailcedrat"), (262, "cailcedrat"), (392, "cailcedrat"),
+                  (78, "acacia"), (150, "acacia"), (340, "acacia"), (512, "acacia")]:
+    deco(col, name)
 for col, name, front in [
     (3, "iroko", False), (12, "fougere", False), (22, "colocase", False), (27, "champignons", False), (31, "souche", False),
     (46, "raphia", False), (52, "fromager", False), (69, "champignons", False), (72, "fougere", False),
@@ -357,8 +385,27 @@ for col, name, front in [
     (424, "colocase", False), (433, "fougere", False),
     # le cœur
     (508, "fromager", False), (517, "colocase", False), (530, "iroko", False), (536, "grande_fougere", False),
-    (591, "fromager", False), (599, "colocase", False),
+    (590, "colocase", False),
     (512, "fougere", True), (538, "fougere", True),
+]:
+    deco(col, name, front)
+for col, name, front in [
+    (16, "bananier", False), (60, "bananier", False), (104, "bananier", False), (136, "bananier", False),
+    (330, "bananier", False), (380, "bananier", False), (402, "bananier", False), (520, "bananier", False),
+    (25, "citronnier", False), (84, "citronnier", False), (125, "citronnier", False), (360, "citronnier", False), (410, "citronnier", False),
+    (6, "buisson_dense", False), (40, "buisson_dense", False), (57, "buisson_dense", False), (75, "buisson_dense", False),
+    (96, "buisson_dense", False), (114, "buisson_dense", False), (144, "buisson_dense", False), (175, "buisson_dense", False),
+    (205, "buisson_dense", False), (250, "buisson_dense", False), (290, "buisson_dense", False), (338, "buisson_dense", False),
+    (370, "buisson_dense", False), (400, "buisson_dense", False), (428, "buisson_dense", False), (515, "buisson_dense", False),
+    (533, "buisson_dense", False),
+    (33, "buisson_fleuri", False), (88, "buisson_fleuri", False), (122, "buisson_fleuri", False), (348, "buisson_fleuri", False),
+    (384, "buisson_fleuri", False), (524, "buisson_fleuri", False),
+    (14, "herbe_haute", False), (44, "herbe_haute", False), (66, "herbe_haute", False), (101, "herbe_haute", False),
+    (128, "herbe_haute", False), (160, "herbe_haute", False), (220, "herbe_haute", False), (270, "herbe_haute", False),
+    (306, "herbe_haute", False), (356, "herbe_haute", False), (392, "herbe_haute", False), (437, "herbe_haute", False),
+    (527, "herbe_haute", False),
+    (30, "herbe_haute", True), (110, "herbe_haute", True), (362, "herbe_haute", True), (64, "buisson_dense", True),
+    (395, "buisson_dense", True), (142, "herbe_haute", True),
 ]:
     deco(col, name, front)
 
@@ -379,6 +426,7 @@ def check():
             ("stèle de la cime, avec Kokou", cps["SteleCime"], ("dash", "glide"), True, 0, 9700),
             ("stèle de la canopée, avec Kokou", cps["SteleCanopee"], ("dash", "glide"), True, 0, 9700),
             ("stèle du cœur, avec Kokou", cps["SteleCoeur"], ("dash", "glide"), True, 0, 9700),
+            ("stèle du vieil iroko", cps["SteleIroko"], ("dash", "glide"), False, 0, COLS * 16),
             ("départ, sans capacité", start, (), False, 0, 6200)]
     for label, st, ab, wr, xmin, xmax in runs:
         w = world(wr)
@@ -386,7 +434,7 @@ def check():
         far = max((segs[i][1] for i in seen), default=0)
         print(f"\n--- {label} : le plus loin atteint col {int(far) // 16}")
         for e in ents:
-            if e["kind"] in ("sokpe", "checkpoint") and st[0] - 50 <= e["x"] <= xmax:
+            if e["kind"] in ("sokpe", "checkpoint", "end") and st[0] - 50 <= e["x"] <= xmax:
                 x, y = e["x"] + e.get("dx", 0), e["y"] - 8
                 ok = touched(visited, x, y, 9 if e["kind"] == "sokpe" else 14)
                 print(f"   {'OK ' if ok else '-- '} {e['kind']:10} {e.get('name', ''):18} col {x // 16}")
@@ -420,6 +468,15 @@ for y in range(ROWS):
             l, r = plank[y][x - 1], plank[y][x + 1]
             col = 2 if not l and r else 4 if l and not r else 3
             cells.append([x, y, col, 3, 1])
+
+# flaques et serpents, là où le sol est plat sur cinq cases
+def _flat(c):
+    r = surface(c, 0)
+    return r < ROWS and all(surface(k, 0) == r and not solid[r - 1][k] for k in range(c - 2, c + 3))
+for _c in (18, 30, 40, 70, 85, 95, 112, 125, 148, 250, 262, 330, 345, 372, 390, 398, 410, 452, 525):
+    if _flat(_c): puddle(_c, surface(_c, 0))
+for _c, _d in ((62, -1), (116, 1), (246, -1), (356, 1), (404, -1), (530, -1)):
+    if _flat(_c): ent("snake", _c, surface(_c, 0) - 1, dir=_d)
 
 # petits détails semés sur le sol (ground_bits.py) : cailloux, touffes, feuilles mortes,
 # racines qui affleurent, pousses, brindilles — irréguliers, jamais deux fois de suite pareils

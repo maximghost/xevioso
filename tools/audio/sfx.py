@@ -924,6 +924,71 @@ def _revival():
     return reverb(out, room=3.0, wet=0.4)
 
 
+@sfx("wheel_turn", 0.7)
+def _wheel_turn():
+    """Une roue de bois du cœur de l'iroko tourne d'un quart : cliquetis des dents, grincement."""
+    n = int(0.45 * SR)
+    out = np.zeros(n)
+    for k, at in enumerate((0.0, 0.07, 0.14, 0.21)):
+        m = int(0.04 * SR)
+        click = bp(noise(m, rng=rng(40 + k)), 900, 3000) * env_exp(m, 0.008) * (1.0 - 0.15 * k)
+        knock = osc(pitch_env(m, 260 - 20 * k, 180, 0.01)) * env_exp(m, 0.02) * 0.6
+        place(out, mix(click, knock), at)
+    creak = osc(pitch_env(n, 180, 140, 0.3), "saw") * env_adsr(n, 0.05, 0.1, 0.4, 0.2) * 0.08
+    return reverb(mix(out, lp(creak, 900)), room=1.2, damp=3000, wet=0.3)
+
+
+@sfx("shard_free", 0.8)
+def _shard_free():
+    """L'éclat se libère : un cristal qui chante, monte, et une rumeur de racines qui lâchent."""
+    n = int(1.6 * SR)
+    sing = sum(osc(pitch_env(n, f, f * 1.5, 0.6)) * (0.3 / (i + 1)) for i, f in enumerate((660, 990, 1320)))
+    sing = sing * env_adsr(n, 0.05, 0.3, 0.6, 0.8)
+    crack = crackle(1.6, 90, seed=41, lo=300, hi=2500) * env_exp(n, 0.5) * 0.4
+    return reverb(mix(sing, crack), room=2.0, damp=5000, wet=0.4)
+
+
+@sfx("splash", 0.7)
+def _splash():
+    """Un pied dans une flaque : un « plaf » d'eau, puis quelques gouttes qui retombent."""
+    n = int(0.45 * SR)
+    r = rng(31)
+    body = bp(noise(n, rng=r), 500, 3500) * env_exp(n, 0.07, attack=0.004)
+    hiss = hp(noise(n, rng=r), 3000) * env_exp(n, 0.12) * 0.35
+    out = mix(body, hiss)
+    for k, (at, f) in enumerate(((0.06, 1400), (0.11, 1900), (0.17, 1200), (0.24, 2300))):
+        m = int(0.05 * SR)
+        drop = osc(pitch_env(m, f, f * 1.8, 0.02)) * env_exp(m, 0.015) * 0.3
+        place(out, drop, at)
+    return reverb(out, room=0.6, damp=6000, wet=0.15)
+
+
+@sfx("snake_hiss", 0.55)
+def _snake_hiss():
+    """Le serpent siffle : un souffle aigu qui enfle puis retombe."""
+    n = int(0.8 * SR)
+    x = bp(noise(n, rng=rng(32)), 3500, 9000) * env_adsr(n, 0.12, 0.2, 0.7, 0.3)
+    return x * (0.85 + 0.15 * np.sin(np.arange(n) / SR * 2 * np.pi * 23))
+
+
+@sfx("snake_strike", 0.7)
+def _snake_strike():
+    """Il se détend et mord : un fouet d'air et un claquement sec."""
+    n = int(0.25 * SR)
+    swish = bp(noise(n, rng=rng(33)), 1200, 6000) * env_exp(n, 0.05, attack=0.02)
+    snap = osc(pitch_env(n, 900, 300, 0.01), "square") * env_exp(n, 0.012) * 0.4
+    return mix(swish, snap)
+
+
+@sfx("snake_die", 0.7)
+def _snake_die():
+    """Le serpent vaincu : un sifflement étranglé qui s'éteint, un bruit de feuilles."""
+    n = int(0.6 * SR)
+    hiss = bp(noise(n, rng=rng(34)), 2500, 7000) * env_exp(n, 0.25) * 0.6
+    leaves = crackle(0.6, 160, seed=35, lo=2000, hi=7000) * env_exp(n, 0.3) * 0.5
+    return mix(hiss * np.linspace(1, 0.3, n), leaves)
+
+
 @sfx("root_slam", 0.8)
 def _root_slam():
     """Une racine-pilon frappe le sol du souterrain : un coup sourd de bois et de terre."""

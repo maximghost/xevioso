@@ -11,7 +11,7 @@ const CLOTH := preload("res://assets/props/foret/sacred_cloth.png")
 const OFFERINGS := preload("res://assets/props/foret/offrandes.png")
 const EMBLEM := preload("res://assets/ui/xevioso/emblem.png")
 const EMBLEM_GLOW := preload("res://assets/ui/xevioso/emblem_glow.png")
-const MIN_TREE_HEIGHT := 110          # en dessous, ce n'est pas un arbre (buisson, fougère…)
+const MIN_TREE_HEIGHT := 140          # en dessous, ce n'est pas un arbre (buisson, fougère…)
 const MAX_TREES := 12
 const REACH_BACK := 1500.0            # jusqu'où la caméra remonte la forêt (px)
 

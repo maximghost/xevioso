@@ -8,6 +8,7 @@ extends Area2D
 
 
 var _done: bool = false
+var _asked: bool = false
 
 
 func _ready() -> void:
@@ -18,7 +19,20 @@ func _on_body_entered(body: Node2D) -> void:
 	if _done or not body is Player:
 		return
 	var level := Level.of(self)
-	if level == null or not level.can_complete():
+	if level == null:
+		return
+	if level.requires_shard and not level.shard_taken:
+		if not _asked:
+			_asked = true
+			level.say(Voices.lines(&"foret_tabernacle_vide"))
+		return
+	if not level.can_complete():
 		return    # le héros est en train de tomber (fin de partie en cours) : pas de victoire
 	_done = true
+	# l'éclat rapporté est posé sur l'autel
+	var carried := body.get_node_or_null("EclatPorte")
+	if carried != null:
+		carried.reparent(self)
+		var t := carried.create_tween()
+		t.tween_property(carried, "position", Vector2(0, -44), 0.6).set_trans(Tween.TRANS_SINE)
 	level.complete(global_position)

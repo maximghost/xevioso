@@ -1,0 +1,58 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/enemies/snake/snake.gd" id="1_kf8tn"]
+[ext_resource type="SpriteFrames" path="res://assets/enemies/snake/snake_frames.tres" id="2_n45y5"]
+[ext_resource type="Script" path="res://scripts/core/health.gd" id="3_k4pay"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_g76gq"]
+size = Vector2(26, 8)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_p3dk6"]
+size = Vector2(30, 9)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_0l13r"]
+size = Vector2(32, 14)
+
+[node name="Snake" type="CharacterBody2D" unique_id=960523189]
+collision_layer = 4
+collision_mask = 17
+floor_snap_length = 4.0
+script = ExtResource("1_kf8tn")
+speed = 30.0
+dust_color = Color(0.5, 0.44, 0.34, 1)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1119018585]
+position = Vector2(0, -5)
+shape = SubResource("RectangleShape2D_g76gq")
+
+[node name="Sprite" type="AnimatedSprite2D" parent="." unique_id=975647312]
+position = Vector2(0, -10)
+sprite_frames = ExtResource("2_n45y5")
+animation = &"walk"
+
+[node name="LedgeRay" type="RayCast2D" parent="." unique_id=1665694776]
+position = Vector2(16, -2)
+target_position = Vector2(0, 8)
+collision_mask = 17
+
+[node name="Hurtbox" type="Area2D" parent="." unique_id=1401794788]
+collision_layer = 0
+collision_mask = 2
+monitorable = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Hurtbox" unique_id=1095420072]
+position = Vector2(0, -5)
+shape = SubResource("RectangleShape2D_p3dk6")
+
+[node name="Hitbox" type="Area2D" parent="." unique_id=430459606]
+collision_layer = 4
+collision_mask = 0
+monitoring = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Hitbox" unique_id=1822286175]
+position = Vector2(0, -8)
+shape = SubResource("RectangleShape2D_0l13r")
+
+[node name="Health" type="Node" parent="." unique_id=1611717163]
+script = ExtResource("3_k4pay")
+max_health = 2

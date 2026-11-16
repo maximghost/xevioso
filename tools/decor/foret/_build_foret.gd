@@ -6,9 +6,11 @@ extends SceneTree
 
 const TILE := 16
 ## Décors qui balancent (fougères, palmes, colocases) : amplitude en pixels.
-const SWAY := {"fougere": 1.2, "grande_fougere": 1.8, "colocase": 2.0, "raphia": 2.4, "buisson_foret": 0.8}
+const SWAY := {"fougere": 1.2, "grande_fougere": 1.8, "colocase": 2.0, "raphia": 2.4, "buisson_foret": 0.8,
+	"bananier": 1.8, "herbe_haute": 2.4, "buisson_dense": 0.7, "buisson_fleuri": 0.7, "citronnier": 0.5}
 ## Décors « arbres » : enfoncés de 8 px sous la ligne du sol (la terre recouvre le pied).
-const SINK := {"iroko": 8, "fromager": 8, "raphia": 8, "arbre_mort": 8, "figuier": 8, "termitiere": 8}
+const SINK := {"iroko": 8, "fromager": 8, "raphia": 8, "arbre_mort": 8, "figuier": 8, "termitiere": 8,
+	"acacia": 8, "cailcedrat": 8, "bananier": 4, "citronnier": 4}
 ## Décors de la v1 encore utilisés (souche, tronc couché, buisson, fougère, champignons).
 const OLD := ["fougere", "champignons", "souche", "tronc_couche", "buisson_foret"]
 
@@ -46,8 +48,10 @@ func _frames(sheet_path: String, size: Vector2i, anims: Array, out_path: String)
 
 func _build_frames() -> void:
 	_frames("res://assets/enemies/ant/ant.png", Vector2i(24, 20), [[&"walk", 0, 4, 9.0, true]], "res://assets/enemies/ant/ant_frames.tres")
-	_frames("res://assets/enemies/bat/bat.png", Vector2i(24, 16), [[&"fly", 0, 4, 12.0, true]], "res://assets/enemies/bat/bat_frames.tres")
-	_frames("res://assets/enemies/bat/bat_eyes.png", Vector2i(24, 16), [[&"fly", 0, 4, 12.0, true]], "res://assets/enemies/bat/bat_eyes_frames.tres")
+	_frames("res://assets/enemies/bat/bat.png", Vector2i(32, 22), [[&"fly", 0, 6, 14.0, true]], "res://assets/enemies/bat/bat_frames.tres")
+	_frames("res://assets/enemies/bat/bat_eyes.png", Vector2i(32, 22), [[&"fly", 0, 6, 14.0, true]], "res://assets/enemies/bat/bat_eyes_frames.tres")
+	_frames("res://assets/enemies/snake/snake.png", Vector2i(48, 20), [[&"walk", 0, 4, 7.0, true], [&"coil", 1, 2, 6.0, true],
+		[&"strike", 2, 2, 12.0, false]], "res://assets/enemies/snake/snake_frames.tres")
 	_frames("res://assets/enemies/rat/rat.png", Vector2i(16, 10), [[&"run", 0, 2, 14.0, true]], "res://assets/enemies/rat/rat_frames.tres")
 	_frames("res://assets/enemies/golem/golem.png", Vector2i(34, 38), [[&"walk", 0, 4, 5.0, true], [&"sleep", 1, 2, 1.5, true]], "res://assets/enemies/golem/golem_frames.tres")
 	_frames("res://assets/props/foret/bird.png", Vector2i(14, 12), [[&"fly", 0, 2, 10.0, true], [&"perch", 0, 0, 1.0, true]], "res://assets/props/foret/bird_frames.tres")
@@ -98,6 +102,23 @@ func _build_enemy_scenes() -> void:
 		cs.position = Vector2(0, -17)
 	golem.get_node("LedgeRay").position = Vector2(14, -2)
 	_save_scene(golem, "res://scenes/enemies/golem/golem.tscn")
+	# Le serpent : le corps de la motte, une autre allure (il se love et mord)
+	var snake: Node = load("res://scenes/enemies/crawler/crawler.tscn").instantiate(PackedScene.GEN_EDIT_STATE_INSTANCE)
+	snake.name = "Snake"
+	snake.set_script(load("res://scenes/enemies/snake/snake.gd"))
+	snake.set("speed", 30.0)
+	snake.set("dust_color", Color(0.5, 0.44, 0.34))
+	var ss: AnimatedSprite2D = snake.get_node("Sprite")
+	ss.sprite_frames = load("res://assets/enemies/snake/snake_frames.tres")
+	ss.position = Vector2(0, -10)
+	for path in ["CollisionShape2D", "Hurtbox/CollisionShape2D", "Hitbox/CollisionShape2D"]:
+		var cs: CollisionShape2D = snake.get_node(path)
+		var r := RectangleShape2D.new()
+		r.size = {"CollisionShape2D": Vector2(26, 8), "Hurtbox/CollisionShape2D": Vector2(30, 9), "Hitbox/CollisionShape2D": Vector2(32, 14)}[path]
+		cs.shape = r
+		cs.position = Vector2(0, -5 if path != "Hitbox/CollisionShape2D" else -8)
+	snake.get_node("LedgeRay").position = Vector2(16, -2)
+	_save_scene(snake, "res://scenes/enemies/snake/snake.tscn")
 
 
 func _save_scene(node: Node, path: String) -> void:
@@ -153,6 +174,8 @@ func _build_level(data: Dictionary, tileset: TileSet) -> Node2D:
 	root.set("use_weather", false)
 	root.set("requires_boss", true)
 	root.set("sacred_finale", true)
+	root.set("requires_shard", true)
+	root.set("post_boss_checkpoint", &"SteleIroko")
 	root.set("green_tiles", load("res://assets/tiles/forest_tiles_green.png"))
 	root.set("dry_color", Color(0.86, 0.88, 0.86))
 	root.set("rain_color", Color(1.02, 1.06, 0.98))
@@ -290,6 +313,7 @@ func _build_level(data: Dictionary, tileset: TileSet) -> Node2D:
 		"sokpe": load("res://scenes/props/sokpe_stone.tscn"),
 		"ant": load("res://scenes/enemies/ant/ant.tscn"),
 		"bat": load("res://scenes/enemies/bat/bat.tscn"),
+		"snake": load("res://scenes/enemies/snake/snake.tscn"),
 		"golem": load("res://scenes/enemies/golem/golem.tscn"),
 		"end": load("res://scenes/props/end_shrine.tscn"),
 		"shrine": load("res://scenes/props/hero_shrine.tscn"),
@@ -297,6 +321,7 @@ func _build_level(data: Dictionary, tileset: TileSet) -> Node2D:
 	var player: Node2D
 	var n := {}
 	var late := []           # nœuds qui référencent d'autres nœuds : réglés à la fin
+	var late_own := []       # nœuds construits ici avec des enfants (à faire posséder par la scène)
 	for e in data.entities:
 		var kind: String = e.kind
 		if kind in ["cover", "sprite", "sunbeam", "mist"]:
@@ -351,6 +376,12 @@ func _build_level(data: Dictionary, tileset: TileSet) -> Node2D:
 				node.set("drop", float(e.drop))
 				node.set("period", float(e.period))
 				node.set("phase", float(e.phase))
+			"heartlock":
+				node = _scripted(Node2D.new(), "res://scenes/props/foret/heart_lock.gd")
+				late.append([node, e])
+			"puddle":
+				node = _scripted(Area2D.new(), "res://scenes/props/foret/puddle.gd")
+				node.set("width", float(e.w))
 			"lightgate":
 				node = _scripted(AnimatableBody2D.new(), "res://scenes/props/foret/light_root_gate.gd")
 				node.set("height_tiles", int(e.h))
@@ -389,6 +420,27 @@ func _build_level(data: Dictionary, tileset: TileSet) -> Node2D:
 			"shrine":
 				node = scenes["shrine"].instantiate()
 				node.set("hero", load("res://assets/heroes/%s/%s_data.tres" % [e.hero, e.hero]))
+			"end":
+				if e.has("texture"):
+					# l'autel de fin, avec son image à lui (le tabernacle de Xɛvioso)
+					node = _scripted(Area2D.new(), "res://scenes/props/end_shrine.gd")
+					node.collision_layer = 0
+					node.collision_mask = 2
+					node.monitorable = false
+					var spr := Sprite2D.new()
+					spr.name = "Sprite"
+					spr.texture = load("res://assets/props/foret/%s.png" % e.texture)
+					spr.position = Vector2(0, 4 - spr.texture.get_height() / 2.0)
+					node.add_child(spr)
+					var cs := CollisionShape2D.new()
+					var r := RectangleShape2D.new()
+					r.size = Vector2(48, 60)
+					cs.shape = r
+					cs.position = Vector2(0, -30)
+					node.add_child(cs)
+					late_own.append(node)
+				else:
+					node = scenes["end"].instantiate()
 			_:
 				node = scenes[kind].instantiate()
 		n[kind] = n.get(kind, 0) + 1
@@ -398,12 +450,15 @@ func _build_level(data: Dictionary, tileset: TileSet) -> Node2D:
 		var pos := Vector2(e.x + e.get("dx", 0), e.y)
 		match kind:
 			"sokpe": pos = Vector2(e.x + e.get("dx", 0), e.y - 8)
-			"ant", "golem": node.set("start_direction", int(e.dir))
+			"ant", "golem", "snake": node.set("start_direction", int(e.dir))
 			"firefloor": pos = Vector2(e.x - 8, e.y)
 		node.position = pos
-		var parent: Node = enemies if kind in ["ant", "bat", "golem", "adan"] else (voices if kind == "voice" else props)
+		var parent: Node = enemies if kind in ["ant", "bat", "golem", "adan", "snake"] else (voices if kind == "voice" else props)
 		parent.add_child(node); _own(node, root)
 	# Les liens entre nœuds (chemins relatifs, une fois tout le monde en place)
+	for nd in late_own:
+		for c in nd.get_children():
+			_own(c, root)
 	for item in late:
 		var node: Node = item[0]
 		var e: Dictionary = item[1]
@@ -415,6 +470,8 @@ func _build_level(data: Dictionary, tileset: TileSet) -> Node2D:
 				node.set("drum_paths", paths)
 				node.set("gate_path", node.get_path_to(props.get_node(String(e.gate))))
 				node.set("bird_path", node.get_path_to(props.get_node(String(e.bird))))
+			"heartlock":
+				node.set("exit_gate", node.get_path_to(props.get_node("PorteEclat")))
 			"adan":
 				node.set("fire_floor_path", node.get_path_to(props.get_node("SolBrulant")))
 			"arena":

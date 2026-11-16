@@ -275,6 +275,7 @@ const TEST_STARTS := {
 	"sanctuaire": "la forêt, à la stèle du sous-bois (avant le sanctuaire)",
 	"canopee": "la forêt, à la stèle du sanctuaire (Kokou rejoint)",
 	"adan": "la forêt, à la stèle du cœur (devant l'arène d'Adan, Kokou rejoint)",
+	"coeur": "la forêt, au vieil iroko (Adan vaincu : l'énigme des roues, Kokou rejoint)",
 }
 var _test_checked := false
 ## Vrai pendant un raccourci de test : rien n'est enregistré jusqu'au retour au menu.
@@ -313,10 +314,10 @@ func start_test(moment: String) -> void:
 			checkpoint_level = &""
 			checkpoint_name = &""
 			go_to_level(&"foret_1")
-		"sombre", "sanctuaire", "canopee", "adan":
+		"sombre", "sanctuaire", "canopee", "adan", "coeur":
 			var stele: StringName = {"sombre": &"SteleOree", "sanctuaire": &"SteleSousBois",
-				"canopee": &"SteleSanctuaire", "adan": &"SteleCoeur"}[moment]
-			if moment in ["canopee", "adan"] and not &"kokou" in unlocked_heroes:
+				"canopee": &"SteleSanctuaire", "adan": &"SteleCoeur", "coeur": &"SteleIroko"}[moment]
+			if moment in ["canopee", "adan", "coeur"] and not &"kokou" in unlocked_heroes:
 				unlocked_heroes.append(&"kokou")   # pour ce test seulement : rien n'est enregistré
 			checkpoint_level = &"foret_1"
 			checkpoint_name = stele

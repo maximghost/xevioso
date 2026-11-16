@@ -1,7 +1,6 @@
 """Créatures et objets animés de la forêt des irokos (planches d'images, une ligne par animation).
 
-  bat.png        chauve-souris de poussière, 24 × 16, 4 images de vol (yeux dessinés à part)
-  bat_eyes.png   les yeux seuls (même grille) : affichés sans éclairage, ils luisent dans le noir
+  (bat.png, bat_eyes.png : dessinés maintenant par fauna.py)
   rat.png        rat gris, 16 × 10, 2 images de course
   golem.png      le Poussiéreux, 34 × 38 : marche (4), dort (2) ; ligne 0 marche, ligne 1 sommeil
   bird.png       oiseau messager (touraco), 14 × 12, 2 images de vol + 1 posé
@@ -313,9 +312,8 @@ def flame(i):
 
 
 if __name__ == "__main__":
-    sheet([[bat_frame(i) for i in range(4)]], 24, 16).save(f"{OUT}/bat.png")
-    eyes = sheet([[bat_frame(i, True) for i in range(4)]], 24, 16)
-    eyes.save(f"{OUT}/bat_eyes.png")
+    # la chauve-souris est désormais dessinée par fauna.py (32 × 22, 6 images) : ne pas l'écraser
+    pass
     sheet([[rat_frame(i) for i in range(2)]], 16, 10).save(f"{OUT}/rat.png")
     sheet([[golem_frame(i) for i in range(4)], [golem_frame(i, True) for i in range(2)]], 34, 38).save(f"{OUT}/golem.png")
     sheet([[bird_frame(i) for i in range(3)]], 14, 12).save(f"{OUT}/bird.png")
