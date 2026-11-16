@@ -19,6 +19,8 @@ var grown: float = 0.0
 
 var _sprite: Sprite2D
 var _sigil: Sprite2D
+var _halo: PointLight2D
+var _notes: CPUParticles2D
 var _shape: CollisionShape2D
 var _left: float = 0.0
 var _tween: Tween
@@ -45,15 +47,44 @@ func _ready() -> void:
 	_sigil = Sprite2D.new()
 	_sigil.texture = preload("res://assets/props/foret/root_sigil.png")
 	_sigil.offset = Vector2(0, -5)
+	_sigil.scale = Vector2(1.4, 1.4)
 	var unshaded := CanvasItemMaterial.new()
 	unshaded.light_mode = CanvasItemMaterial.LIGHT_MODE_UNSHADED
 	_sigil.material = unshaded
 	add_child(_sigil)
+	# Une lueur verte qui respire au ras du sol, et de petites notes qui montent : « joue ici ».
+	_halo = PointLight2D.new()
+	_halo.texture = Fx.light_texture()
+	_halo.texture_scale = 0.7
+	_halo.color = Color(0.5, 1.0, 0.6)
+	_halo.energy = 0.6
+	_halo.position = Vector2(0, -6)
+	add_child(_halo)
+	_notes = CPUParticles2D.new()
+	_notes.texture = preload("res://assets/props/foret/note.png")
+	_notes.amount = 2
+	_notes.lifetime = 1.8
+	_notes.position = Vector2(0, -12)
+	_notes.direction = Vector2(0, -1)
+	_notes.spread = 25.0
+	_notes.gravity = Vector2.ZERO
+	_notes.initial_velocity_min = 10.0
+	_notes.initial_velocity_max = 16.0
+	var fade := Gradient.new()
+	fade.set_color(0, Color(0.6, 1.0, 0.7, 0.0))
+	fade.add_point(0.25, Color(0.6, 1.0, 0.7, 0.9))
+	fade.set_color(fade.get_point_count() - 1, Color(0.6, 1.0, 0.7, 0.0))
+	_notes.color_ramp = fade
+	_notes.material = unshaded
+	add_child(_notes)
 	_set_grown(0.0)
 
 
 func _physics_process(delta: float) -> void:
-	_sigil.modulate.a = 0.55 + 0.35 * sin(Time.get_ticks_msec() / 400.0 + position.x)
+	var pulse: float = 0.5 + 0.5 * sin(Time.get_ticks_msec() / 400.0 + position.x)
+	_sigil.modulate.a = 0.6 + 0.4 * pulse
+	_halo.energy = (0.35 + 0.45 * pulse) * (0.3 if grown > 0.5 else 1.0)
+	_notes.emitting = grown < 0.5
 	if grown <= 0.0 or _left <= 0.0:
 		return
 	_left -= delta

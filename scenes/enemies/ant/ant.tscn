@@ -12,7 +12,7 @@ size = Vector2(16, 10)
 
 [sub_resource type="RectangleShape2D" id="hit_shape"]
 
-[node name="Ant" type="CharacterBody2D" unique_id=2142178069]
+[node name="Ant" type="CharacterBody2D" unique_id=51859858]
 collision_layer = 4
 collision_mask = 17
 floor_snap_length = 4.0
@@ -20,38 +20,38 @@ script = ExtResource("1_81435")
 speed = 50.0
 dust_color = Color(0.55, 0.52, 0.48, 1)
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=31293887]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=475816162]
 position = Vector2(0, -6)
 shape = SubResource("body_shape")
 
-[node name="Sprite" type="AnimatedSprite2D" parent="." unique_id=549014637]
+[node name="Sprite" type="AnimatedSprite2D" parent="." unique_id=1513754175]
 position = Vector2(0, -10)
 sprite_frames = ExtResource("2_lnh7x")
 animation = &"walk"
 
-[node name="LedgeRay" type="RayCast2D" parent="." unique_id=21513283]
+[node name="LedgeRay" type="RayCast2D" parent="." unique_id=203281226]
 position = Vector2(10, -2)
 target_position = Vector2(0, 8)
 collision_mask = 17
 
-[node name="Hurtbox" type="Area2D" parent="." unique_id=381170628]
+[node name="Hurtbox" type="Area2D" parent="." unique_id=633760052]
 collision_layer = 0
 collision_mask = 2
 monitorable = false
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Hurtbox" unique_id=962110747]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Hurtbox" unique_id=87858157]
 position = Vector2(0, -6)
 shape = SubResource("hurt_shape")
 
-[node name="Hitbox" type="Area2D" parent="." unique_id=1891318054]
+[node name="Hitbox" type="Area2D" parent="." unique_id=430106256]
 collision_layer = 4
 collision_mask = 0
 monitoring = false
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Hitbox" unique_id=165545010]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Hitbox" unique_id=1342926806]
 position = Vector2(0, -10)
 shape = SubResource("hit_shape")
 
-[node name="Health" type="Node" parent="." unique_id=903212855]
+[node name="Health" type="Node" parent="." unique_id=1164926334]
 script = ExtResource("3_7p7ru")
 max_health = 2

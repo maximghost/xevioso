@@ -228,17 +228,39 @@ func _build_level(data: Dictionary, tileset: TileSet) -> Node2D:
 	root.set("terrain", tm)
 	# Habillages : les masses de terre qui sont en vrai des troncs, un tronc couché, des racines
 	var covers := Node2D.new(); covers.name = "Habillages"; root.add_child(covers); _own(covers, root)
+	var lights := Node2D.new(); lights.name = "Lumieres"
 	for e in data.entities:
-		if e.kind != "cover":
-			continue
-		var c := Sprite2D.new()
-		c.texture = load("res://assets/decor/foret/%s.png" % e.texture)
-		c.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
-		c.region_enabled = true
-		c.region_rect = Rect2(0, 0, e.w, e.h)
-		c.centered = false
-		c.position = Vector2(e.x, e.y)
-		covers.add_child(c); _own(c, root)
+		match e.kind:
+			"cover":
+				var c := Sprite2D.new()
+				c.texture = load("res://assets/decor/foret/%s.png" % e.texture)
+				c.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
+				c.region_enabled = true
+				c.region_rect = Rect2(0, 0, e.w, e.h)
+				c.centered = false
+				c.position = Vector2(e.x, e.y)
+				covers.add_child(c); _own(c, root)
+			"sprite":
+				var sp := Sprite2D.new()
+				sp.texture = load("res://assets/decor/foret/%s.png" % e.texture)
+				sp.position = Vector2(e.x, e.y)
+				sp.flip_h = e.get("flip", false)
+				covers.add_child(sp); _own(sp, root)
+			"sunbeam":
+				var b := _scripted(Node2D.new(), "res://scenes/props/foret/sunbeam.gd")
+				for k in ["length", "width", "slant", "strength"]:
+					b.set(k, float(e[k]))
+				b.position = Vector2(e.x, e.y)
+				lights.add_child(b)
+			"mist":
+				var m := _scripted(Node2D.new(), "res://scenes/props/foret/mist.gd")
+				m.set("width", float(e.w))
+				m.set("alpha", float(e.alpha))
+				m.set("fireflies", bool(e.fireflies))
+				m.position = Vector2(e.x, e.y)
+				lights.add_child(m)
+	root.add_child(lights); _own(lights, root)
+	for c in lights.get_children(): _own(c, root)
 
 	var dark := _scripted(Node2D.new(), "res://scenes/props/foret/darkness.gd")
 	dark.name = "Ombre"
@@ -265,7 +287,7 @@ func _build_level(data: Dictionary, tileset: TileSet) -> Node2D:
 	var late := []           # nœuds qui référencent d'autres nœuds : réglés à la fin
 	for e in data.entities:
 		var kind: String = e.kind
-		if kind == "cover":
+		if kind in ["cover", "sprite", "sunbeam", "mist"]:
 			continue
 		if kind == "player":
 			player = load("res://scenes/heroes/player.tscn").instantiate()

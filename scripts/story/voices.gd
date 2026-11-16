@@ -178,6 +178,17 @@ const LINES := {
 		{"text": "Le cœur de l'iroko. C'est ici qu'Adaka a planté sa colère. Elle porte un nom : Adan."},
 		{"text": "Sa fureur brûle tout ce qui touche le sol. Seules les racines sacrées ne brûlent pas."},
 	],
+	&"foret_arene": [
+		{"text": "Adan ! Kokou, tiens-toi prêt : ton tambour réveille les souches qui luisent, et leurs racines ne brûlent pas.",
+			"pc": "Tab : Kokou · K maintenu près d'une souche verte : sa racine pousse et vous porte",
+			"mobile": "Bouton vert : Kokou · Bouton bleu maintenu près d'une souche verte : sa racine pousse"},
+		{"text": "Grimpe sur les racines pour atteindre les branches. Et frappe-le quand il s'écrase ou s'essouffle."},
+	],
+	&"foret_fureur": [
+		{"text": "Sa Fureur déborde ! Le sol va brûler : sur une racine ou une branche, vite !",
+			"pc": "Kokou : K maintenu près d'une souche verte",
+			"mobile": "Kokou : bouton bleu maintenu près d'une souche verte"},
+	],
 	&"foret_adan_vaincu": [
 		{"text": "La colère retombe en cendre. Allez, touchez le cœur de l'arbre : rendez-lui sa voix."},
 	],

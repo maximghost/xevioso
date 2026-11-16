@@ -45,8 +45,24 @@ func _on_enter(body: Node2D) -> void:
 	add_child(_hud)
 	_adan.health_changed.connect(_hud.set_health)
 	_adan.rage_changed.connect(_hud.set_rage)
+	var level := Level.of(self)
+	if level != null:
+		level.say(Voices.lines(&"foret_arene"))
+	_adan.fury_warning.connect(_on_fury_warning)
 	await get_tree().create_timer(0.6).timeout
 	_adan.awaken(player)
+
+
+## La première Fureur : Xɛvioso rappelle où se mettre à l'abri.
+var _warned: bool = false
+
+func _on_fury_warning() -> void:
+	if _warned:
+		return
+	_warned = true
+	var level := Level.of(self)
+	if level != null:
+		level.say(Voices.lines(&"foret_fureur"))
 
 
 func _on_player_died() -> void:

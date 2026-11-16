@@ -18,6 +18,8 @@ extends CharacterBody2D
 signal defeated
 signal health_changed(current: int, maximum: int)
 signal rage_changed(value: float)
+## Il entre en Fureur (prévient l'arène : le premier rappel de Xɛvioso).
+signal fury_warning
 
 @export var max_health: int = 30
 @export var arena_left: float = 0.0
@@ -256,7 +258,8 @@ func _face_player() -> void:
 ## Choisit la prochaine attaque.
 func _think() -> void:
 	if rage >= 100.0:
-		_set_state(S.FURY_WIND, 1.4)
+		fury_warning.emit()
+		_set_state(S.FURY_WIND, 1.8)
 		_sprite.play(&"fury")
 		Audio.play_at(&"adan_roar", global_position)
 		return

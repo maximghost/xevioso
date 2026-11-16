@@ -75,6 +75,19 @@ def cover(c0, c1, r0, r1, texture):
     """Habille un bloc de terre (tronc, tronc couché, racines) : une image raccordable posée
     par-dessus les tuiles, de la colonne c0 à c1, de la ligne r0 à r1 (incluses)."""
     ents.append(dict(kind="cover", x=c0 * 16, y=r0 * 16, w=(c1 - c0 + 1) * 16, h=(r1 - r0 + 1) * 16, texture=texture))
+def sprite(x, y, texture, flip=False):
+    """Une image posée telle quelle (x, y : son centre, en pixels)."""
+    ents.append(dict(kind="sprite", x=x, y=y, texture=texture, flip=flip))
+def branch(c0, c1, row):
+    """Une grosse branche d'appui : planche (collision) habillée d'écorce moussue, bouts cassés."""
+    planks(c0, c1, row)
+    ents.append(dict(kind="cover", x=c0 * 16, y=row * 16 - 2, w=(c1 - c0 + 1) * 16, h=20, texture="branch_h"))
+    sprite(c0 * 16 - 6, row * 16 + 8, "branch_cap_l")
+    sprite((c1 + 1) * 16 + 6, row * 16 + 8, "branch_cap_r")
+def sunbeam(col, top_row, length=300, width=40, slant=60, strength=0.16):
+    ents.append(dict(kind="sunbeam", x=col * 16, y=top_row * 16, length=length, width=width, slant=slant, strength=strength))
+def mist(c0, c1, row, alpha=0.18, fireflies=False):
+    ents.append(dict(kind="mist", x=c0 * 16, y=row * 16, w=(c1 - c0) * 16, alpha=alpha, fireflies=fireflies))
 def wall(col, r0, r1):
     """Mur invisible (sous l'habillage d'un tronc)."""
     for y in range(r0, r1 + 1): solid[y][col] = True
@@ -124,7 +137,7 @@ ent("ant", 142, G - 3, dir=1)
 # ===== 2. Le sous-bois sombre (155-322) ==============================================
 # L'entrée : un arbre couché fait un porche ; derrière, la nuit.
 ground(156, 167, 30, 33)                    # le porche (le tronc couché au-dessus du chemin)
-cover(156, 167, 30, 33, "log_h")
+sprite(156 * 16 + 96, 30 * 16 + 32, "porch_log")
 dark_ranges.append((161, 322))
 ent("fireflies", 164, G - 4, name="Lucioles1")
 ground(161, 175, G - 2)
@@ -138,9 +151,17 @@ ent("rat", 187, G - 3)
 ground(200, 222, G - 2)
 ground(201, 221, 28, G - 5)                 # le plafond de racines (bas : 2 cases au-dessus du sol)
 hole(210, 211, 36, G - 5)                   # la niche : on peut s'y redresser
-cover(201, 209, 28, G - 5, "roots_v")
-cover(212, 221, 28, G - 5, "roots_v")
-cover(210, 211, 28, 35, "roots_v")
+cover(201, 221, G - 4, G - 3, "tunnel_back")      # la paroi du fond : on est sous terre
+cover(210, 211, 36, G - 5, "tunnel_back")
+cover(201, 209, 28, G - 5, "root_ceiling")
+cover(212, 221, 28, G - 5, "root_ceiling")
+cover(210, 211, 28, 35, "root_ceiling")
+ents.append(dict(kind="cover", x=201 * 16, y=(G - 4) * 16, w=9 * 16, h=14, texture="root_fringe"))
+ents.append(dict(kind="cover", x=212 * 16, y=(G - 4) * 16, w=10 * 16, h=14, texture="root_fringe"))
+ents.append(dict(kind="cover", x=210 * 16, y=36 * 16, w=32, h=14, texture="root_fringe"))
+sprite(200 * 16 + 4, (G - 2) * 16 - 48, "root_arch")                  # l'embouchure, à l'entrée
+sprite(222 * 16 + 12, (G - 2) * 16 - 48, "root_arch", flip=True)      # et à la sortie
+mist(163, 320, G - 2, alpha=0.14, fireflies=True)
 ent("sokpe", 210, 36, name="SokpeTunnel", dx=8)
 ent("ant", 219, G - 3, dir=-1)
 ent("rat", 205, G - 3)
@@ -150,11 +171,12 @@ ent("checkpoint", 228, G - 3, name="SteleTunnel")
 ground(222, 252, G - 2)
 ent("fireflies", 226, G - 4, name="Lucioles2")
 ground(252, 256, 26)                        # la paroi : on ne passe que par le haut
+cover(252, 256, 27, G - 1, "trunk_wide")    # c'est le pied d'un arbre géant
 mushroom(237, G - 3)
-ground(239, 244, 33, 33)                    # premier palier
+branch(239, 244, 33)                        # premier palier
 mushroom(243, 32)
-ground(245, 251, 26, 26)                    # second palier, contre la paroi
-ground(233, 234, 30, 30)                    # renfoncement à gauche du puits (Ruée ou Pagne)
+branch(245, 251, 26)                        # second palier, contre la paroi
+branch(233, 234, 30)                        # renfoncement à gauche du puits (Ruée ou Pagne)
 ent("sokpe", 233, 29, name="SokpePuits", dx=8)
 ent("bat", 241, 24)
 # d. la ravine noire : branches mortes, une liane, des chauves-souris ; une corniche secrète
@@ -169,7 +191,7 @@ planks(289, 292, 26)
 ent("bat", 290, 20)
 crumble(295, 26, 2)
 ground(298, 306, 26)
-ground(281, 282, 31, 31)                    # la corniche secrète, sous le chemin
+branch(281, 282, 31)                        # la corniche secrète, sous le chemin
 mushroom(282, 30)
 ent("sokpe", 281, 30, name="SokpeRavineNoire", dx=0)
 ent("sokpe", 287, 21, name="SokpeVolee", dx=0)  # au-dessus du vide, entre deux branches
@@ -186,7 +208,7 @@ ground(330, 400, G - 2)
 voice(326, "foret_sanctuaire")
 ent("drum", 338, G - 3, voice=0, name="TambourBlanc")
 mushroom(347, G - 3)
-ground(350, 355, 33, 33)                    # le haut rebord du tambour rouge
+branch(350, 355, 33)                        # la haute branche du tambour rouge
 ent("drum", 354, 32, voice=1, name="TambourRouge")
 ent("sokpe", 351, 30, name="SokpeTambour", dx=0)
 planks(380, 383, G - 5)                     # d'où frapper le tambour indigo
@@ -221,10 +243,10 @@ planks(440, 443, 22)
 planks(445, 449, 19)
 planks(440, 443, 16)
 ground(452, 456, 14, 47)                    # le tronc qui borde l'ascension
-cover(452, 456, 0, 12, "bark_v")
-cover(452, 456, 14, 41, "bark_v")
-ground(445, 466, 13, 13)                    # la grosse branche du haut
-hole(450, 451, 13, 13)                      # le courant passe à travers
+cover(452, 456, 0, 12, "trunk_wide")
+cover(452, 456, 14, G - 1, "trunk_wide")
+branch(445, 449, 13)                        # la grosse branche du haut…
+branch(452, 466, 13)                        # … coupée par le courant ascendant
 updraft(450, 7, 35, w=2)
 ent("sokpe", 450, 7, name="SokpeCourant", dx=0)
 ent("bat", 446, 18)
@@ -242,7 +264,7 @@ planks(488, 494, 11)
 ent("bat", 491, 6)
 gust(486, 494, 3, 10, 1, period=4.0, phase=0.4, strength=120.0)
 ent("sokpe", 483, 6, name="SokpeRafale", dx=0)
-ground(495, 503, 11, 11)
+branch(495, 503, 11)
 ent("checkpoint", 498, 10, name="SteleCanopee")
 ent("sokpe", 502, 3, name="SokpeCime", dx=0)
 planks(499, 501, 6)                          # au-dessus de la stèle : une branche fine…
@@ -259,8 +281,8 @@ for c in (539, 540, 541):                    # l'arène est fermée par deux tro
     wall(c, 0, G - 8)
 for c in (588, 589, 590):
     wall(c, 0, G - 8)
-cover(539, 541, 0, G - 8, "bark_v")
-cover(588, 590, 0, G - 8, "bark_v")
+cover(539, 541, 0, G - 8, "trunk_col")
+cover(588, 590, 0, G - 8, "trunk_col")
 cover(539, 541, G - 7, G - 3, "hollow")           # on passe dans le creux du tronc
 cover(588, 590, G - 7, G - 3, "hollow")
 planks(548, 551, G - 8)
@@ -277,6 +299,17 @@ ground(588, 601, G - 2)
 ent("end", 596, G - 3, name="CoeurIroko")
 for y in range(0, ROWS):
     solid[y][601] = True
+
+# ===== Lumière et brume =============================================================
+for col, row, L, sl in ((28, 20, 330, 50), (84, 18, 340, 70), (138, 20, 320, 40), (342, 18, 330, 60), (371, 16, 360, 50),
+                        (395, 18, 330, 40), (470, 0, 420, 70), (512, 14, 400, 60), (562, 12, 420, 50)):
+    sunbeam(col, row, length=L, slant=sl)
+mist(0, 160, G, alpha=0.1)
+mist(322, 420, G - 2, alpha=0.16)
+mist(504, 600, G - 2, alpha=0.14)
+deco(204, "grande_fougere", row=28)              # au-dessus du tunnel, la forêt continue
+deco(216, "fougere", row=28)
+deco(352, "fromager")                             # la haute branche part de cet arbre
 
 # ===== Voix ==========================================================================
 for col, vid in [(9, "foret_depart"), (20, "foret_liane"), (53, "foret_champi"), (107, "foret_ronces"),
