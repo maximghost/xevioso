@@ -19,8 +19,8 @@ signal shard_taken
 ## Rotation de départ de chaque roue (en quarts de tour, sens horaire, depuis la bonne position).
 @export var start_turns: Array[int] = [2, 3, 2]
 ## Battement du cœur de colère (s) et durée de son sommeil après un coup de tambour (s).
-@export var pulse_period: float = 4.5
-@export var calm_time: float = 12.0
+@export var pulse_period: float = 6.0
+@export var calm_time: float = 18.0
 ## La porte de racines qui ferme la sortie de l'arbre : elle s'ouvre quand on prend l'éclat.
 @export var exit_gate: NodePath
 ## Largeur du creux de l'arbre (px), depuis ce nœud (posé au sol, bord gauche du creux).
@@ -33,11 +33,17 @@ const ROOTS := preload("res://assets/props/foret/racines_colere.png")
 const SHARD := preload("res://assets/props/foret/eclat_foudre.png")
 const WHEEL_X := [140.0, 200.0, 260.0]
 const WHEEL_Y := -36.0
-const CLAMP := Vector2(304.0, -158.0)
+const CLAMP := Vector2(332.0, -98.0)    # sous le bandeau des paroles : on le voit toujours
 ## Chaque coup : la roue frappée avance (+1), ses voisines reculent (-1).
 const GEARS := [[1, -1, 0], [-1, 1, -1], [0, -1, 1]]
 const CARVED := Color(0.32, 0.2, 0.14)
 const SAP := Color(0.55, 0.8, 1.0)
+const SAP_DIM := Color(0.42, 0.62, 0.82)
+## Côtés ouverts du sillon de chaque roue, à sa bonne position (0 haut, 1 droite, 2 bas, 3 gauche).
+const OPEN := [[0, 1], [3, 1], [3, 0]]
+const SIDE_DIR := [Vector2(0, -1), Vector2(1, 0), Vector2(0, 1), Vector2(-1, 0)]
+## Le battement est annoncé : les racines s'embrasent, la roue du milieu tremble.
+const WARN_TIME := 1.3
 
 var turns: Array[int] = [0, 0, 0]
 var _wheels: Array[Sprite2D] = []
@@ -53,6 +59,10 @@ var _state := 0            # 0 : verrouillé ; 1 : la foudre est tombée ; 2 : l
 var _said := {}
 var _was_aligned := false
 var _calm_tween: Tween
+var _drip: CPUParticles2D
+var _mural: Node2D
+var _lit_count := -1
+var _intro_done := false
 
 
 func _ready() -> void:
@@ -106,6 +116,20 @@ func _ready() -> void:
 	_red.energy = 0.5
 	_red.position = CLAMP
 	add_child(_red)
+	_build_mural()
+	_drip = CPUParticles2D.new()
+	_drip.amount = 6
+	_drip.lifetime = 0.9
+	_drip.direction = Vector2(0, 1)
+	_drip.spread = 10.0
+	_drip.gravity = Vector2(0, 160)
+	_drip.initial_velocity_min = 4.0
+	_drip.initial_velocity_max = 12.0
+	_drip.scale_amount_min = 1.0
+	_drip.scale_amount_max = 1.6
+	_drip.color = SAP
+	_drip.emitting = false
+	add_child(_drip)
 	_refresh(false)
 
 
@@ -118,17 +142,55 @@ func _process(delta: float) -> void:
 	if _state != 0:
 		return
 	var inside := _player_inside()
+	_highlight_near(inside)
+	if inside and not _intro_done:
+		# à l'arrivée, la sève coule une première fois sous les yeux du joueur : on voit d'où
+		# elle vient et où elle s'arrête
+		_intro_done = true
+		_lit_count = 0
+		for item in [_grooves[0], _channels[0], _grooves[1], _channels[1], _grooves[2], _channels[2], _grooves[3]]:
+			item.set("default_color" if item is Line2D else "modulate", CARVED)
+		_refresh(true)
 	if _calm > 0.0:
 		_calm -= delta
-		_red.energy = 0.15
+		# le cœur dort : les racines grises respirent lentement ; elles rougissent avant le réveil
+		var waking: bool = _calm < 2.5
+		_red.energy = (0.5 + 0.5 * sin(Time.get_ticks_msec() / 90.0)) * 0.6 if waking else 0.08
+		_roots.modulate = Color(1.0, 0.55, 0.5) if waking and fmod(_calm, 0.5) < 0.25 else Color(0.55, 0.55, 0.62)
+		if _calm <= 0.0:
+			_roots.modulate = Color.WHITE
+			_pulse_t = pulse_period
 		return
-	_red.energy = 0.35 + 0.25 * maxf(0.0, sin(Time.get_ticks_msec() / 1000.0 * TAU / pulse_period * 2.0))
 	if not inside:
+		_red.energy = 0.3
 		return
 	_pulse_t -= delta
+	# l'annonce du battement
+	var warn: float = clampf(1.0 - _pulse_t / WARN_TIME, 0.0, 1.0)
+	_red.energy = 0.3 + 1.1 * warn * warn
+	_roots.scale = Vector2.ONE * (1.0 + 0.08 * warn)
+	var mid: Sprite2D = _wheels[1]
+	mid.offset = Vector2(randf_range(-1.0, 1.0), randf_range(-1.0, 1.0)) * (1.5 * warn) if warn > 0.0 else Vector2.ZERO
 	if _pulse_t <= 0.0:
 		_pulse_t = pulse_period
+		mid.offset = Vector2.ZERO
 		_heartbeat()
+
+
+## Le moyeu d'une roue luit doucement quand un héros est assez près pour la frapper.
+func _highlight_near(inside: bool) -> void:
+	var level := Level.of(self)
+	var px: float = INF
+	if inside and level != null and level.player != null:
+		px = to_local(level.player.global_position).x
+	for k in 3:
+		var near: bool = absf(px - WHEEL_X[k]) < 34.0
+		var w: Sprite2D = _wheels[k]
+		if w.modulate.g > 0.9:          # pas pendant le rougeoiement d'un battement
+			w.modulate = Color(1.18, 1.12, 1.0) if near else Color.WHITE
+	if _mural != null:
+		var close: bool = inside and px < 120.0
+		_mural.modulate.a = move_toward(_mural.modulate.a, 1.0 if close else 0.45, get_process_delta_time() * 2.0)
 
 
 func _player_inside() -> bool:
@@ -143,8 +205,8 @@ func _player_inside() -> bool:
 func _heartbeat() -> void:
 	Audio.play_at(&"heartbeat", to_global(CLAMP), 2.0)
 	var t := _roots.create_tween()
-	t.tween_property(_roots, "scale", Vector2(1.15, 1.15), 0.08)
-	t.tween_property(_roots, "scale", Vector2.ONE, 0.3)
+	t.tween_property(_roots, "scale", Vector2(1.18, 1.18), 0.06)
+	t.tween_property(_roots, "scale", Vector2.ONE, 0.35)
 	var level := Level.of(self)
 	if level != null and level.player != null:
 		level.player.shake_camera(2.0, 0.2)
@@ -171,6 +233,7 @@ func _turn(i: int, by_heart: bool) -> void:
 		if step == 0:
 			continue
 		turns[k] = posmod(turns[k] + step, 4)
+		_gear_arrow(k, step, by_heart)
 		var w: Sprite2D = _wheels[k]
 		var tw := w.create_tween()
 		tw.tween_property(w, "rotation_degrees", w.rotation_degrees + 90.0 * step, 0.26).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
@@ -181,29 +244,149 @@ func _turn(i: int, by_heart: bool) -> void:
 	_refresh(true)
 
 
-func _wheel_ok(k: int) -> bool:
-	return turns[k] == 0 or (k == 1 and turns[k] == 2)
+func _open_sides(k: int) -> Array:
+	return [posmod(OPEN[k][0] + turns[k], 4), posmod(OPEN[k][1] + turns[k], 4)]
+
+
+## Jusqu'où la sève descend-elle ? Elle tombe du ciel dans le sillon d'entrée, entre dans la
+## première roue par le haut, suit son sillon, passe aux suivantes… et s'arrête au premier
+## raccord manqué. Renvoie [éléments allumés (0 entrée, 1 roue 1, 2 raccord, 3 roue 2,
+## 4 raccord, 5 roue 3, 6 sillon des racines), point où elle s'arrête].
+func _sap_flow() -> Array:
+	var lit := 1
+	var enter_side := [0, 3, 3]           # par où la sève entre dans chaque roue
+	var exit_want := [1, 1, 0]            # par où elle doit en sortir pour continuer
+	var stop: Vector2 = Vector2(WHEEL_X[0], WHEEL_Y - 28.0)
+	for k in 3:
+		var sides := _open_sides(k)
+		var center := Vector2(WHEEL_X[k], WHEEL_Y)
+		if not enter_side[k] in sides:
+			stop = center + SIDE_DIR[enter_side[k]] * 28.0
+			return [lit, stop]
+		lit += 1                           # la roue se remplit
+		var out: int = sides[0] if sides[1] == enter_side[k] else sides[1]
+		if out != exit_want[k]:
+			stop = center + SIDE_DIR[out] * 27.0
+			return [lit, stop]
+		lit += 1                           # le raccord suivant (ou le sillon des racines)
+	return [lit, CLAMP]
 
 
 func is_aligned() -> bool:
-	return _wheel_ok(0) and _wheel_ok(1) and _wheel_ok(2)
+	return _sap_flow()[0] >= 7
 
 
 func _refresh(animate: bool) -> void:
-	var aligned := is_aligned()
-	for k in 3:
-		var target: Color = SAP if aligned else (Color(0.42, 0.52, 0.62) if _wheel_ok(k) else CARVED)
-		if animate:
-			_channels[k].create_tween().tween_property(_channels[k], "modulate", target, 0.3)
+	var flow := _sap_flow()
+	var lit: int = flow[0]
+	var aligned: bool = lit >= 7
+	# éléments, dans l'ordre où la sève les traverse
+	var items: Array = [_grooves[0], _channels[0], _grooves[1], _channels[1], _grooves[2], _channels[2], _grooves[3]]
+	for i in items.size():
+		var node: CanvasItem = items[i]
+		var on: bool = i < lit
+		var target: Color = (SAP if aligned else SAP_DIM) if on else CARVED
+		var prop := "default_color" if node is Line2D else "modulate"
+		if animate and on and i >= _lit_count:
+			# la sève avance : chaque morceau s'allume un peu après le précédent
+			var tw := node.create_tween()
+			tw.tween_interval(0.12 * (i - maxi(_lit_count - 1, 0)))
+			tw.tween_property(node, prop, target, 0.15)
 		else:
-			_channels[k].modulate = target
-	for g in _grooves:
-		g.default_color = SAP if aligned else CARVED
+			node.set(prop, target)
+	_lit_count = lit
+	# là où elle s'arrête, la sève goutte
+	_drip.position = flow[1]
+	_drip.emitting = not aligned
 	if aligned and not _was_aligned:
 		Audio.play(&"lightning_ready", -4.0)
+		var t := _roots.create_tween()
+		for n in 3:
+			t.tween_property(_roots, "position:x", CLAMP.x + 2.0, 0.04)
+			t.tween_property(_roots, "position:x", CLAMP.x - 2.0, 0.04)
+		t.tween_property(_roots, "position:x", CLAMP.x, 0.04)
 		if not _said.has(&"seve"):
 			_hint(&"foret_coeur_seve")
 	_was_aligned = aligned
+
+
+## Une flèche courbe, brève, autour d'une roue qui tourne : on voit le sens de l'engrenage.
+func _gear_arrow(k: int, step: int, by_heart: bool) -> void:
+	var arc := Line2D.new()
+	arc.width = 1.5
+	arc.default_color = Color(1.0, 0.45, 0.35, 0.9) if by_heart else Color(1.0, 0.92, 0.7, 0.85)
+	var pts := PackedVector2Array()
+	var a0: float = -PI * 0.8
+	var span: float = PI * 0.45 * step
+	for j in 13:
+		var a: float = a0 + span * j / 12.0
+		pts.append(Vector2(cos(a), sin(a)) * 37.0)
+	arc.points = pts
+	var tip: Vector2 = pts[12]
+	var tangent: Vector2 = (pts[12] - pts[11]).normalized()
+	var head := Line2D.new()
+	head.width = 1.5
+	head.default_color = arc.default_color
+	head.points = PackedVector2Array([tip - tangent.rotated(0.6) * 5.0, tip, tip - tangent.rotated(-0.6) * 5.0])
+	arc.add_child(head)
+	arc.position = Vector2(WHEEL_X[k], WHEEL_Y)
+	add_child(arc)
+	var t := arc.create_tween()
+	t.tween_interval(0.25)
+	t.tween_property(arc, "modulate:a", 0.0, 0.45)
+	t.tween_callback(arc.queue_free)
+
+
+## La fresque gravée près de l'entrée : trois roues qui se tiennent par les dents. Celle du
+## milieu tourne dans un sens, ses voisines dans l'autre ; l'éclair au-dessus de la première,
+## les racines au-dessus de la dernière. Elle s'éclaire quand on s'en approche.
+func _build_mural() -> void:
+	_mural = Node2D.new()
+	_mural.position = Vector2(66.0, -104.0)
+	_mural.scale = Vector2(1.5, 1.5)
+	_mural.modulate.a = 0.45
+	add_child(_mural)
+	var ink := Color(0.78, 0.6, 0.4)
+	for k in 3:
+		var c := Vector2(-18.0 + 18.0 * k, 0.0)
+		var ring := Line2D.new()
+		ring.width = 1.0
+		ring.default_color = ink
+		var pts := PackedVector2Array()
+		for j in 25:
+			var a: float = TAU * j / 24.0
+			pts.append(c + Vector2(cos(a), sin(a)) * 8.0)
+		ring.points = pts
+		_mural.add_child(ring)
+		# la flèche : sens horaire au milieu, l'autre sens sur les côtés
+		var dir: float = 1.0 if k == 1 else -1.0
+		var arc := Line2D.new()
+		arc.width = 1.0
+		arc.default_color = ink
+		var ap := PackedVector2Array()
+		for j in 9:
+			var a: float = -PI / 2.0 + dir * PI * 0.6 * j / 8.0
+			ap.append(c + Vector2(cos(a), sin(a)) * 4.5)
+		arc.points = ap
+		_mural.add_child(arc)
+		var tip: Vector2 = ap[8]
+		var tg: Vector2 = (ap[8] - ap[7]).normalized()
+		var hd := Line2D.new()
+		hd.width = 1.0
+		hd.default_color = ink
+		hd.points = PackedVector2Array([tip - tg.rotated(0.7) * 3.0, tip, tip - tg.rotated(-0.7) * 3.0])
+		_mural.add_child(hd)
+	# l'éclair au-dessus de la première roue, et le chemin jusqu'aux racines au-dessus de la dernière
+	var bolt := Line2D.new()
+	bolt.width = 1.0
+	bolt.default_color = Color(0.7, 0.85, 1.0)
+	bolt.points = PackedVector2Array([Vector2(-16, -22), Vector2(-20, -16), Vector2(-15, -15), Vector2(-18, -9)])
+	_mural.add_child(bolt)
+	var root := Line2D.new()
+	root.width = 1.0
+	root.default_color = Color(0.85, 0.35, 0.25)
+	root.points = PackedVector2Array([Vector2(18, -9), Vector2(18, -15), Vector2(22, -19), Vector2(26, -18), Vector2(24, -22)])
+	_mural.add_child(root)
 
 
 func _build_grooves() -> void:
@@ -211,7 +394,7 @@ func _build_grooves() -> void:
 		[Vector2(WHEEL_X[0], -330.0), Vector2(WHEEL_X[0], WHEEL_Y - 28.0)],
 		[Vector2(WHEEL_X[0] + 28.0, WHEEL_Y), Vector2(WHEEL_X[1] - 28.0, WHEEL_Y)],
 		[Vector2(WHEEL_X[1] + 28.0, WHEEL_Y), Vector2(WHEEL_X[2] - 28.0, WHEEL_Y)],
-		[Vector2(WHEEL_X[2], WHEEL_Y - 28.0), Vector2(WHEEL_X[2], -110.0), Vector2(WHEEL_X[2] + 18.0, -140.0), CLAMP + Vector2(-14.0, 6.0)],
+		[Vector2(WHEEL_X[2], WHEEL_Y - 28.0), Vector2(WHEEL_X[2] + 6.0, -82.0), Vector2(WHEEL_X[2] + 30.0, -94.0), CLAMP + Vector2(-18.0, 2.0)],
 	]
 	for pts in paths:
 		var shadow := Line2D.new()
@@ -238,11 +421,8 @@ func hear_drum(from: Vector2) -> void:
 		_call_lightning()
 	elif _calm <= 0.0:
 		_calm = calm_time
-		var t := _roots.create_tween()
-		_calm_tween = t
-		t.tween_property(_roots, "modulate", Color(0.6, 0.6, 0.7), 0.4)
-		t.tween_interval(calm_time - 1.2)
-		t.tween_property(_roots, "modulate", Color.WHITE, 0.8)
+		_roots.scale = Vector2.ONE
+		_wheels[1].offset = Vector2.ZERO
 		if not _said.has(&"calme"):
 			_hint(&"foret_coeur_calme")
 
@@ -250,11 +430,11 @@ func hear_drum(from: Vector2) -> void:
 func _call_lightning() -> void:
 	_state = 1
 	solved.emit()
-	if _calm_tween != null and _calm_tween.is_valid():
-		_calm_tween.kill()
+	_drip.emitting = false
+	_roots.modulate = Color.WHITE
 	var level := Level.of(self)
 	var pts := [Vector2(WHEEL_X[0] + randf_range(-20, 20), -520.0), Vector2(WHEEL_X[0], WHEEL_Y), Vector2(WHEEL_X[1], WHEEL_Y),
-		Vector2(WHEEL_X[2], WHEEL_Y), Vector2(WHEEL_X[2], -110.0), CLAMP]
+		Vector2(WHEEL_X[2], WHEEL_Y), Vector2(WHEEL_X[2] + 6.0, -82.0), CLAMP]
 	Audio.play(&"thunder_close", 2.0)
 	if level != null:
 		level.flash(0.9)

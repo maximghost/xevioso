@@ -198,9 +198,10 @@ const LINES := {
 		{"text": "Trois sœurs gardent le cœur. Elles se tiennent par les dents : quand l'une fait un pas, celles qu'elle touche reculent d'autant.",
 			"pc": "Frappez une roue pour la faire tourner", "mobile": "Frappez une roue pour la faire tourner"},
 		{"text": "Ma foudre entre par la tête de l'aînée et ne ressort que par la tête de la cadette. Entre les deux, la sève ne doit pas se perdre."},
+		{"text": "La sève connaît le chemin : là où elle goutte, le chemin se brise. Et regardez le mur : les anciens y ont gravé la danse des trois sœurs."},
 	],
 	&"foret_coeur_pouls": [
-		{"text": "Entendez-vous ? Le cœur de colère bat encore, et chaque battement bouscule la sœur du milieu. Ce qui bat s'apaise quand le tambour parle bas.",
+		{"text": "Entendez-vous ? Le cœur de colère bat encore : quand ses racines rougissent, il va bousculer la sœur du milieu. Ce qui bat s'apaise quand le tambour parle bas.",
 			"pc": "Kokou : K maintenu (tambour parlant)", "mobile": "Kokou : bouton bleu maintenu"},
 	],
 	&"foret_coeur_calme": [
