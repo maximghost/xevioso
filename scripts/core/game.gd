@@ -40,7 +40,7 @@ const DEV_LEVELS: Array[StringName] = [&"test"]
 ## L'écran titre.
 const TITLE_SCREEN := "res://scenes/ui/title_screen.tscn"
 ## La scène d'ouverture, avant le premier niveau d'une nouvelle partie.
-const INTRO := "res://scenes/story/intro.tscn"
+const INTRO := "res://scenes/story/prologue.tscn"
 
 ## Nombre de vies par tentative de niveau : perdre tous ses cœurs coûte une vie ;
 ## à la dernière, c'est la fin de la partie (game over) et on recommence le niveau.

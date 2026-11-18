@@ -21,6 +21,36 @@ extends RefCounted
 const ADAKA := "Adaka"
 
 ## Narration de la scène d'ouverture, un tableau après l'autre (voix du conteur, pas de Xɛvioso).
+## Le prologue (« la guerre de la foudre ») : la voix, puis le conteur, scène par scène.
+const PROLOGUE := {
+	&"voix": ["Je suis la voix qui gronde.", "L'œil qui voit dans la nuit.", "La pluie qui pardonne."],
+	&"equilibre": [
+		"Il y a bien des saisons, au pays des collines rouges, le ciel tenait parole.",
+		"Xɛvioso, le guerrier du ciel, veillait : son éclair voyait les fautes, son tonnerre avertissait, sa pluie pardonnait.",
+		"Au bout du village, sur son autel, brillait la Pierre de foudre. D'elle naissaient les sokpe, les cartouches du dieu.",
+	],
+	&"felure": [
+		"Mais les hommes ne sont pas toujours justes. Une balance qui triche, un serment menteur, une main qui vole…",
+		"De chaque faute montait une fumée noire. Dans la forêt, les fumées s'assemblèrent. Et quelque chose ouvrit les yeux.",
+	],
+	&"vol": [
+		"Une nuit d'orage, une ombre née de toutes les fautes se glissa jusqu'à l'autel.",
+		"L'éclair la frappa… et la traversa sans la voir : elle était faite de ce qui se cache.",
+		"Adaka, la Méchanceté, brisa la Pierre de foudre, dispersa les sokpe aux quatre vents, et avala les nuages. Le guerrier du ciel était désarmé.",
+	],
+	&"sans_foudre": [
+		"Un couvercle noir se referma sur le ciel. Sans foudre, plus personne ne craignait de mentir ni de voler.",
+		"Les villages se déchirèrent, et la terre de Sakpata se fendit sous un soleil sans pitié.",
+	],
+	&"carton": ["Quand la foudre se tait, la méchanceté grandit."],
+	&"signe": [
+		"Puis vint une nuit d'orage sec. La foudre tomba sur un garçon du village : Kodjo.",
+		"Il se releva. Indemne. Dans ses yeux passait la lumière du ciel.",
+		"Le prêtre de Xɛvioso consulta le Fa. Les signes étaient clairs : cinq enfants portaient la marque du ciel.",
+		"« Le ciel a choisi, dit le prêtre. Ils seront ses Envoyés. »",
+	],
+}
+
 const STORY := {
 	# Le village vivant, à la saison des pluies
 	&"avant": [
@@ -64,6 +94,13 @@ const STORY := {
 
 const LINES := {
 	# Scène d'ouverture : l'appel de Xɛvioso, en quatre temps (la scène joue ses effets entre chaque).
+	&"prologue_appel": [
+		{"text": "Envoyés. Adaka m'a désarmé… mais il n'a pas pu me faire taire tout à fait."},
+		{"text": "Mes sokpe sont dispersés aux quatre vents. Ce sont mes cartouches : retrouvez-les, et ma foudre frappera de nouveau."},
+		{"text": "Kodjo, toi que ma foudre a touché : je te donne la Ruée. Afi, je te donne le pagne qui vole."},
+		{"text": "Trois autres portent ma marque, loin d'ici. Vous les trouverez sur votre chemin."},
+		{"text": "Allez. Rendez-moi ma voix, mon regard… et ma pluie."},
+	],
 	&"intro_appel": [
 		{"text": "Enfants du village… levez les yeux."},
 		{"text": "Je suis Xɛvioso. Le tonnerre est ma voix, l'éclair est ma hache."},
